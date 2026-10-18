@@ -1,0 +1,4 @@
+document.querySelector('#print')?.addEventListener('click',()=>window.print());
+const table=document.querySelector('#items');
+function total(){if(!table)return;let sum=0;for(const row of table.rows){sum+=(Number(row.querySelector('[name=qty]').value)||0)*(Number(row.querySelector('[name=price]').value)||0);}document.querySelector('#total').textContent=sum.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+document.querySelector('#add-item')?.addEventListener('click',()=>{if(table.rows.length>=30)return;const row=table.rows[0].cloneNode(true);row.querySelectorAll('input').forEach(i=>i.value=i.name==='qty'?'1':'');table.append(row);});table?.addEventListener('input',total);total();
