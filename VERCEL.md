@@ -1,6 +1,6 @@
 # นำระบบขึ้น Vercel + PostgreSQL
 
-สถานะ: เชื่อมบัญชีและสร้างโปรเจกต์ Vercel `piyawats-projects-96892eb0/passadukwc` พร้อมเชื่อม GitHub แล้ว ตั้ง SESSION_SECRET ใน Production และตรวจ Vercel build สำเร็จ ฐานข้อมูล Supabase แผน Free (sin1) ยังรอเจ้าของบัญชียอมรับเงื่อนไข จึงยังไม่ได้สร้าง schema หรือ deploy แอปที่ใช้งานได้จริง
+สถานะ: เชื่อมบัญชีและสร้างโปรเจกต์ Vercel `piyawats-projects-96892eb0/passadukwc` พร้อมเชื่อม GitHub แล้ว ตั้ง SESSION_SECRET ใน Production และตรวจ Vercel build สำเร็จ ฐานข้อมูล Supabase แผน Free (sin1) สร้างและเชื่อมแล้ว migration ผ่านโดยตรวจ TLS ครบถ้วนและ deploy ที่ https://passadukwc.vercel.app สำเร็จ ตรวจ /setup และ static assets ได้ HTTP 200 หน้าที่ต้องล็อกอิน redirect และ invalid CSRF ได้ 403 เหลือ SETUP_TOKEN ที่เจ้าของกำหนดและการสร้างแอดมินก่อนใช้งานจริง
 
 ## 1. เชื่อม repository
 
@@ -38,13 +38,13 @@ npm ci
 npm run db:migrate
 ```
 
-คำสั่ง migration มี transaction และ advisory lock และรันซ้ำได้ ไม่ลบข้อมูลเดิม ไม่ต้องรัน migration ทุก cold start ใช้ migration เป็นงานแยกก่อน deploy ไม่บังคับให้ Vercel build ต่อฐานข้อมูล Production
+คำสั่ง migration มี transaction และ advisory lock และรันซ้ำได้ ไม่ลบข้อมูลเดิม ไม่ต้องรัน migration ทุก cold start ใช้ migration เป็นงานแยกก่อน deploy สำหรับโปรเจกต์นี้ `vercel.json` ตั้ง buildCommand เป็น `node scripts/prepare-cert.js && npm run db:migrate` เพื่อสร้าง/ตรวจ schema จาก Vercel ก่อน deploy เนื่องจากเครื่องพัฒนาเชื่อมปลายทาง PostgreSQL โดยตรงไม่ได้ build จะหยุดหาก migration ไม่ผ่าน และไม่มี migration ใน cold start
 
 SQLite เดิมไม่ถูกส่งขึ้น Supabase อัตโนมัติ หากเริ่มมีข้อมูลจริงแล้ว ต้องทำงานย้ายข้อมูลพร้อมสำรองและตรวจสอบเลขก่อนใช้งานต่อ
 
 ## 5. Deploy และตรวจรับ
 
-กด Deploy ใน Vercel หลังสร้าง schema และตั้งค่าลับครบแล้ว หาก deploy ก่อนตั้งค่า ให้ Redeploy หลังตั้งค่าเสร็จ จากนั้นเปิด HTTPS URL ที่ Vercel ให้ เข้า `/setup` ใช้ SETUP_TOKEN สร้างผู้ดูแลของโรงเรียนด้วยชื่อผู้ใช้/รหัสผ่านที่ตั้งเอง เมื่อล็อกอินแล้วให้ตั้งผู้ลงนามและเพิ่มเจ้าหน้าที่ 3 คน
+กด Deploy ใน Vercel หลังตั้งค่าฐานข้อมูลและค่าลับครบแล้ว Vercel จะรัน migration ระหว่าง build หาก deploy ก่อนตั้งค่า ให้ Redeploy หลังตั้งค่าเสร็จ จากนั้นเปิด HTTPS URL ที่ Vercel ให้ เข้า `/setup` ใช้ SETUP_TOKEN สร้างผู้ดูแลของโรงเรียนด้วยชื่อผู้ใช้/รหัสผ่านที่ตั้งเอง เมื่อล็อกอินแล้วให้ตั้งผู้ลงนามและเพิ่มเจ้าหน้าที่ 3 คน
 
 ตรวจล็อกอินและสร้างรายการทดสอบพร้อมกันจากหลาย browser ตรวจเลขซื้อ/จ้างแยกกัน การคง session หลัง refresh/redeploy และชุดพิมพ์ A4 ก่อนใช้ข้อมูลจริง ตรวจ Vercel logs โดยไม่บันทึก cookie หรือค่าลับ
 
@@ -57,3 +57,7 @@ SQLite เดิมไม่ถูกส่งขึ้น Supabase อัตโ
 session และ rate limiter สำหรับล็อกอินเก็บใน PostgreSQL ไม่ใช้หน่วยความจำของ function เป็นแหล่งข้อมูลกลาง `npm test` ทดสอบ SQLite และ PostgreSQL จริงแบบชั่วคราวในเครื่องพัฒนา รวมหลาย app instance, sessions, migrations, เลขรันและ concurrent edits การทดสอบนี้ยังไม่ใช่การตรวจ deployment บน Vercel
 
 แบบเอกสารยังเป็นฉบับร่างตาม README และยังไม่มีตราครุฑที่โรงเรียนรับรอง การ deploy ไม่ใช่การรับรองรูปแบบเอกสารหรือระเบียบจัดซื้อจัดจ้าง
+
+## TLS ของ Supabase
+
+การเชื่อม Supabase ตรวจ hostname และ chain ด้วย `sslmode=verify-full` และ `sslrootcert` โดย build ดาวน์โหลด CA จาก HTTPS URL ทางการที่ Supabase Studio กำหนดไว้ ตรวจว่าเป็น CA ของ Supabase และอยู่ในช่วงอายุ ก่อนนำเข้า bundle ที่ `certs/supabase-prod-ca-2021.crt` ไม่ปิด TLS verification สำหรับพัฒนาในเครื่องที่ใช้ Supabase ให้รัน `node scripts/prepare-cert.js` ก่อน migration ต้องอนุญาตปลายทางดาวน์โหลด CA และชื่อ host ฐานข้อมูลด้วย

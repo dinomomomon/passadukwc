@@ -32,6 +32,25 @@ function postgresSQL(sql) {
       "greatest(counters.value,excluded.value)",
     );
 }
+function secureConnectionString(value) {
+  const url = new URL(value);
+  if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname)) {
+    url.searchParams.set("sslmode", "verify-full");
+    url.searchParams.delete("uselibpqcompat");
+    url.searchParams.delete("ssl");
+    if (
+      (url.hostname.endsWith(".pooler.supabase.com") ||
+        url.hostname.endsWith(".supabase.co")) &&
+      !url.searchParams.has("sslrootcert")
+    ) {
+      url.searchParams.set(
+        "sslrootcert",
+        path.join(__dirname, "certs/supabase-prod-ca-2021.crt"),
+      );
+    }
+  }
+  return url.toString();
+}
 function createDatabase({ dbPath, databaseUrl, driver } = {}) {
   const pg = !!(databaseUrl || driver);
   if (process.env.VERCEL && !pg)
@@ -43,7 +62,7 @@ function createDatabase({ dbPath, databaseUrl, driver } = {}) {
     pool =
       driver ||
       new (require("pg").Pool)({
-        connectionString: databaseUrl,
+        connectionString: secureConnectionString(databaseUrl),
         max: 3,
         idleTimeoutMillis: 10000,
         connectionTimeoutMillis: 10000,
@@ -187,4 +206,4 @@ function createDatabase({ dbPath, databaseUrl, driver } = {}) {
   };
   return api;
 }
-module.exports = { createDatabase, postgresSQL };
+module.exports = { createDatabase, postgresSQL, secureConnectionString };

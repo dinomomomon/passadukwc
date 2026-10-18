@@ -4,9 +4,10 @@
   "functions": {
     "**": {
       "maxDuration": 30,
-      "includeFiles": "{views,public}/**",
+      "includeFiles": "{views,public,certs}/**",
       "excludeFiles": "{data,test}/**"
     }
   },
-  "framework": "express"
+  "framework": "express",
+  "buildCommand": "node scripts/prepare-cert.js && npm run db:migrate"
 }

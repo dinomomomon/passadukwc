@@ -1,4 +1,5 @@
 const { Pool } = require("pg");
+const { secureConnectionString } = require("../database");
 const fs = require("node:fs");
 const path = require("node:path");
 async function migrate(pool) {
@@ -26,7 +27,7 @@ if (require.main === module) {
     process.exitCode = 1;
   } else {
     const pool = new Pool({
-      connectionString: url,
+      connectionString: secureConnectionString(url),
       connectionTimeoutMillis: 10000,
       max: 1,
     });

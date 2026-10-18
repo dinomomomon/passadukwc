@@ -68,6 +68,8 @@ function createApp({
   app.disable("x-powered-by");
   if (process.env.TRUST_PROXY === "1" || process.env.VERCEL)
     app.set("trust proxy", 1);
+  // Register explicitly so Vercel traces the template engine into the function bundle.
+  app.engine("ejs", require("ejs").__express);
   app.set("view engine", "ejs");
   app.set("views", path.join(__dirname, "views"));
   app.use(helmet());
