@@ -1,10 +1,10 @@
 # นำระบบขึ้น Vercel + PostgreSQL
 
-สถานะ: เตรียมโค้ด Vercel Function และ PostgreSQL แล้ว ยังไม่ได้เชื่อมบัญชี สร้างฐานข้อมูล หรือ deploy จริง ต้องมีสิทธิ์เข้า Vercel และฐานข้อมูลก่อน
+สถานะ: เชื่อมบัญชีและสร้างโปรเจกต์ Vercel `piyawats-projects-96892eb0/passadukwc` พร้อมเชื่อม GitHub แล้ว ตั้ง SESSION_SECRET ใน Production และตรวจ Vercel build สำเร็จ ฐานข้อมูล Supabase แผน Free (sin1) ยังรอเจ้าของบัญชียอมรับเงื่อนไข จึงยังไม่ได้สร้าง schema หรือ deploy แอปที่ใช้งานได้จริง
 
 ## 1. เชื่อม repository
 
-หลังโค้ดอยู่ใน GitHub ให้เข้า https://vercel.com/new ลงชื่อเข้าใช้ด้วย GitHub เลือก `dinomomomon/passadukwc` และ root directory ของ repository ใช้ Node.js 24.x ไม่มีขั้นตอน build หน้าเว็บแยก ใช้ `vercel.json` และ entry `api/index.js` ซึ่ง export Express app โดยไม่เปิด listener
+หลังโค้ดอยู่ใน GitHub ให้เข้า https://vercel.com/new ลงชื่อเข้าใช้ด้วย GitHub เลือก `dinomomomon/passadukwc` และ root directory ของ repository ใช้ Node.js 24.x ไม่มีขั้นตอน build หน้าเว็บแยก ใช้ `vercel.json` และ entry `app.js` ซึ่ง export Express app ผ่าน native Express framework ไม่มี catch-all rewrite ไป /api/index; เมื่อ import จะไม่เปิด listener (เปิดเฉพาะ npm start)
 
 ## 2. ฐานข้อมูล Supabase
 

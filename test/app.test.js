@@ -1,6 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { createApp } = require("../server");
+const { createApp } = require("../application");
 test("workflow: security, roles, central numbers, editing, printing and session revocation", async (t) => {
   const { app, db } = createApp({
     dbPath: ":memory:",

@@ -10,6 +10,7 @@ function createApp({
   dbPath = process.env.DB_PATH || path.join(__dirname, "data/school.db"),
   secret = process.env.SESSION_SECRET,
   driver,
+  expressApp,
 } = {}) {
   if (
     (process.env.NODE_ENV === "production" || process.env.VERCEL) &&
@@ -63,7 +64,7 @@ function createApp({
       }
     }
   }
-  const app = express();
+  const app = expressApp || express();
   app.disable("x-powered-by");
   if (process.env.TRUST_PROXY === "1" || process.env.VERCEL)
     app.set("trust proxy", 1);
@@ -573,13 +574,5 @@ function createApp({
       });
   });
   return { app, db: db.raw || db, close: () => db.close() };
-}
-if (require.main === module) {
-  const { app } = createApp();
-  app.listen(
-    Number(process.env.PORT) || 3000,
-    process.env.HOST || "127.0.0.1",
-    () => console.log("Kawila procurement server started"),
-  );
 }
 module.exports = { createApp };
