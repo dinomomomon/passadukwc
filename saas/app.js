@@ -61,35 +61,28 @@ async function printOfficialDocuments(){
     for(const sheet of sheets){
       const body=sheet.querySelector('.doc-sheet-body');
       if(!body)throw new Error('รูปแบบหน้าเอกสารไม่สมบูรณ์');
-      // Keep TH Sarabun 16pt and 3/2/2.5/2 cm margins unchanged.
-      // Only reduce optional vertical spacing when the document needs room.
+      // Use a consistent 14 pt body font with comfortable leading.
+      // Never compress line height to make text fit a single page.
       const cs=getComputedStyle(sheet);
-      const available=sheet.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-6;
+      const available=sheet.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-8;
       const hasRoom=async ()=>{
         await new Promise(resolve=>requestAnimationFrame(resolve));
         return body.getBoundingClientRect().height<=available;
       };
       if(await hasRoom())continue;
-      // An empty ruled table is decorative. Trim its blank space before
-      // changing real text or letting the form continue onto a second sheet.
-      const tableBlank=sheet.querySelector('.official-table-ruled .table-filler');
-      if(tableBlank){
-        const original=parseFloat(tableBlank.style.height)||60;
-        for(const mm of [48,36,24,12,0]){
+      // Reduce decorative whitespace in the ruled item table only.
+      const blank=sheet.querySelector('.official-table-ruled .table-filler');
+      if(blank){
+        const original=parseFloat(blank.style.height)||60;
+        for(const mm of [35,25,15,7,0]){
           if(mm>=original)continue;
-          tableBlank.style.height=mm+'mm';
+          blank.style.height=mm+'mm';
           if(await hasRoom())break;
         }
         if(await hasRoom())continue;
       }
-      sheet.classList.add('print-compact');
-      if(await hasRoom())continue;
-      sheet.classList.remove('print-compact');
-      sheet.classList.add('print-tight');
-      if(await hasRoom())continue;
-      // Long descriptions or many items legitimately need a continuation page.
-      // Never clip their text and never silently shrink below 16pt.
-      sheet.classList.remove('print-tight');
+      // Content exceeding one sheet must continue naturally rather than
+      // being clipped or typeset with tightly packed lines.
       sheet.classList.add('print-flow');
       continuedPages++;
     }
