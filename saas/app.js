@@ -120,13 +120,18 @@ function auth(){
     '<button class="kp-main-button" type="submit">บันทึกรหัสผ่านใหม่</button></form>'+
     '<p class="kp-auth-footnote">ลิงก์ตั้งรหัสผ่านมีอายุจำกัด หากไม่สามารถบันทึกได้ กรุณาขอลิงก์ใหม่</p>';
   const note=mode==='login'||mode==='signup'?'<div class="kp-divider">หรือ</div><button class="kp-demo-button" data-action="demo">'+i('eye')+' ทดลองดูระบบโดยไม่ต้องสมัคร</button>':null;
-  app.innerHTML='<main class="kp-auth-screen">'+authHero()+'<section class="kp-auth-right"><div class="kp-login-card">'+
-    '<div class="kp-login-mark"><img src="/kru-pasadu-icon.svg" alt=""><div><strong>ครูพัสดุ</strong><span>ทำเรื่องพัสดุให้เป็นเรื่องง่าย</span></div></div>'+
-    '<h2>'+title+'</h2><p class="kp-login-subtitle">'+subtitle+'</p>'+
-    (mode==='login'||mode==='signup'?signupTabs():'')+
-    msg()+fields+(note||'')+
-    (mode==='login'||mode==='signup'?'<p class="kp-auth-footnote">ใช้ตัวจัดการรหัสผ่านของเบราว์เซอร์ได้อย่างปลอดภัย ระบบจะจดจำเพียงอีเมลเมื่อคุณเลือกเท่านั้น</p>':'')+
-    '</div></section></main>';
+  app.innerHTML='<main class="kp-auth-screen">'+authHero()+'<section class="kp-auth-right"><div class="kp-auth-right-inner">'+
+    '<div class="kp-auth-identity" aria-label="ครูพัสดุ ทำเรื่องพัสดุให้เป็นเรื่องง่าย">'+
+      '<img class="kp-auth-identity-image" src="/kru-pasadu-icon.svg" alt="โลโก้ครูพัสดุ">'+
+      '<div class="kp-auth-identity-name">ครูพัสดุ</div>'+
+      '<div class="kp-auth-identity-tagline">ทำเรื่องพัสดุให้เป็นเรื่องง่าย</div>'+
+    '</div>'+
+    '<div class="kp-login-card">'+
+      '<div class="kp-form-heading"><h2>'+title+'</h2><p class="kp-login-subtitle">'+subtitle+'</p></div>'+
+      (mode==='login'||mode==='signup'?signupTabs():'')+
+      msg()+fields+(note||'')+
+      (mode==='login'||mode==='signup'?'<p class="kp-auth-footnote">ใช้ตัวจัดการรหัสผ่านของเบราว์เซอร์ได้อย่างปลอดภัย ระบบจะจดจำเพียงอีเมลเมื่อคุณเลือกเท่านั้น</p>':'')+
+    '</div></div></section></main>';
 }
 
 function verificationPending(){
