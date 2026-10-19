@@ -57,97 +57,64 @@ async function printOfficialDocuments(){
     if(document.fonts?.ready)await document.fonts.ready;
     await Promise.all([...root.querySelectorAll('img')].map(img=>img.decode?.().catch(()=>{})||Promise.resolve()));
 
-    // Each memorandum's complete signature section is one unbreakable unit.
-    // Measure against the real A4 content area before Chrome paginates.
-    const getAvailable=(sheet)=>{
-      const cs=getComputedStyle(sheet);
-      return sheet.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-10;
-    };
-    const fits=async (sheet)=>{
+    // Fit each complete document, not its fragments. Prefer generous typography
+    // and progressively select a smaller readable size only when necessary.
+    const densities=['comfortable','balanced','fitted','compact','minimum'];
+    const fits=async sheet=>{
       await new Promise(resolve=>requestAnimationFrame(resolve));
-      const body=sheet.querySelector('.doc-sheet-body');
-      if(!body)throw new Error('ไม่พบพื้นที่เนื้อหาเอกสาร');
-      return body.getBoundingClientRect().height<=getAvailable(sheet);
+      const content=sheet.querySelector('.doc-sheet-body');
+      if(!content)throw new Error('ไม่พบเนื้อหาเอกสารที่จะพิมพ์');
+      const css=getComputedStyle(sheet);
+      const available=sheet.clientHeight-parseFloat(css.paddingTop)-parseFloat(css.paddingBottom)-14;
+      const outerHeight=content.getBoundingClientRect().height;
+      if(outerHeight>available)return false;
+      // Safety check: all signature cards must be inside the printable height.
+      const sheetTop=sheet.getBoundingClientRect().top+parseFloat(css.paddingTop);
+      const bottom=sheetTop+available;
+      return [...sheet.querySelectorAll('.signature-card,.memo-signatures,.inspector-sign')]
+        .every(node=>node.getBoundingClientRect().bottom<=bottom);
     };
-    const getOverflow=async (sheet)=>{
-      await new Promise(resolve=>requestAnimationFrame(resolve));
-      const body=sheet.querySelector('.doc-sheet-body');
-      return body.getBoundingClientRect().height-getAvailable(sheet);
-    };
-    let continuedPages=0;
+    const problems=[];
+    const layoutSummary=[];
     for(const sheet of [...root.querySelectorAll('.paper-page')]){
-      if(await fits(sheet))continue;
-      const filler=sheet.querySelector('.official-table-ruled .table-filler');
-      if(filler){
-        const original=parseFloat(filler.style.height)||60;
-        for(const mm of [35,25,15,7,0]){
-          if(mm>=original)continue;
-          filler.style.height=mm+'mm';
-          if(await fits(sheet))break;
+      sheet.classList.remove('memo-balanced','print-tight','print-compact','print-flow','print-continuation');
+      let fitted=false;
+      const candidate=async()=>{
+        for(const density of densities){
+          sheet.dataset.density=density;
+          if(await fits(sheet)){fitted=true;break;}
         }
-        if(await fits(sheet))continue;
+      };
+      await candidate();
+      // Reduce *decorative* blank height in an item table only as needed.
+      if(!fitted){
+        const blank=sheet.querySelector('.official-table-ruled .table-filler');
+        if(blank){
+          const initial=parseFloat(blank.style.height)||60;
+          for(const h of [50,40,30,20,10,0]){
+            if(h>=initial)continue;
+            blank.style.height=h+'mm';
+            await candidate();
+            if(fitted)break;
+          }
+        }
       }
-      if(sheet.classList.contains('memo-page')){
-        sheet.classList.add('memo-balanced');
-        if(await fits(sheet))continue;
-
-        // A genuinely longer memorandum gets an explicit page marked "(ต่อ)".
-        // Keep all 3 signatures together, never put the director alone.
-        const firstBody=sheet.querySelector('.memo-content');
-        const approvals=sheet.querySelector('.memo-signatures');
-        const subject=sheet.querySelector('.memo-field-subject .memo-value');
-        if(!firstBody||!approvals||!subject)throw new Error('เอกสารบันทึกข้อความมีโครงสร้างไม่สมบูรณ์');
-        const continuation=document.createElement('section');
-        continuation.className='paper-page official memo-page continuation-page memo-balanced';
-        const continuationBody=document.createElement('div');
-        continuationBody.className='doc-sheet-body';
-        const h=document.createElement('div');h.className='memo-top';
-        h.innerHTML='<img class="garuda-emblem" src="/garuda-memo.svg" alt="ตราครุฑ"><h1>บันทึกข้อความ</h1>';
-        const label=document.createElement('div');
-        label.className='continuation-label';
-        label.textContent='เรื่อง '+subject.textContent+' (ต่อ)';
-        const continuationContent=document.createElement('div');
-        continuationContent.className='memo-content';
-        continuationBody.append(h,label,continuationContent,approvals);
-        continuation.append(continuationBody);
-        sheet.after(continuation);
-        const moved=[];
-        // Carry the final narrative paragraph onto the approval page, so it
-        // cannot become a signature-only sheet.
-        const last=firstBody.lastElementChild;
-        if(last){moved.unshift(last);continuationContent.prepend(last);}
-        // Bring more complete blocks across if the first sheet still overflows.
-        while(!(await fits(sheet)) && firstBody.lastElementChild){
-          const block=firstBody.lastElementChild;
-          moved.unshift(block);
-          continuationContent.prepend(block);
-        }
-        if(!(await fits(sheet))){
-          throw new Error('ข้อความรายงานยาวเกินไปสำหรับการจัดหน้าต่อเนื่อง กรุณาย่อข้อความเหตุผลหรือแบ่งเอกสารแนบท้าย');
-        }
-        if(!(await fits(continuation))){
-          // The continuation cannot be silently clipped. Refuse printing
-          // instead of losing an approval, date or signature.
-          throw new Error('ข้อความหน้าต่อและส่วนลงนามยาวเกินกระดาษ A4 กรุณาลดรายละเอียดในรายการนี้ก่อนพิมพ์');
-        }
-        if(!moved.length)throw new Error('ไม่สามารถจัดหน้าลงนามให้ครบถ้วน');
-        continuedPages++;
-      } else {
-        // Long tabular annexes can continue naturally, without clipping rows.
-        sheet.classList.add('print-flow');
-        continuedPages++;
-      }
-    }
-    // Last check: no memorandum is allowed to contain truncated approvals.
-    for(const sheet of root.querySelectorAll('.memo-page')){
+      const isMemo=sheet.classList.contains('memo-page');
       const approval=sheet.querySelector('.memo-signatures');
-      const actual=approval?approval.querySelectorAll('.signature-card').length:0;
-      if(approval && actual!==3)throw new Error('จำนวนช่องลงนามในบันทึกข้อความไม่ครบ 3 ตำแหน่ง');
-      if(!(await fits(sheet)))throw new Error('พบหน้าเอกสารที่ข้อความเกินขอบกระดาษ A4');
+      if(isMemo&&(!approval||approval.querySelectorAll('.signature-card').length!==3))
+        throw new Error('ช่องลงนามในบันทึกข้อความไม่ครบ กรุณาติดต่อผู้ดูแลระบบ');
+      if(!fitted){
+        const title=sheet.querySelector('.memo-field-subject .memo-value,.print-title')?.textContent?.trim()||'เอกสาร';
+        problems.push(title);
+      }else{
+        layoutSummary.push({name:sheet.querySelector('.memo-field-subject .memo-value,.print-title')?.textContent?.trim()||'เอกสาร',size:sheet.dataset.density});
+      }
     }
-    // Wait for any Garuda image added to an explicit continuation sheet.
-    await Promise.all([...root.querySelectorAll('img')].map(img=>img.decode?.().catch(()=>{})||Promise.resolve()));
-    root.dataset.continuationCount=String(continuedPages);
+    if(problems.length){
+      throw new Error('เอกสาร '+problems.join(' / ')+' มีข้อความยาวเกินหน้ากระดาษ A4 แม้ปรับขนาดตัวอักษรแล้ว เพื่อไม่ให้ลายเซ็นตกหน้า กรุณาย่อข้อความหรือแยกรายละเอียดเป็นเอกสารแนบท้าย');
+    }
+    root.dataset.continuationCount='0';
+    root.dataset.layoutSummary=JSON.stringify(layoutSummary);
   } catch(err){
     document.body.classList.remove('print-measuring');
     root.innerHTML='';
