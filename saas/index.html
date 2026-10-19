@@ -16,13 +16,29 @@
     if(changed)history.replaceState(history.state,'',url.pathname+url.search+url.hash);
   }catch(ignore){}
   var timeoutId;
+  try{sessionStorage.removeItem('kru_boot_stage');}catch(ignore){}
+  function bootHint(){
+    var stage='';
+    try{stage=sessionStorage.getItem('kru_boot_stage')||'';}catch(ignore){}
+    if(!stage)return 'โมดูลแอปยังไม่เริ่มทำงาน อาจมีข้อผิดพลาดในการรัน JavaScript หรือส่วนขยาย Chrome บล็อกสคริปต์';
+    var labels={
+      'client-ready':'เริ่มไลบรารีบัญชีแล้ว แต่ยังไม่เริ่มตรวจสอบเซสชัน',
+      'auth-reading-session':'กำลังรอ Supabase ตรวจสอบเซสชันของโปรไฟล์ Chrome',
+      'auth-loading-roles':'กำลังโหลดสิทธิ์บัญชีและข้อมูลโรงเรียน',
+      'ui-rendering':'กำลังวาดหน้าจอหลังโหลดสิทธิ์',
+      'ui-ready':'โหลดหน้าแอปสำเร็จแล้ว',
+      'ui-error':'เกิดข้อผิดพลาดขณะตรวจสอบบัญชี',
+      'ui-recovery':'เข้าสู่หน้ากู้คืนแล้ว'
+    };
+    return labels[stage]||'ขั้นตอนล่าสุด: '+stage;
+  }
   function showRecovery(message){
     var app=document.getElementById('app');
     if(!app||!app.querySelector('.loading-screen'))return;
     app.innerHTML='<main class="startup-failure" role="alert" aria-live="assertive">'+
       '<img src="/kru-pasadu-icon.svg" width="82" height="82" alt="โลโก้ครูพัสดุ">'+
       '<h1>เปิดครูพัสดุไม่สำเร็จ</h1>'+
-      '<p>'+message+'</p>'+
+      '<p>'+message+'</p><p><strong>ผลตรวจการเริ่มระบบ:</strong> '+bootHint()+'</p>'+
       '<div class="startup-actions"><button type="button" id="kru-try-again">ลองเปิดใหม่</button>'+
       '<button type="button" id="kru-repair-auth">ล้างเซสชันบัญชี (ขั้นแรก)</button>'+
       '<a class="startup-diagnostics-link" href="/diagnostics.html">ตรวจสอบสาเหตุใน Chrome</a></div>'+
@@ -44,6 +60,20 @@
   timeoutId=setTimeout(function(){
     showRecovery('การเปิดระบบใช้เวลานานกว่าปกติ กรุณาเปิดหน้าตรวจสอบเพื่อแยกว่าเกิดจากไฟล์เว็บไซต์ เครือข่าย หรือข้อมูลใน Chrome');
   },30000);
+  window.addEventListener('error',function(evt){
+    var from=String(evt.filename||evt.target&&evt.target.src||'');
+    if(from.indexOf('/app.js')!==-1){
+      clearTimeout(timeoutId);
+      showRecovery('ตรวจพบข้อผิดพลาดขณะโหลดหรือเรียกใช้ไฟล์ JavaScript ของครูพัสดุ กรุณาเปิดหน้าตรวจสอบและส่งผลกลับมา');
+    }
+  });
+  window.addEventListener('unhandledrejection',function(evt){
+    // Do not expose errors or token material in the user-facing UI.
+    if(document.querySelector('.loading-screen')){
+      clearTimeout(timeoutId);
+      showRecovery('การเริ่มระบบหยุดทำงานจากข้อผิดพลาดใน JavaScript กรุณาเปิดหน้าตรวจสอบสาเหตุ');
+    }
+  });
   window.addEventListener('kru:ready',function(){clearTimeout(timeoutId);},{once:true});
   window.addEventListener('kru:dependency-error',function(){
     clearTimeout(timeoutId);
@@ -474,4 +504,4 @@
 </head>
 <body><div id="app"><main class="loading-screen"><img src="/kru-pasadu-icon.svg" width="84" height="84" alt="โลโก้ครูพัสดุ" class="loading-brand-logo"><p>กำลังเปิดครูพัสดุ...</p><a href="/diagnostics.html" style="display:block;margin-top:12px;font-size:12px;color:#5480b8;text-decoration:underline">ตรวจสอบปัญหา Chrome</a></main></div>
 <div id="print-area" aria-hidden="true"></div>
-<script type="module" src="/app.js?v=20261019-chromediag3"></script></body></html>
+<script type="module" src="/app.js?v=20261019-localbundle4"></script></body></html>
