@@ -28,7 +28,7 @@ import {SUPABASE_URL,SUPABASE_KEY} from './config.js';
 import {buildDocuments,escapeHtml as e} from './print.js';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 const app=document.getElementById('app');
-const bootStage=phase=>{try{window.__kruBootStage=phase;document.documentElement.dataset.kruBoot=phase;}catch{}};
+const bootStage=phase=>{try{window.__kruBootStage=phase;document.documentElement.dataset.kruBoot=phase;sessionStorage.setItem('kru_boot_stage',phase);}catch{}};
 bootStage('client-ready');
 const demoSchool={id:'demo-school',name:'โรงเรียนตัวอย่างวิทยาลัย',district:'อำเภอเมือง',province:'เชียงใหม่',director_name:'นายสมชาย ตัวอย่าง',head_name:'นางสาวสุภา ตัวอย่าง',officer_name:'นายมานะ ตั้งใจ',finance_name:'นางสาวการเงิน ตัวอย่าง'};
 const mkDemo=(id,kind,no,title,vendor,total,date,items)=>({id,kind,document_number:no,fiscal_year:2570,document_date:date,title,reason:'ใช้ในการดำเนินงานตามแผนของสถานศึกษา',department:'กลุ่มบริหารงานวิชาการ',budget_source:'งบดำเนินงาน / กิจกรรมพัฒนาผู้เรียน',method:'วิธีเฉพาะเจาะจง (รอตรวจสอบข้อกฎหมาย)',vendor_name:vendor,items,total_satang:total*100,state:'draft',signers:{officer:demoSchool.officer_name,head:demoSchool.head_name,director:demoSchool.director_name}});
