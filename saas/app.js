@@ -145,6 +145,8 @@ async function printOfficialDocuments(){
       if(approval && actual!==3)throw new Error('จำนวนช่องลงนามในบันทึกข้อความไม่ครบ 3 ตำแหน่ง');
       if(!(await fits(sheet)))throw new Error('พบหน้าเอกสารที่ข้อความเกินขอบกระดาษ A4');
     }
+    // Wait for any Garuda image added to an explicit continuation sheet.
+    await Promise.all([...root.querySelectorAll('img')].map(img=>img.decode?.().catch(()=>{})||Promise.resolve()));
     root.dataset.continuationCount=String(continuedPages);
   } catch(err){
     document.body.classList.remove('print-measuring');
