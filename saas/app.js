@@ -59,59 +59,88 @@ async function printOfficialDocuments(){
 
     // Fit each complete document, not its fragments. Prefer generous typography
     // and progressively select a smaller readable size only when necessary.
-    const densities=['comfortable','balanced','fitted','compact','minimum'];
+    // Text and signatures are sized independently. Keep each memo (including
+    // all its approvals) together; never move a lone signature to the next page.
+    const layoutOptions=[
+      ['comfortable','normal'],
+      ['balanced','normal'],
+      ['fitted','normal'],
+      ['compact','normal'],
+      ['compact','balanced'],
+      ['minimum','normal'],
+      ['minimum','balanced'],
+      ['minimum','compact'],
+      ['extra','balanced'],
+      ['extra','compact'],
+      ['extra','minimum']
+    ];
     const fits=async sheet=>{
       await new Promise(resolve=>requestAnimationFrame(resolve));
       const content=sheet.querySelector('.doc-sheet-body');
       if(!content)throw new Error('ไม่พบเนื้อหาเอกสารที่จะพิมพ์');
       const css=getComputedStyle(sheet);
-      const available=sheet.clientHeight-parseFloat(css.paddingTop)-parseFloat(css.paddingBottom)-14;
-      const outerHeight=content.getBoundingClientRect().height;
-      if(outerHeight>available)return false;
-      // Safety check: all signature cards must be inside the printable height.
-      const sheetTop=sheet.getBoundingClientRect().top+parseFloat(css.paddingTop);
-      const bottom=sheetTop+available;
-      return [...sheet.querySelectorAll('.signature-card,.memo-signatures,.inspector-sign')]
-        .every(node=>node.getBoundingClientRect().bottom<=bottom);
+      const sheetRect=sheet.getBoundingClientRect();
+      const top=sheetRect.top+parseFloat(css.paddingTop);
+      const bottom=sheetRect.bottom-parseFloat(css.paddingBottom)-14;
+      // Detect text overflow even if the container's visible box is clipped.
+      if(content.getBoundingClientRect().height>bottom-top)return false;
+      if(content.scrollHeight>content.clientHeight+3)return false;
+      // A4 contains every signature, date and director's approval in full.
+      return [...sheet.querySelectorAll('.signature-card,.memo-signatures,.director-sign,.inspector-sign,.approval-options')]
+        .every(node=>{
+          const rect=node.getBoundingClientRect();
+          return rect.top>=top-3 && rect.bottom<=bottom;
+        });
     };
     const problems=[];
     const layoutSummary=[];
     for(const sheet of [...root.querySelectorAll('.paper-page')]){
       sheet.classList.remove('memo-balanced','print-tight','print-compact','print-flow','print-continuation');
-      let fitted=false;
-      const candidate=async()=>{
-        for(const density of densities){
-          sheet.dataset.density=density;
-          if(await fits(sheet)){fitted=true;break;}
-        }
-      };
-      await candidate();
-      // Reduce *decorative* blank height in an item table only as needed.
-      if(!fitted){
-        const blank=sheet.querySelector('.official-table-ruled .table-filler');
-        if(blank){
-          const initial=parseFloat(blank.style.height)||60;
-          for(const h of [50,40,30,20,10,0]){
-            if(h>=initial)continue;
-            blank.style.height=h+'mm';
-            await candidate();
-            if(fitted)break;
-          }
-        }
-      }
+      const inspector=sheet.querySelector('.inspector-sign');
+      const signatureCards=[...sheet.querySelectorAll('.signature-card')];
       const isMemo=sheet.classList.contains('memo-page');
       const approval=sheet.querySelector('.memo-signatures');
       if(isMemo&&(!approval||approval.querySelectorAll('.signature-card').length!==3))
         throw new Error('ช่องลงนามในบันทึกข้อความไม่ครบ กรุณาติดต่อผู้ดูแลระบบ');
+      // Never remove or hide signature fields to make a page fit.
+      let selection=null;
+      const tryLayouts=async()=>{
+        for(const [bodySize,signSize] of layoutOptions){
+          sheet.dataset.density=bodySize;
+          sheet.dataset.signDensity=signSize;
+          if(await fits(sheet)){
+            selection={bodySize,signSize};
+            return true;
+          }
+        }
+        return false;
+      };
+      // A long decorative table must not force the entire document's
+      // font down to its minimum; shorten only its blank ruled area first.
+      let fitted=await tryLayouts();
       if(!fitted){
-        const title=sheet.querySelector('.memo-field-subject .memo-value,.print-title')?.textContent?.trim()||'เอกสาร';
+        const blank=sheet.querySelector('.official-table-ruled .table-filler');
+        if(blank){
+          const initial=parseFloat(blank.style.height)||60;
+          for(const height of [45,35,25,15,8,0]){
+            if(height>=initial)continue;
+            blank.style.height=height+'mm';
+            if(await tryLayouts()){fitted=true;break;}
+          }
+        }
+      }
+      const title=sheet.querySelector('.memo-field-subject .memo-value,.print-title')?.textContent?.trim()||'เอกสาร';
+      if(!fitted){
         problems.push(title);
       }else{
-        layoutSummary.push({name:sheet.querySelector('.memo-field-subject .memo-value,.print-title')?.textContent?.trim()||'เอกสาร',size:sheet.dataset.density});
+        // Check that the fit did not drop a signature while applying styles.
+        if(isMemo&&approval.querySelectorAll('.signature-card').length!==3)
+          throw new Error('เอกสารขาดช่องลงนามหลังจัดหน้า');
+        layoutSummary.push({name:title,body:selection.bodySize,signatures:selection.signSize});
       }
     }
     if(problems.length){
-      throw new Error('เอกสาร '+problems.join(' / ')+' มีข้อความยาวเกินหน้ากระดาษ A4 แม้ปรับขนาดตัวอักษรแล้ว เพื่อไม่ให้ลายเซ็นตกหน้า กรุณาย่อข้อความหรือแยกรายละเอียดเป็นเอกสารแนบท้าย');
+      throw new Error('เอกสาร '+problems.join(' / ')+' มีข้อความยาวเกินหน้ากระดาษ A4 แม้ปรับขนาดตัวอักษรแล้ว เพื่อไม่ให้ลายเซ็นตกหน้า กรุณาย่อเนื้อหาหรือแยกรายละเอียดเป็นเอกสารแนบท้าย โดยเก็บบล็อกลงนามไว้ด้วยกัน');
     }
     root.dataset.continuationCount='0';
     root.dataset.layoutSummary=JSON.stringify(layoutSummary);
