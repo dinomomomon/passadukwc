@@ -454,3 +454,169 @@ table td {
   #print-area .paper-page td,
   #print-area .paper-page th { color: #111 !important; }
 }
+
+
+/* ===== Shared brand and independent school identities ===== */
+.brand-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  background: #FFFFFF;
+  border: 1px solid rgba(9,105,232,.13);
+  box-shadow: 0 6px 17px rgba(12,73,156,.12);
+  overflow: hidden;
+}
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 3px;
+}
+.brand-wording {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+.brand-wording strong {
+  color: #153D77;
+  font-size: 22px;
+  font-weight: 800;
+}
+.brand-wording small {
+  margin-top: 4px;
+  color: #DE7210;
+  font-size: 10px;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+.side-brand .brand-wording strong { color: #FFFFFF; }
+.side-brand .brand-wording small { color: #FFD395; }
+.side-brand .brand-mark { border-color: #BED8FF; }
+.loading-brand-logo {
+  display: block;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 16px;
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 8px 23px rgba(9,105,232,.13);
+}
+.school-identity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 13px 0 4px;
+  padding: 12px 11px;
+  border-radius: 13px;
+  background: rgba(255,255,255,.11);
+  border: 1px solid rgba(255,255,255,.15);
+}
+.school-identity > div { flex: 1; min-width: 0; }
+.school-identity b {
+  display: block;
+  color: #FFFFFF;
+  font-size: 13px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.school-identity small {
+  display: block;
+  color: #C3D8FF;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.school-logo {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  background: #FFFFFF;
+  border: 1px solid #D5E3F7;
+  border-radius: 11px;
+  box-shadow: 0 4px 13px rgba(11,73,167,.09);
+  overflow: hidden;
+  width: 44px;
+  height: 44px;
+}
+.school-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+  display: block;
+}
+.school-logo-fallback {
+  font-size: 21px;
+  background: #EFF5FF;
+  color: #1768CE;
+}
+.school-logo-topbar {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+}
+.top-school {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.top-school > div { min-width: 0; }
+.top-school h2 { overflow-wrap: anywhere; }
+.school-logo-settings {
+  width: 76px;
+  height: 76px;
+  border-radius: 15px;
+}
+.school-logo-settings img { padding: 7px; }
+.school-logo-setting {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding: 14px;
+  background: #F6F9FF;
+  border: 1px solid #E0EBFA;
+  border-radius: 13px;
+  margin-bottom: 16px;
+}
+.school-logo-setting > div { min-width: 0; }
+.school-logo-setting b { color: #194B92; }
+.school-logo-setting p { margin: 3px 0; font-size: 12px; }
+.logo-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-items: center;
+}
+#school-logo-file { padding: 9px; }
+#school-logo-file::file-selector-button {
+  background: #E4EFFF;
+  color: #155FC5;
+  border: 1px solid #C9DEFB;
+  padding: 7px 11px;
+  border-radius: 8px;
+  margin-right: 12px;
+  font: inherit;
+  cursor: pointer;
+}
+@media (max-width: 800px) {
+  .school-logo-topbar { width: 38px; height: 38px; }
+  .brand-mark { width: 47px; height: 47px; flex-basis: 47px; }
+  .brand-wording strong { font-size: 19px; }
+  .school-logo-setting { align-items: flex-start; }
+  .school-logo-settings { width: 68px; height: 68px; }
+}
+@media (max-width: 450px) {
+  .top-school h2 { font-size: 13px; }
+  .top-school p { font-size: 10px; }
+  .topbar { padding: 0 10px; }
+  .brand-wording strong { font-size: 18px; }
+}
+@media print {
+  .school-logo, .school-identity, .brand-mark, .loading-brand-logo { display:none !important; }
+  /* School logos are intentionally UI-only; A4 print templates remain unchanged. */
+}
