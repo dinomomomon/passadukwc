@@ -56,35 +56,94 @@ async function printOfficialDocuments(){
   try{
     if(document.fonts?.ready)await document.fonts.ready;
     await Promise.all([...root.querySelectorAll('img')].map(img=>img.decode?.().catch(()=>{})||Promise.resolve()));
-    const sheets=[...root.querySelectorAll('.paper-page')];
-    let continuedPages=0;
-    for(const sheet of sheets){
-      const body=sheet.querySelector('.doc-sheet-body');
-      if(!body)throw new Error('รูปแบบหน้าเอกสารไม่สมบูรณ์');
-      // Use a consistent 14 pt body font with comfortable leading.
-      // Never compress line height to make text fit a single page.
+
+    // Each memorandum's complete signature section is one unbreakable unit.
+    // Measure against the real A4 content area before Chrome paginates.
+    const getAvailable=(sheet)=>{
       const cs=getComputedStyle(sheet);
-      const available=sheet.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-8;
-      const hasRoom=async ()=>{
-        await new Promise(resolve=>requestAnimationFrame(resolve));
-        return body.getBoundingClientRect().height<=available;
-      };
-      if(await hasRoom())continue;
-      // Reduce decorative whitespace in the ruled item table only.
-      const blank=sheet.querySelector('.official-table-ruled .table-filler');
-      if(blank){
-        const original=parseFloat(blank.style.height)||60;
+      return sheet.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-10;
+    };
+    const fits=async (sheet)=>{
+      await new Promise(resolve=>requestAnimationFrame(resolve));
+      const body=sheet.querySelector('.doc-sheet-body');
+      if(!body)throw new Error('ไม่พบพื้นที่เนื้อหาเอกสาร');
+      return body.getBoundingClientRect().height<=getAvailable(sheet);
+    };
+    const getOverflow=async (sheet)=>{
+      await new Promise(resolve=>requestAnimationFrame(resolve));
+      const body=sheet.querySelector('.doc-sheet-body');
+      return body.getBoundingClientRect().height-getAvailable(sheet);
+    };
+    let continuedPages=0;
+    for(const sheet of [...root.querySelectorAll('.paper-page')]){
+      if(await fits(sheet))continue;
+      const filler=sheet.querySelector('.official-table-ruled .table-filler');
+      if(filler){
+        const original=parseFloat(filler.style.height)||60;
         for(const mm of [35,25,15,7,0]){
           if(mm>=original)continue;
-          blank.style.height=mm+'mm';
-          if(await hasRoom())break;
+          filler.style.height=mm+'mm';
+          if(await fits(sheet))break;
         }
-        if(await hasRoom())continue;
+        if(await fits(sheet))continue;
       }
-      // Content exceeding one sheet must continue naturally rather than
-      // being clipped or typeset with tightly packed lines.
-      sheet.classList.add('print-flow');
-      continuedPages++;
+      if(sheet.classList.contains('memo-page')){
+        sheet.classList.add('memo-balanced');
+        if(await fits(sheet))continue;
+
+        // A genuinely longer memorandum gets an explicit page marked "(ต่อ)".
+        // Keep all 3 signatures together, never put the director alone.
+        const firstBody=sheet.querySelector('.memo-content');
+        const approvals=sheet.querySelector('.memo-signatures');
+        const subject=sheet.querySelector('.memo-field-subject .memo-value');
+        if(!firstBody||!approvals||!subject)throw new Error('เอกสารบันทึกข้อความมีโครงสร้างไม่สมบูรณ์');
+        const continuation=document.createElement('section');
+        continuation.className='paper-page official memo-page continuation-page memo-balanced';
+        const continuationBody=document.createElement('div');
+        continuationBody.className='doc-sheet-body';
+        const h=document.createElement('div');h.className='memo-top';
+        h.innerHTML='<img class="garuda-emblem" src="/garuda-memo.svg" alt="ตราครุฑ"><h1>บันทึกข้อความ</h1>';
+        const label=document.createElement('div');
+        label.className='continuation-label';
+        label.textContent='เรื่อง '+subject.textContent+' (ต่อ)';
+        const continuationContent=document.createElement('div');
+        continuationContent.className='memo-content';
+        continuationBody.append(h,label,continuationContent,approvals);
+        continuation.append(continuationBody);
+        sheet.after(continuation);
+        const moved=[];
+        // Carry the final narrative paragraph onto the approval page, so it
+        // cannot become a signature-only sheet.
+        const last=firstBody.lastElementChild;
+        if(last){moved.unshift(last);continuationContent.prepend(last);}
+        // Bring more complete blocks across if the first sheet still overflows.
+        while(!(await fits(sheet)) && firstBody.lastElementChild){
+          const block=firstBody.lastElementChild;
+          moved.unshift(block);
+          continuationContent.prepend(block);
+        }
+        if(!(await fits(sheet))){
+          throw new Error('ข้อความรายงานยาวเกินไปสำหรับการจัดหน้าต่อเนื่อง กรุณาย่อข้อความเหตุผลหรือแบ่งเอกสารแนบท้าย');
+        }
+        if(!(await fits(continuation))){
+          // The continuation cannot be silently clipped. Refuse printing
+          // instead of losing an approval, date or signature.
+          throw new Error('ข้อความหน้าต่อและส่วนลงนามยาวเกินกระดาษ A4 กรุณาลดรายละเอียดในรายการนี้ก่อนพิมพ์');
+        }
+        if(!moved.length)throw new Error('ไม่สามารถจัดหน้าลงนามให้ครบถ้วน');
+        continuedPages++;
+      } else {
+        // Long tabular annexes can continue naturally, without clipping rows.
+        sheet.classList.add('print-flow');
+        continuedPages++;
+      }
+    }
+    // Last check: no memorandum is allowed to contain truncated approvals.
+    for(const sheet of root.querySelectorAll('.memo-page')){
+      const approval=sheet.querySelector('.memo-signatures');
+      const actual=approval?approval.querySelectorAll('.signature-card').length:0;
+      if(approval && actual!==3)throw new Error('จำนวนช่องลงนามในบันทึกข้อความไม่ครบ 3 ตำแหน่ง');
+      if(!(await fits(sheet)))throw new Error('พบหน้าเอกสารที่ข้อความเกินขอบกระดาษ A4');
     }
     root.dataset.continuationCount=String(continuedPages);
   } catch(err){
