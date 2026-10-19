@@ -63,15 +63,11 @@ async function printOfficialDocuments(){
       const cs=getComputedStyle(sheet);
       const available=sheet.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-4;
       let fitted=false;
-      for(const factor of [1,.96,.92,.88,.84,.8,.76]){
-        body.style.zoom=String(factor);
-        await new Promise(resolve=>requestAnimationFrame(resolve));
-        if(body.getBoundingClientRect().height<=available){
-          fitted=true;break;
-        }
-      }
+      body.style.zoom='1';
+      await new Promise(resolve=>requestAnimationFrame(resolve));
+      if(body.getBoundingClientRect().height<=available) fitted=true;
       if(!fitted){
-        throw new Error('เอกสารบางฉบับยาวเกิน 1 หน้า A4 ระบบไม่ตัดข้อความทิ้ง กรุณาลดรายละเอียดหรือแยกเอกสารแนบท้ายก่อนพิมพ์');
+        throw new Error('เอกสารบางฉบับยาวเกินพื้นที่ A4 มาตรฐาน (ขนาดตัวอักษร 16 pt และระยะขอบตามงานสารบรรณ) จึงยังไม่พิมพ์เพื่อป้องกันข้อความตกหน้า กรุณาลดข้อความหรือแยกเอกสารแนบท้าย');
       }
     }
   } catch(err){
