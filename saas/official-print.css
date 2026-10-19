@@ -18,7 +18,7 @@
 .paper-page .memo-field-number .date-label{white-space:nowrap}
 .paper-page .memo-line{border:0;height:0;margin:3mm 0 2mm}
 .paper-page .memo-field-to{margin-bottom:3mm}
-.paper-page.official p{font:400 16pt/1.17 var(--gov-font);margin:1.5mm 0;color:#111}
+.paper-page.official p{font:400 16pt/1.15 var(--gov-font);margin:.7mm 0;color:#111}
 .paper-page .indent{text-indent:25mm}
 .paper-page ol{font:400 16pt/1.15 var(--gov-font);margin:2mm 0;padding-left:9mm}
 .paper-page li{margin:.7mm 0;padding-left:1mm}
