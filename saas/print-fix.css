@@ -33,9 +33,9 @@
 .paper-page .garuda-emblem {
   position: absolute;
   left: 1mm;
-  top: 0;
-  width: 19mm;
-  height: 21mm;
+  top: 2mm;
+  width: 15mm;
+  height: 15mm;
   object-fit: contain;
   display: block;
 }
