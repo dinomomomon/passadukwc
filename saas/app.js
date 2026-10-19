@@ -276,9 +276,81 @@ async function loadOwner(){const [a,b]=await Promise.all([db.from('schools').sel
 async function loadRecords(){if(!state.school||state.demo)return;const {data,error}=await db.from('procurements').select('*').eq('school_id',state.school.id).order('created_at',{ascending:false}).limit(300);if(error){state.error=error.message;return;}state.records=data||[];}
 async function startDemo(){state.demo=true;state.user=null;state.school=demoSchool;state.records=[...demoRecords];state.owner=false;state.page='dashboard';render();}
 async function signOut(){if(state.demo){state.demo=false;state.school=null;state.profile=null;state.page='landing';state.records=[];render();return;}const {error}=await db.auth.signOut();if(error)return notify('ออกจากระบบไม่สำเร็จ: '+error.message,true);state.session=null;state.user=null;state.profile=null;state.school=null;state.owner=false;state.page='landing';render();}
-async function go(action,el){if(action==='home'){state.page='landing';state.demo=false;render();return;}if(action==='login'||action==='signup'){state.authMode=action;state.page='auth';render();return;}if(action==='resend-confirmation'){if(!state.pendingSignupEmail)return notify('ไม่พบอีเมลที่สมัคร กรุณาลองสมัครใหม่',true);const {error}=await db.auth.resend({type:'signup',email:state.pendingSignupEmail,options:{emailRedirectTo:window.location.origin}});if(error)return notify('ยังส่งอีเมลซ้ำไม่ได้ กรุณารอสักครู่แล้วลองอีกครั้ง',true);return notify('ส่งอีเมลยืนยันอีกครั้งแล้ว กรุณาตรวจกล่องจดหมายและโฟลเดอร์สแปม');}if(action==='demo')return startDemo();if(action==='signout')return signOut();if(action==='profile')return openProfileEditor();if(action==='close-profile'){document.getElementById('profile-dialog')?.close();document.getElementById('profile-dialog')?.remove();return;}if(action==='search'){state.filter=document.querySelector('#record-search')?.value||'';state.page='records';render();return;}if(action==='add-item'){collectDraft();state.items.push({name:'',qty:'1',unit:'',price:''});form();return;}if(action==='remove-item'){collectDraft();if(state.items.length>1)state.items.splice(Number(el.dataset.id),1);form();return;}if(action==='open'){state.currentRecord=state.records.find(r=>String(r.id)===String(el.dataset.id));state.page='detail';render();return;}if(action==='print'){await printOfficialDocuments();return;}if(action==='preview'){state.page='preview';render();return;}if(action==='approve-school'){if(!confirm('อนุมัติคำขอเปิดโรงเรียนนี้?'))return;const {error}=await db.rpc('platform_approve_request',{p_request_id:el.dataset.id});if(error)return notify(error.message,true);await loadOwner();state.flash='อนุมัติโรงเรียนแล้ว';return owner();}if(action==='owner'){await loadOwner();state.page='owner';return render();}if(action==='members'){if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้นที่เข้าเมนูจัดการผู้ใช้งานได้',true);await loadMembers();state.page='members';return render();}if(action==='create'){state.items=[{name:'',qty:'1',unit:'',price:''}];state.draft={};state.page='create';return render();}if(action==='records'){if(!state.demo)await loadRecords();state.page='records';return render();}if(action==='settings'){state.page='settings';return render();}if(action==='storage'){state.page='storage';return render();}if(action==='remove-school-logo'){if(!isAdmin())return notify('ไม่มีสิทธิ์ลบโลโก้โรงเรียน',true);if(!confirm('ต้องการนำโลโก้โรงเรียนออกจากหน้าเว็บใช่หรือไม่?'))return;if(state.demo){state.demoLogoUrl='';state.flash='นำโลโก้ตัวอย่างออกแล้ว';return render();}const old=state.school.logo_path;if(!old)return;const {data,error}=await db.from('schools').update({logo_path:''}).eq('id',state.school.id).select('*').single();if(error)return notify(error.message,true);state.school=data;await db.storage.from('school-logos').remove([old]);state.flash='นำโลโก้โรงเรียนออกแล้ว';return render();}if(action==='dashboard'){state.page='dashboard';return render();}}
+async function go(action,el){if(action==='home'){state.page='landing';state.demo=false;render();return;}if(action==='login'||action==='signup'){
+  state.authEmail=String(document.querySelector('#kp-email')?.value||document.querySelector('#kp-forgot-email')?.value||state.authEmail||'').trim();
+  state.authMode=action;state.authForgot=false;state.recoveryMode=false;state.page='auth';render();return;
+}
+if(action==='forgot-password'){
+  state.authEmail=String(document.querySelector('#kp-email')?.value||state.authEmail||'').trim();
+  state.authForgot=true;state.page='auth';render();return;
+}
+if(action==='show-password'){
+  const id=String(el.dataset.target||'');
+  if(!/^kp-(password|confirm_password)$/.test(id))return;
+  const input=document.getElementById(id);
+  if(!input)return;
+  const show=input.type==='password';
+  input.type=show?'text':'password';
+  el.textContent=show?'ซ่อน':'แสดง';
+  el.setAttribute('aria-label',show?'ซ่อนรหัสผ่าน':'แสดงรหัสผ่าน');
+  input.focus();return;
+}if(action==='resend-confirmation'){if(!state.pendingSignupEmail)return notify('ไม่พบอีเมลที่สมัคร กรุณาลองสมัครใหม่',true);const {error}=await db.auth.resend({type:'signup',email:state.pendingSignupEmail,options:{emailRedirectTo:window.location.origin}});if(error)return notify('ยังส่งอีเมลซ้ำไม่ได้ กรุณารอสักครู่แล้วลองอีกครั้ง',true);return notify('ส่งอีเมลยืนยันอีกครั้งแล้ว กรุณาตรวจกล่องจดหมายและโฟลเดอร์สแปม');}if(action==='demo')return startDemo();if(action==='signout')return signOut();if(action==='profile')return openProfileEditor();if(action==='close-profile'){document.getElementById('profile-dialog')?.close();document.getElementById('profile-dialog')?.remove();return;}if(action==='search'){state.filter=document.querySelector('#record-search')?.value||'';state.page='records';render();return;}if(action==='add-item'){collectDraft();state.items.push({name:'',qty:'1',unit:'',price:''});form();return;}if(action==='remove-item'){collectDraft();if(state.items.length>1)state.items.splice(Number(el.dataset.id),1);form();return;}if(action==='open'){state.currentRecord=state.records.find(r=>String(r.id)===String(el.dataset.id));state.page='detail';render();return;}if(action==='print'){await printOfficialDocuments();return;}if(action==='preview'){state.page='preview';render();return;}if(action==='approve-school'){if(!confirm('อนุมัติคำขอเปิดโรงเรียนนี้?'))return;const {error}=await db.rpc('platform_approve_request',{p_request_id:el.dataset.id});if(error)return notify(error.message,true);await loadOwner();state.flash='อนุมัติโรงเรียนแล้ว';return owner();}if(action==='owner'){await loadOwner();state.page='owner';return render();}if(action==='members'){if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้นที่เข้าเมนูจัดการผู้ใช้งานได้',true);await loadMembers();state.page='members';return render();}if(action==='create'){state.items=[{name:'',qty:'1',unit:'',price:''}];state.draft={};state.page='create';return render();}if(action==='records'){if(!state.demo)await loadRecords();state.page='records';return render();}if(action==='settings'){state.page='settings';return render();}if(action==='storage'){state.page='storage';return render();}if(action==='remove-school-logo'){if(!isAdmin())return notify('ไม่มีสิทธิ์ลบโลโก้โรงเรียน',true);if(!confirm('ต้องการนำโลโก้โรงเรียนออกจากหน้าเว็บใช่หรือไม่?'))return;if(state.demo){state.demoLogoUrl='';state.flash='นำโลโก้ตัวอย่างออกแล้ว';return render();}const old=state.school.logo_path;if(!old)return;const {data,error}=await db.from('schools').update({logo_path:''}).eq('id',state.school.id).select('*').single();if(error)return notify(error.message,true);state.school=data;await db.storage.from('school-logos').remove([old]);state.flash='นำโลโก้โรงเรียนออกแล้ว';return render();}if(action==='dashboard'){state.page='dashboard';return render();}}
 function collectDraft(){const f=document.querySelector('#procurement-form');if(!f)return;state.draft=Object.fromEntries(new FormData(f));document.querySelectorAll('[data-item]').forEach(el=>{const n=Number(el.dataset.item),key=el.dataset.key;if(state.items[n])state.items[n][key]=el.value;});}
-async function handleForm(form){const f=Object.fromEntries(new FormData(form));if(form.id==='auth-form'){let result;if(state.authMode==='signup'){result=await db.auth.signUp({email:f.email,password:f.password,options:{emailRedirectTo:window.location.origin,data:{full_name:f.full_name}}});if(result.error)return notify(result.error.message,true);if(!result.data.session){state.pendingSignupEmail=f.email;state.error='';state.flash='';state.page='verify-email';return render();}state.pendingSignupEmail='';state.flash='สร้างบัญชีเรียบร้อยแล้ว กรุณารอแอดมินโรงเรียนกำหนดสิทธิ์ใช้งาน';}else{result=await db.auth.signInWithPassword({email:f.email,password:f.password});if(result.error)return notify('เข้าสู่ระบบไม่สำเร็จ: '+result.error.message,true);}state.session=result.data.session;state.demo=false;state.page='dashboard';await loadUser();return render();}
+async function handleForm(form){const f=Object.fromEntries(new FormData(form));if(form.id==='auth-form'){
+  const email=String(f.email||'').trim(), password=String(f.password||'');
+  state.authEmail=email;
+  if(!email||!password)return notify('กรุณากรอกอีเมลและรหัสผ่านให้ครบ',true);
+  let result;
+  if(state.authMode==='signup'){
+    const fullName=String(f.full_name||'').trim().replace(/\s+/g,' ');
+    if(fullName.length<3)return notify('กรุณาระบุชื่อ–นามสกุลจริงให้ครบ',true);
+    if(password!==String(f.confirm_password||''))return notify('รหัสผ่านทั้งสองช่องไม่ตรงกัน กรุณาตรวจสอบ',true);
+    if(password.length<8)return notify('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',true);
+    result=await db.auth.signUp({
+      email,password,
+      options:{emailRedirectTo:window.location.origin,data:{full_name:fullName}}
+    });
+    if(result.error)return notify('สมัครบัญชีไม่สำเร็จ: '+result.error.message,true);
+    if(!result.data.session){
+      state.pendingSignupEmail=email;state.error='';state.flash='';state.page='verify-email';return render();
+    }
+    state.pendingSignupEmail='';
+    state.flash='สมัครบัญชีเรียบร้อยแล้ว กรุณารอผู้ดูแลโรงเรียนกำหนดสิทธิ์';
+  }else{
+    result=await db.auth.signInWithPassword({email,password});
+    if(result.error)return notify('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน',true);
+    rememberLoginEmail(email,!!f.remember_email);
+  }
+  state.session=result.data.session;
+  state.demo=false;state.page='dashboard';await loadUser();return render();
+}
+if(form.id==='forgot-form'){
+  const email=String(f.email||'').trim();
+  if(!email)return notify('กรุณากรอกอีเมลบัญชี',true);
+  state.authEmail=email;
+  const {error}=await db.auth.resetPasswordForEmail(email,{
+    redirectTo:window.location.origin+'/?auth=recovery'
+  });
+  if(error)return notify('ส่งลิงก์ตั้งรหัสผ่านไม่สำเร็จ กรุณาลองอีกครั้งหรือติดต่อผู้ดูแลระบบ',true);
+  state.authForgot=false;state.authMode='login';
+  state.flash='หากอีเมลนี้มีบัญชีในระบบ เราได้ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว กรุณาตรวจกล่องจดหมายและจดหมายขยะ';
+  return render();
+}
+if(form.id==='reset-password-form'){
+  const pwd=String(f.password||''),confirm=String(f.confirm_password||'');
+  if(pwd.length<8)return notify('รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร',true);
+  if(pwd!==confirm)return notify('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน',true);
+  const {data:sessionData}=await db.auth.getSession();
+  if(!sessionData.session)return notify('ลิงก์ตั้งรหัสผ่านหมดอายุหรือไม่ถูกต้อง กรุณาขอลิงก์ใหม่',true);
+  const {error}=await db.auth.updateUser({password:pwd});
+  if(error)return notify('เปลี่ยนรหัสผ่านไม่สำเร็จ กรุณาลองใหม่หรือขอลิงก์ใหม่',true);
+  await db.auth.signOut();
+  history.replaceState(null,'',window.location.origin+'/');
+  state.recoveryMode=false;state.authForgot=false;state.authMode='login';state.session=null;
+  state.user=null;state.profile=null;state.school=null;state.owner=false;state.page='auth';
+  state.flash='เปลี่ยนรหัสผ่านเรียบร้อยแล้ว กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่';
+  return render();
+}
 if(form.id==='profile-form'){
   if(!state.user||state.demo)return notify('กรุณาเข้าสู่ระบบก่อนแก้ไขข้อมูลบัญชี',true);
   const fullName=String(f.full_name||'').trim().replace(/\s+/g,' ');
@@ -328,4 +400,29 @@ state.currentRecord=rec;state.page='detail';state.flash='บันทึกส�
 document.addEventListener('click',async ev=>{const el=ev.target.closest('[data-action]');if(!el)return;ev.preventDefault();try{await go(el.dataset.action,el);}catch(ex){notify(ex.message,true);}});
 document.addEventListener('submit',async ev=>{if(!ev.target.id)return;ev.preventDefault();const b=ev.target.querySelector('[type=submit]');if(b)b.disabled=true;try{await handleForm(ev.target);}catch(ex){notify(ex.message,true);}finally{if(b)b.disabled=false;}});
 document.addEventListener('input',ev=>{const el=ev.target;if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();}}});
-(async()=>{try{const {data,error}=await db.auth.getSession();if(error)throw error;state.session=data.session;state.page='landing';if(state.session){await loadUser();state.page='dashboard';}render();}catch(err){console.error(err);state.error='ไม่สามารถเชื่อมต่อฐานข้อมูล กรุณาลองใหม่';landing();}})();
+db.auth.onAuthStateChange((event)=>{
+  if(event==='PASSWORD_RECOVERY'){
+    state.recoveryMode=true;
+    state.authForgot=false;
+    state.page='auth';
+    render();
+  }
+});
+(async()=>{
+  try{
+    const {data,error}=await db.auth.getSession();
+    if(error)throw error;
+    state.session=data.session;
+    state.page=state.recoveryMode?'auth':'landing';
+    if(state.session&&!state.recoveryMode){
+      await loadUser();
+      state.page='dashboard';
+    }
+    render();
+  }catch(err){
+    console.error(err);
+    state.error='ไม่สามารถเชื่อมต่อฐานข้อมูล กรุณาลองใหม่';
+    state.page='auth';
+    render();
+  }
+})();
