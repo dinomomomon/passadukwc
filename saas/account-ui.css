@@ -83,3 +83,23 @@
 @media print{
   #app .account-identity,#app .logout-button,#app .profile-dialog{display:none!important}
 }
+
+/* Thai-language sign-up verification fallback (only when Supabase requires email confirmation). */
+#app .verify-illustration{
+  display:grid;place-items:center;width:54px;height:54px;border-radius:16px;
+  background:#E6F5F0;color:#12856F;margin-bottom:20px;
+  box-shadow:inset 0 0 0 1px #CBEBE0;
+}
+#app .verify-illustration svg{width:28px;height:28px}
+#app .verify-email-box{
+  display:flex;flex-direction:column;gap:4px;
+  padding:14px 17px;background:#EFF5FF;border:1px solid #D5E5FB;
+  border-radius:12px;margin:18px 0;color:#5A7290
+}
+#app .verify-email-box span{font-size:12px}
+#app .verify-email-box strong{color:#0E54AE;font-size:15px;overflow-wrap:anywhere}
+#app .verify-steps{padding:4px 0 11px}
+#app .verify-steps p{font-size:13px;line-height:1.75;color:#415B79;margin:0 0 8px}
+#app .verify-steps b{color:#115FC7}
+#app .verify-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:18px}
+#app .verify-actions button{flex:1 1 170px}
