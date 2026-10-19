@@ -18,6 +18,10 @@ for(const file of staticAssets){
 // This keeps the original source compatible with direct static previews
 // but ships a browser app with NO runtime CDN imports in production.
 const source=await readFile(resolve(root,'app.js'),'utf8');
+if(/^\s*async\s*$/m.test(source)){
+  throw new Error('Standalone async identifier detected. Refusing to deploy a broken app.');
+}
+
 const marker="import {SUPABASE_URL,SUPABASE_KEY} from './config.js';";
 const offset=source.indexOf(marker);
 if(offset<0||!source.slice(0,offset).includes('loadSupabaseSdk')){
