@@ -4,6 +4,34 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0969E8"><meta name="description" content="ครูพัสดุ - ระบบจัดซื้อจัดจ้างออนไลน์สำหรับโรงเรียน">
 <title>ครูพัสดุ | KRU PASADU</title>
+<link rel="canonical" href="https://kru-pasadu.vercel.app/">
+<script>
+(function(){
+  // Only remove marketing attribution; keep auth callback and reset tokens intact.
+  try{
+    var url=new URL(window.location.href), changed=false;
+    ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid'].forEach(function(key){
+      if(url.searchParams.has(key)){url.searchParams.delete(key);changed=true;}
+    });
+    if(changed)window.history.replaceState(window.history.state,'',url.pathname+url.search+url.hash);
+  }catch(error){}
+  window.addEventListener('DOMContentLoaded',function(){
+    var timer=window.setTimeout(function(){
+      var root=document.getElementById('app');
+      if(!root||!root.querySelector('.loading-screen'))return;
+      root.innerHTML='<main class="startup-failure" role="alert" aria-live="assertive">'+
+        '<img src="/kru-pasadu-icon.svg" alt="โลโก้ครูพัสดุ" width="82" height="82">'+
+        '<h1>ไม่สามารถเปิดระบบได้ในขณะนี้</h1>'+
+        '<p>การเชื่อมต่อใช้เวลานานกว่าปกติ อาจเกิดจากเครือข่ายหรือบริการเข้าสู่ระบบ กรุณาลองโหลดใหม่อีกครั้ง</p>'+
+        '<button type="button" id="kru-try-again">ลองเปิดระบบอีกครั้ง</button>'+
+        '<small>หากยังไม่สำเร็จ ลองเปิดในหน้าต่างไม่ระบุตัวตน หรือติดต่อผู้ดูแลครูพัสดุ</small>'+
+        '</main>';
+      document.getElementById('kru-try-again').addEventListener('click',function(){window.location.reload();});
+    },20000);
+    window.addEventListener('kru:ready',function(){window.clearTimeout(timer);},{once:true});
+  });
+}());
+</script>
 <link rel="icon" type="image/svg+xml" href="/kru-pasadu-icon.svg">
 <link rel="apple-touch-icon" href="/kru-pasadu-icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,6 +49,14 @@
 <link rel="stylesheet" href="/auth-unified.css">
 <link rel="stylesheet" href="/auth-polish.css">
 <link rel="stylesheet" href="/subscriptions.css">
+<style>
+.startup-failure{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:28px;font-family:"Sarabun",Tahoma,sans-serif;color:#123F86;background:#f4f8ff}
+.startup-failure>img{border-radius:19px;box-shadow:0 8px 20px rgba(15,96,210,.12)}
+.startup-failure h1{font-size:26px;line-height:1.45;margin:3px 0 0}
+.startup-failure p{max-width:520px;font-size:15px;line-height:1.8;color:#58749A;margin:0}
+.startup-failure button{border:none;border-radius:12px;padding:14px 23px;background:#0969e8;color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+.startup-failure small{max-width:460px;font-size:12px;line-height:1.7;color:#7990aa}
+</style>
 </head>
 <body><div id="app"><main class="loading-screen"><img src="/kru-pasadu-icon.svg" width="84" height="84" alt="โลโก้ครูพัสดุ" class="loading-brand-logo"><p>กำลังเปิดครูพัสดุ...</p></main></div>
 <div id="print-area" aria-hidden="true"></div>
