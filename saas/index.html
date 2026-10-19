@@ -7,30 +7,48 @@
 <link rel="canonical" href="https://kru-pasadu.vercel.app/">
 <script>
 (function(){
-  // Only remove marketing attribution; keep auth callback and reset tokens intact.
+  // Remove attribution parameters only; never strip auth/recovery query or hash.
   try{
-    var url=new URL(window.location.href), changed=false;
+    var url=new URL(location.href),changed=false;
     ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid'].forEach(function(key){
       if(url.searchParams.has(key)){url.searchParams.delete(key);changed=true;}
     });
-    if(changed)window.history.replaceState(window.history.state,'',url.pathname+url.search+url.hash);
-  }catch(error){}
-  window.addEventListener('DOMContentLoaded',function(){
-    var timer=window.setTimeout(function(){
-      var root=document.getElementById('app');
-      if(!root||!root.querySelector('.loading-screen'))return;
-      root.innerHTML='<main class="startup-failure" role="alert" aria-live="assertive">'+
-        '<img src="/kru-pasadu-icon.svg" alt="โลโก้ครูพัสดุ" width="82" height="82">'+
-        '<h1>ไม่สามารถเปิดระบบได้ในขณะนี้</h1>'+
-        '<p>การเชื่อมต่อใช้เวลานานกว่าปกติ อาจเกิดจากเครือข่ายหรือบริการเข้าสู่ระบบ กรุณาลองโหลดใหม่อีกครั้ง</p>'+
-        '<button type="button" id="kru-try-again">ลองเปิดระบบอีกครั้ง</button>'+
-        '<small>หากยังไม่สำเร็จ ลองเปิดในหน้าต่างไม่ระบุตัวตน หรือติดต่อผู้ดูแลครูพัสดุ</small>'+
-        '</main>';
-      document.getElementById('kru-try-again').addEventListener('click',function(){window.location.reload();});
-    },20000);
-    window.addEventListener('kru:ready',function(){window.clearTimeout(timer);},{once:true});
-  });
-}());
+    if(changed)history.replaceState(history.state,'',url.pathname+url.search+url.hash);
+  }catch(ignore){}
+  var timeoutId;
+  function showRecovery(message){
+    var app=document.getElementById('app');
+    if(!app||!app.querySelector('.loading-screen'))return;
+    app.innerHTML='<main class="startup-failure" role="alert" aria-live="assertive">'+
+      '<img src="/kru-pasadu-icon.svg" width="82" height="82" alt="โลโก้ครูพัสดุ">'+
+      '<h1>เปิดครูพัสดุไม่สำเร็จ</h1>'+
+      '<p>'+message+'</p>'+
+      '<div class="startup-actions"><button type="button" id="kru-try-again">ลองเปิดใหม่</button>'+
+      '<button type="button" id="kru-repair-auth">ซ่อมข้อมูลเข้าสู่ระบบใน Chrome</button></div>'+
+      '<small>ปุ่มซ่อมจะให้ออกจากระบบเฉพาะ Chrome เครื่องนี้ โดยไม่ลบเอกสารหรือข้อมูลที่เก็บในโรงเรียน</small>'+
+      '</main>';
+    document.getElementById('kru-try-again').addEventListener('click',function(){location.reload();});
+    document.getElementById('kru-repair-auth').addEventListener('click',function(){
+      if(!confirm('ต้องการล้างเฉพาะข้อมูลเข้าสู่ระบบครูพัสดุที่เก็บใน Chrome เครื่องนี้หรือไม่? คุณจะต้องกรอกอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบใหม่ แต่เอกสารที่บันทึกบนเซิร์ฟเวอร์จะไม่ถูกลบ'))return;
+      try{
+        localStorage.removeItem('sb-xwtynagykjqhlzmkitrx-auth-token');
+        sessionStorage.removeItem('sb-xwtynagykjqhlzmkitrx-auth-token');
+        location.assign('/');
+      }catch(error){
+        alert('Chrome ไม่อนุญาตให้เข้าถึงข้อมูลบัญชี กรุณาลองในหน้าต่างไม่ระบุตัวตน หรือล้างข้อมูลเว็บไซต์เฉพาะ kru-pasadu.vercel.app จากการตั้งค่า Chrome');
+      }
+    });
+  }
+  // Starts immediately, not after DOMContentLoaded (CSS can delay that event).
+  timeoutId=setTimeout(function(){
+    showRecovery('Chrome ใช้เวลาโหลดเกิน 15 วินาที อาจเกิดจากแคช เซสชัน หรือการเชื่อมต่อไลบรารี กรุณาลองใหม่หรือซ่อมเซสชันด้านล่าง');
+  },15000);
+  window.addEventListener('kru:ready',function(){clearTimeout(timeoutId);},{once:true});
+  window.addEventListener('kru:dependency-error',function(){
+    clearTimeout(timeoutId);
+    showRecovery('Chrome โหลดส่วนเชื่อมต่อระบบบัญชีจากเครือข่ายไม่สำเร็จ กรุณาลองใหม่ หรือปิดส่วนขยายที่อาจบล็อก CDN');
+  },{once:true});
+})();
 </script>
 <link rel="icon" type="image/svg+xml" href="/kru-pasadu-icon.svg">
 <link rel="apple-touch-icon" href="/kru-pasadu-icon.svg">
@@ -56,8 +74,12 @@
 .startup-failure p{max-width:520px;font-size:15px;line-height:1.8;color:#58749A;margin:0}
 .startup-failure button{border:none;border-radius:12px;padding:14px 23px;background:#0969e8;color:#fff;font-weight:800;font-size:15px;cursor:pointer}
 .startup-failure small{max-width:460px;font-size:12px;line-height:1.7;color:#7990aa}
+
+.startup-failure .startup-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px}
+.startup-failure .startup-actions button:last-child{background:#fff;color:#1558b5;border:1px solid #cadefa}
+.startup-failure small{max-width:570px}
 </style>
 </head>
 <body><div id="app"><main class="loading-screen"><img src="/kru-pasadu-icon.svg" width="84" height="84" alt="โลโก้ครูพัสดุ" class="loading-brand-logo"><p>กำลังเปิดครูพัสดุ...</p></main></div>
 <div id="print-area" aria-hidden="true"></div>
-<script type="module" src="/app.js?v=20261019-bootfix1"></script></body></html>
+<script type="module" src="/app.js?v=20261019-chromefix2"></script></body></html>
