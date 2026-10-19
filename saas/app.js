@@ -327,7 +327,23 @@ function owner(){if(!state.owner){notify('ไม่มีสิทธิ์เ�
 function waitAccess(){app.innerHTML='<div class="landing"><div class="land-nav">'+logo()+btn('ออกจากระบบ','signout','secondary')+'</div><div style="max-width:660px;margin:65px auto;padding:25px"><div class="card">'+msg()+'<span class="pill">บัญชีพร้อมแล้ว</span><h1>รอรับสิทธิ์เข้าถึงโรงเรียน</h1><p>อีเมลบัญชี: <b>'+e(state.user.email)+'</b></p><p>หากโรงเรียนของคุณมีผู้ดูแลแล้ว ให้แจ้งอีเมลนี้แก่แอดมินเพื่อเพิ่มเข้าระบบ หรือส่งคำขอเปิดโรงเรียนใหม่ได้ด้านล่าง</p><form id="request-school-form"><div class="field"><label>ชื่อโรงเรียนที่ต้องการเปิดใช้งาน</label><input class="input" name="name" required placeholder="ชื่อโรงเรียน"></div><button type="submit" class="primary">ส่งคำขอเปิดโรงเรียน</button></form><p class="hint">คำขอต้องได้รับอนุมัติจากเจ้าของแพลตฟอร์มก่อนใช้ข้อมูลจริง</p>'+btn('ดูโหมดตัวอย่าง','demo','secondary')+'</div></div></div>';}
 function render(){if(!state.user&&!state.demo){if(state.page==='auth')auth();else if(state.page==='verify-email')verificationPending();else landing();return;}if(state.user&&!state.owner&&!state.school&&!state.demo){waitAccess();return;}if(state.owner&&!state.school&&!state.demo){owner();return;}if(!state.school){state.school=demoSchool;}if(state.page==='records')return records();if(state.page==='create')return form();if(state.page==='detail')return detail();if(state.page==='preview')return preview();if(state.page==='members')return members();if(state.page==='settings')return settings();if(state.page==='storage')return storage();if(state.page==='owner')return owner();dashboard();}
 async function loadUser(){if(!state.session){state.user=null;state.profile=null;state.owner=false;return;}const {data:user}=await db.auth.getUser();state.user=user?.user||null;if(!state.user){state.profile=null;return;}const [admin,memberships,profile]=await Promise.all([db.from('platform_admins').select('user_id').eq('user_id',state.user.id),db.from('memberships').select('school_id,role,schools(*)').eq('active',true),db.from('profiles').select('full_name').eq('id',state.user.id).maybeSingle()]);if(admin.error)console.warn(admin.error.message);if(memberships.error)console.warn(memberships.error.message);if(profile.error)console.warn(profile.error.message);state.profile=profile.data||{full_name:state.user?.user_metadata?.full_name||''};state.owner=!!admin.data?.length;state.memberships=memberships.data||[];state.school=state.memberships[0]?.schools||null;if(state.owner){await loadOwner();}if(state.school)await Promise.all([loadRecords(),refreshSubscription()]);}
-async function loadOwner(){const [a,b,c]=await Promise.all([db.from('schools').select('*').order('created_at',{ascending:false}),db.rpc('platform_list_school_requests'),db.rpc('platform_list_subscriptions')]);if(a.error)throw a.error;if(b.error)throw b.error;if(c.error)throw c.error;state.schools=a.data||[];state.schoolRequests=b.data||[];state.subscriptions=c.data||[];}
+async function loadOwner(){
+  const requests=[
+    db.from('schools').select('*').order('created_at',{ascending:false}),
+    db.rpc('platform_list_school_requests'),
+    db.rpc('platform_list_subscriptions')
+  ];
+  const [schools,requestsResult,subscriptions]=await Promise.all(requests);
+  // A temporary billing/report failure should never lock the owner out of the platform.
+  if(schools.error)throw new Error('ไม่สามารถโหลดรายชื่อโรงเรียนได้: '+schools.error.message);
+  state.schools=schools.data||[];
+  state.schoolRequests=requestsResult.error?[]:(requestsResult.data||[]);
+  state.subscriptions=subscriptions.error?[]:(subscriptions.data||[]);
+  if(requestsResult.error||subscriptions.error){
+    console.warn('Optional owner overview unavailable',requestsResult.error?.message||'',subscriptions.error?.message||'');
+    state.flash='ข้อมูลโรงเรียนโหลดสำเร็จ แต่ข้อมูลคำขอหรือสมาชิกบางส่วนยังไม่พร้อม กรุณาลองรีเฟรช';
+  }
+}
 async function loadRecords(){if(!state.school||state.demo)return;const {data,error}=await db.from('procurements').select('*').eq('school_id',state.school.id).order('created_at',{ascending:false}).limit(300);if(error){state.error=error.message;return;}state.records=data||[];}
 async function startDemo(){state.demo=true;state.user=null;state.school=demoSchool;state.records=[...demoRecords];state.owner=false;state.page='dashboard';render();}
 async function signOut(){if(state.demo){state.demo=false;state.school=null;state.profile=null;state.page='landing';state.records=[];render();return;}const {error}=await db.auth.signOut();if(error)return notify('ออกจากระบบไม่สำเร็จ: '+error.message,true);state.session=null;state.user=null;state.profile=null;state.school=null;state.owner=false;state.page='landing';render();}
@@ -466,6 +482,13 @@ state.currentRecord=rec;state.page='detail';state.flash='บันทึกส�
 document.addEventListener('click',async ev=>{const el=ev.target.closest('[data-action]');if(!el)return;ev.preventDefault();try{await go(el.dataset.action,el);}catch(ex){notify(ex.message,true);}});
 document.addEventListener('submit',async ev=>{if(!ev.target.id)return;ev.preventDefault();const b=ev.target.querySelector('[type=submit]');if(b)b.disabled=true;try{await handleForm(ev.target);}catch(ex){notify(ex.message,true);}finally{if(b)b.disabled=false;}});
 document.addEventListener('input',ev=>{const el=ev.target;if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();}}});
+function bootTimeout(promise,ms,message){
+  let timeoutId;
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error(message)),ms);})
+  ]).finally(()=>clearTimeout(timeoutId));
+}
 db.auth.onAuthStateChange((event)=>{
   if(event==='PASSWORD_RECOVERY'){
     state.recoveryMode=true;
@@ -476,19 +499,26 @@ db.auth.onAuthStateChange((event)=>{
 });
 (async()=>{
   try{
-    const {data,error}=await db.auth.getSession();
+    const {data,error}=await bootTimeout(db.auth.getSession(),9000,'การตรวจสอบบัญชีใช้เวลานานเกินไป');
     if(error)throw error;
     state.session=data.session;
     state.page=state.recoveryMode?'auth':'landing';
     if(state.session&&!state.recoveryMode){
-      await loadUser();
+      await bootTimeout(loadUser(),12000,'การโหลดสิทธิ์ผู้ใช้งานใช้เวลานานเกินไป');
       state.page='dashboard';
     }
     render();
   }catch(err){
-    console.error(err);
-    state.error='ไม่สามารถเชื่อมต่อฐานข้อมูล กรุณาลองใหม่';
+    console.error('Kru Pasadu startup failure',err);
+    state.user=null;state.profile=null;state.owner=false;state.school=null;
+    state.session=null;
+    state.error='ระบบตรวจสอบบัญชีไม่สำเร็จ ('+(err?.message||'เชื่อมต่อขัดข้อง')+') กรุณาลองเข้าสู่ระบบอีกครั้ง';
     state.page='auth';
-    render();
+    try{render();}catch(displayError){
+      console.error('Failed to render recovery screen',displayError);
+      app.innerHTML='<main class="startup-failure"><h1>ระบบยังไม่พร้อมใช้งาน</h1><p>กรุณาลองเปิดระบบใหม่อีกครั้ง</p><button onclick="location.reload()">โหลดใหม่</button></main>';
+    }
+  }finally{
+    window.dispatchEvent(new Event('kru:ready'));
   }
 })();
