@@ -49,3 +49,7 @@ npx wrangler deploy
 Cloudflare Static Assets ยังใช้ฐานข้อมูล Supabase เดิม ไม่ย้ายหรือแก้ข้อมูล Vercel
 
 หาก Worker เดิมชื่ออื่น ให้ปรับ `name` ใน `saas/wrangler.jsonc` ให้ตรงกับชื่อจริงก่อน deploy อีกครั้ง
+
+## ตรวจสอบการเชื่อม GitHub ก่อน Deploy (19 ตุลาคม 2569)
+หน้าตั้งค่า Cloudflare ยืนยันว่าไม่มีแจ้งเตือน Git disconnected แล้ว โดย Production branch ตั้งเป็น `feature/kru-pasadu-v01`, Root directory `saas`, Build command `npm run build`, Deploy command `npx wrangler deploy` และ Worker `passadukwc`.
+การอัปเดตบันทึกนี้สร้าง Commit ใหม่บน Branch ที่ถูกต้องเพื่อกระตุ้น Cloudflare Workers Builds โดยไม่แตะฐานข้อมูลหรือแอปผู้ใช้.
