@@ -70,6 +70,18 @@ async function printOfficialDocuments(){
         return body.getBoundingClientRect().height<=available;
       };
       if(await hasRoom())continue;
+      // An empty ruled table is decorative. Trim its blank space before
+      // changing real text or letting the form continue onto a second sheet.
+      const tableBlank=sheet.querySelector('.official-table-ruled .table-filler');
+      if(tableBlank){
+        const original=parseFloat(tableBlank.style.height)||60;
+        for(const mm of [48,36,24,12,0]){
+          if(mm>=original)continue;
+          tableBlank.style.height=mm+'mm';
+          if(await hasRoom())break;
+        }
+        if(await hasRoom())continue;
+      }
       sheet.classList.add('print-compact');
       if(await hasRoom())continue;
       sheet.classList.remove('print-compact');
