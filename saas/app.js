@@ -28,6 +28,8 @@ import {SUPABASE_URL,SUPABASE_KEY} from './config.js';
 import {buildDocuments,escapeHtml as e} from './print.js';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 const app=document.getElementById('app');
+const bootStage=phase=>{try{window.__kruBootStage=phase;document.documentElement.dataset.kruBoot=phase;}catch{}};
+bootStage('client-ready');
 const demoSchool={id:'demo-school',name:'โรงเรียนตัวอย่างวิทยาลัย',district:'อำเภอเมือง',province:'เชียงใหม่',director_name:'นายสมชาย ตัวอย่าง',head_name:'นางสาวสุภา ตัวอย่าง',officer_name:'นายมานะ ตั้งใจ',finance_name:'นางสาวการเงิน ตัวอย่าง'};
 const mkDemo=(id,kind,no,title,vendor,total,date,items)=>({id,kind,document_number:no,fiscal_year:2570,document_date:date,title,reason:'ใช้ในการดำเนินงานตามแผนของสถานศึกษา',department:'กลุ่มบริหารงานวิชาการ',budget_source:'งบดำเนินงาน / กิจกรรมพัฒนาผู้เรียน',method:'วิธีเฉพาะเจาะจง (รอตรวจสอบข้อกฎหมาย)',vendor_name:vendor,items,total_satang:total*100,state:'draft',signers:{officer:demoSchool.officer_name,head:demoSchool.head_name,director:demoSchool.director_name}});
 const demoRecords=[
@@ -351,7 +353,7 @@ function ownerSubscriptionsPanel(){
 function owner(){if(!state.owner){notify('ไม่มีสิทธิ์เจ้าของแพลตฟอร์ม',true);return;}const schools=state.schools||[],req=state.schoolRequests||[];app.innerHTML='<div class="shell"><aside class="sidebar"><div class="side-brand">'+logo()+'</div><div class="side-menu-label">แพลตฟอร์ม</div><button class="navlink active" data-action="owner">'+i('building')+'โรงเรียนทั้งหมด</button><button class="navlink" data-action="signout">'+i('logout')+'ออกจากระบบ</button><div class="side-footer">SUPER ADMIN · ครูพัสดุ</div></aside><div class="workspace"><header class="topbar"><div><h2>ครูพัสดุ · เจ้าของแพลตฟอร์ม</h2><p>บริหารการเปิดใช้โรงเรียน</p></div>'+accountHeader()+'</header><div class="content">'+msg()+heading('บริหารโรงเรียน','โรงเรียนและคำขอเปิดใช้งานทั่วทั้งแพลตฟอร์ม')+'<div class="stats-grid"><div class="stat"><div class="stat-top">โรงเรียนทั้งหมด</div><strong>'+schools.length+'</strong></div><div class="stat"><div class="stat-top">คำขอรออนุมัติ</div><strong>'+req.length+'</strong></div></div><div class="grid-two"><section class="card"><h2>คำขอเปิดใช้งาน</h2>'+(req.length?req.map(x=>'<div class="row" style="padding:14px 0;border-bottom:1px solid #e4eded"><div><b>'+e(x.school_name)+'</b><br><small class="muted">'+e(x.requester_email)+'</small></div>'+btn('อนุมัติ','approve-school','primary','data-id="'+e(x.request_id)+'"')+'</div>').join(''):'<p class="muted">ยังไม่มีคำขอที่รออนุมัติ</p>')+'</section><form class="card" id="new-school-form"><h2>สร้างโรงเรียนใหม่</h2><div class="field"><label>ชื่อโรงเรียน</label><input name="name" class="input" required></div><div class="field"><label>อีเมลแอดมินโรงเรียน (ต้องสมัครบัญชีแล้ว)</label><input name="email" class="input" type="email" required></div><button type="submit" class="primary">สร้างโรงเรียน</button></form></div><section class="card"><h2>โรงเรียนที่เปิดใช้งาน</h2><div class="table-scroller"><table><thead><tr><th>โรงเรียน</th><th>จังหวัด</th><th>สถานะ</th></tr></thead><tbody>'+schools.map(s=>'<tr><td>'+e(s.name)+'</td><td>'+e(s.province||'-')+'</td><td><span class="tag">'+e(s.status)+'</span></td></tr>').join('')+'</tbody></table></div></section>'+ownerSubscriptionsPanel()+'<p class="footer">บริหารข้อมูลในแต่ละโรงเรียนผ่านสมาชิกโรงเรียน ไม่อ่านเอกสารลูกค้าโดยไม่จำเป็น</p></div></div></div>';}
 function waitAccess(){app.innerHTML='<div class="landing"><div class="land-nav">'+logo()+btn('ออกจากระบบ','signout','secondary')+'</div><div style="max-width:660px;margin:65px auto;padding:25px"><div class="card">'+msg()+'<span class="pill">บัญชีพร้อมแล้ว</span><h1>รอรับสิทธิ์เข้าถึงโรงเรียน</h1><p>อีเมลบัญชี: <b>'+e(state.user.email)+'</b></p><p>หากโรงเรียนของคุณมีผู้ดูแลแล้ว ให้แจ้งอีเมลนี้แก่แอดมินเพื่อเพิ่มเข้าระบบ หรือส่งคำขอเปิดโรงเรียนใหม่ได้ด้านล่าง</p><form id="request-school-form"><div class="field"><label>ชื่อโรงเรียนที่ต้องการเปิดใช้งาน</label><input class="input" name="name" required placeholder="ชื่อโรงเรียน"></div><button type="submit" class="primary">ส่งคำขอเปิดโรงเรียน</button></form><p class="hint">คำขอต้องได้รับอนุมัติจากเจ้าของแพลตฟอร์มก่อนใช้ข้อมูลจริง</p>'+btn('ดูโหมดตัวอย่าง','demo','secondary')+'</div></div></div>';}
 function render(){if(!state.user&&!state.demo){if(state.page==='auth')auth();else if(state.page==='verify-email')verificationPending();else landing();return;}if(state.user&&!state.owner&&!state.school&&!state.demo){waitAccess();return;}if(state.owner&&!state.school&&!state.demo){owner();return;}if(!state.school){state.school=demoSchool;}if(state.page==='records')return records();if(state.page==='create')return form();if(state.page==='detail')return detail();if(state.page==='preview')return preview();if(state.page==='members')return members();if(state.page==='settings')return settings();if(state.page==='storage')return storage();if(state.page==='owner')return owner();dashboard();}
-async function loadUser(){if(!state.session){state.user=null;state.profile=null;state.owner=false;return;}const {data:user}=await db.auth.getUser();state.user=user?.user||null;if(!state.user){state.profile=null;return;}const [admin,memberships,profile]=await Promise.all([db.from('platform_admins').select('user_id').eq('user_id',state.user.id),db.from('memberships').select('school_id,role,schools(*)').eq('active',true),db.from('profiles').select('full_name').eq('id',state.user.id).maybeSingle()]);if(admin.error)console.warn(admin.error.message);if(memberships.error)console.warn(memberships.error.message);if(profile.error)console.warn(profile.error.message);state.profile=profile.data||{full_name:state.user?.user_metadata?.full_name||''};state.owner=!!admin.data?.length;state.memberships=memberships.data||[];state.school=state.memberships[0]?.schools||null;if(state.owner){await loadOwner();}if(state.school)await Promise.all([loadRecords(),refreshSubscription()]);}
+async function loadUser(){if(!state.session){state.user=null;state.profile=null;state.owner=false;return;}const {data:user}=await db.auth.getUser();state.user=user?.user||null;if(!state.user){state.profile=null;return;}const [admin,memberships,profile]=await Promise.all([db.from('platform_admins').select('user_id').eq('user_id',state.user.id),db.from('memberships').select('school_id,role,schools(*)').eq('user_id',state.user.id).eq('active',true),db.from('profiles').select('full_name').eq('id',state.user.id).maybeSingle()]);if(admin.error)console.warn(admin.error.message);if(memberships.error)console.warn(memberships.error.message);if(profile.error)console.warn(profile.error.message);state.profile=profile.data||{full_name:state.user?.user_metadata?.full_name||''};state.owner=!!admin.data?.length;state.memberships=memberships.data||[];state.school=state.memberships[0]?.schools||null;if(state.owner){await loadOwner();}if(state.school)await Promise.all([loadRecords(),refreshSubscription()]);}
 async function loadOwner(){
   const requests=[
     db.from('schools').select('*').order('created_at',{ascending:false}),
@@ -360,7 +362,7 @@ async function loadOwner(){
   ];
   const [schools,requestsResult,subscriptions]=await Promise.all(requests);
   // A temporary billing/report failure should never lock the owner out of the platform.
-  if(schools.error)throw new Error('ไม่สามารถโหลดรายชื่อโรงเรียนได้: '+schools.error.message);
+  if(schools.error)console.warn('School listing unavailable',schools.error.message);
   state.schools=schools.data||[];
   state.schoolRequests=requestsResult.error?[]:(requestsResult.data||[]);
   state.subscriptions=subscriptions.error?[]:(subscriptions.data||[]);
@@ -524,22 +526,27 @@ db.auth.onAuthStateChange((event)=>{
 });
 (async()=>{
   try{
+    bootStage('auth-reading-session');
     const {data,error}=await bootTimeout(db.auth.getSession(),9000,'การตรวจสอบบัญชีใช้เวลานานเกินไป');
     if(error)throw error;
     state.session=data.session;
     state.page=state.recoveryMode?'auth':'landing';
     if(state.session&&!state.recoveryMode){
+      bootStage('auth-loading-roles');
       await bootTimeout(loadUser(),12000,'การโหลดสิทธิ์ผู้ใช้งานใช้เวลานานเกินไป');
       state.page='dashboard';
     }
+    bootStage('ui-rendering');
     render();
+    bootStage('ui-ready');
   }catch(err){
+    bootStage('ui-error');
     console.error('Kru Pasadu startup failure',err);
     state.user=null;state.profile=null;state.owner=false;state.school=null;
     state.session=null;
     state.error='ระบบตรวจสอบบัญชีไม่สำเร็จ ('+(err?.message||'เชื่อมต่อขัดข้อง')+') กรุณาลองเข้าสู่ระบบอีกครั้ง';
     state.page='auth';
-    try{render();}catch(displayError){
+    try{render();bootStage('ui-recovery');}catch(displayError){
       console.error('Failed to render recovery screen',displayError);
       app.innerHTML='<main class="startup-failure"><h1>ระบบยังไม่พร้อมใช้งาน</h1><p>กรุณาลองเปิดระบบใหม่อีกครั้ง</p><button onclick="location.reload()">โหลดใหม่</button></main>';
     }
