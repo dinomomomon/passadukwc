@@ -24,8 +24,9 @@
       '<h1>เปิดครูพัสดุไม่สำเร็จ</h1>'+
       '<p>'+message+'</p>'+
       '<div class="startup-actions"><button type="button" id="kru-try-again">ลองเปิดใหม่</button>'+
-      '<button type="button" id="kru-repair-auth">ซ่อมข้อมูลเข้าสู่ระบบใน Chrome</button></div>'+
-      '<small>ปุ่มซ่อมจะให้ออกจากระบบเฉพาะ Chrome เครื่องนี้ โดยไม่ลบเอกสารหรือข้อมูลที่เก็บในโรงเรียน</small>'+
+      '<button type="button" id="kru-repair-auth">ล้างเซสชันบัญชี (ขั้นแรก)</button>'+
+      '<a class="startup-diagnostics-link" href="/diagnostics.html">ตรวจสอบสาเหตุใน Chrome</a></div>'+
+      '<small>หากเคยลองล้างเซสชันแล้วไม่สำเร็จ ให้กด “ตรวจสอบสาเหตุใน Chrome” การล้างข้อมูลเว็บไซต์ทั้งหมดต้องทำผ่านการตั้งค่า Chrome และอาจลบแบบร่างที่ไม่ได้บันทึก</small>'+
       '</main>';
     document.getElementById('kru-try-again').addEventListener('click',function(){location.reload();});
     document.getElementById('kru-repair-auth').addEventListener('click',function(){
@@ -41,8 +42,8 @@
   }
   // Starts immediately, not after DOMContentLoaded (CSS can delay that event).
   timeoutId=setTimeout(function(){
-    showRecovery('Chrome ใช้เวลาโหลดเกิน 15 วินาที อาจเกิดจากแคช เซสชัน หรือการเชื่อมต่อไลบรารี กรุณาลองใหม่หรือซ่อมเซสชันด้านล่าง');
-  },15000);
+    showRecovery('การเปิดระบบใช้เวลานานกว่าปกติ กรุณาเปิดหน้าตรวจสอบเพื่อแยกว่าเกิดจากไฟล์เว็บไซต์ เครือข่าย หรือข้อมูลใน Chrome');
+  },30000);
   window.addEventListener('kru:ready',function(){clearTimeout(timeoutId);},{once:true});
   window.addEventListener('kru:dependency-error',function(){
     clearTimeout(timeoutId);
@@ -78,8 +79,9 @@
 .startup-failure .startup-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px}
 .startup-failure .startup-actions button:last-child{background:#fff;color:#1558b5;border:1px solid #cadefa}
 .startup-failure small{max-width:570px}
+  .startup-failure .startup-diagnostics-link{display:inline-flex;align-items:center;justify-content:center;border-radius:11px;padding:12px 17px;text-decoration:none;font:700 13px "Sarabun",Tahoma,sans-serif;color:#174ea6;border:1px solid #bad5fa;background:#f4f8ff}
 </style>
 </head>
-<body><div id="app"><main class="loading-screen"><img src="/kru-pasadu-icon.svg" width="84" height="84" alt="โลโก้ครูพัสดุ" class="loading-brand-logo"><p>กำลังเปิดครูพัสดุ...</p></main></div>
+<body><div id="app"><main class="loading-screen"><img src="/kru-pasadu-icon.svg" width="84" height="84" alt="โลโก้ครูพัสดุ" class="loading-brand-logo"><p>กำลังเปิดครูพัสดุ...</p><a href="/diagnostics.html" style="display:block;margin-top:12px;font-size:12px;color:#5480b8;text-decoration:underline">ตรวจสอบปัญหา Chrome</a></main></div>
 <div id="print-area" aria-hidden="true"></div>
-<script type="module" src="/app.js?v=20261019-chromefix2"></script></body></html>
+<script type="module" src="/app.js?v=20261019-chromediag3"></script></body></html>
