@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ตรวจสอบ Chrome | ครูพัสดุ</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f8fe;font-family:Tahoma,Arial,sans-serif;color:#133e77}
+main{max-width:800px;margin:30px auto;padding:0 16px 45px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+header img{width:58px;height:58px;background:#fff;padding:4px;border-radius:17px}
+h1{font-size:24px;margin:0 0 6px;line-height:1.4}p{line-height:1.75;color:#57728f;font-size:14px}
+article{padding:24px;background:white;border-radius:20px;border:1px solid #d9e8fb;box-shadow:0 10px 28px rgba(18,68,149,.07)}
+ul{list-style:none;padding:0;margin:18px 0}li{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid #e6edf8;font-size:14px}
+li span{flex:1}li strong{font-size:12px;min-width:100px;text-align:right}
+.ok{color:#168150}.no{color:#b33131}.busy{color:#82728b}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+button,a.button{border:none;border-radius:11px;padding:12px 18px;cursor:pointer;background:#0969e8;color:white;font-weight:bold;text-decoration:none;font-size:13px}
+button.secondary,a.button.secondary{background:#fff;color:#175db6;border:1px solid #c8dcfa}
+aside{font-size:13px;background:#fff8ec;color:#81531d;padding:13px 16px;margin-top:19px;border-radius:12px;line-height:1.8}
+small{display:block;color:#798da8;line-height:1.7;margin:12px 0}
+pre{white-space:pre-wrap;word-break:break-word;font:12px/1.7 monospace;background:#f1f6fd;padding:12px;border-radius:10px;color:#234771}
+</style>
+</head>
+<body>
+<main>
+<header><img src="/kru-pasadu-icon.svg" alt=""><div><h1>ตรวจสอบการเปิดครูพัสดุ</h1><p style="margin:0">ตรวจการทำงานเฉพาะเบราว์เซอร์นี้ โดยไม่ต้องเข้าสู่ระบบ</p></div></header>
+<article>
+<p>หน้านี้ตรวจไฟล์เว็บไซต์ การเข้าถึงส่วนเชื่อมต่อบัญชี และที่จัดเก็บข้อมูลบน Chrome โดยไม่อ่านรหัสผ่านหรือข้อมูลในเอกสาร</p>
+<ul id="results"><li><span>กำลังเริ่มตรวจสอบ…</span><strong class="busy">รอสักครู่</strong></li></ul>
+<div class="actions">
+<button id="rerun">ตรวจสอบอีกครั้ง</button>
+<button id="copy" class="secondary">คัดลอกผลตรวจ (ไม่มีรหัสผ่าน)</button>
+<a class="button secondary" href="/">กลับหน้าครูพัสดุ</a>
+</div>
+<aside><b>หากโปรไฟล์ Chrome อื่นเปิดได้:</b> ลองปิดส่วนขยายที่ติดตั้งในโปรไฟล์นี้ชั่วคราว แล้วเปิดหน้าเว็บใหม่ หากยังไม่ได้ ให้ลบข้อมูลเว็บไซต์เฉพาะ <b>kru-pasadu.vercel.app</b> ใน <b>Chrome → การตั้งค่า → ความเป็นส่วนตัวและความปลอดภัย → การตั้งค่าเว็บไซต์ → ดูสิทธิ์และข้อมูลที่เก็บในเว็บไซต์</b> การลบข้อมูลเว็บไซต์จะทำให้ออกจากระบบ และอาจลบแบบร่างที่ยังไม่บันทึก แต่ไม่ลบเอกสารที่เก็บบนเซิร์ฟเวอร์</aside>
+<small>หมายเหตุ: การทดสอบ CDN เป็นเพียงการตรวจการเชื่อมต่อ ไม่ยืนยันว่า Chrome สามารถรันโมดูลทุกตัวได้ และหน้านี้ไม่ตรวจส่วนขยายโดยตรง</small>
+<pre id="summary" hidden></pre>
+</article>
+</main>
+<script>
+(function(){
+const endpoints=[
+ ['ไฟล์หน้าแอป (JavaScript)','/app.js?v=20261019-chromediag3'],
+ ['ไฟล์ตั้งค่าบัญชี','/config.js'],
+ ['ไฟล์แม่แบบเอกสาร','/print.js'],
+ ['ไลบรารีบัญชี (CDN หลัก)','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm'],
+ ['ไลบรารีบัญชี (CDN สำรอง)','https://esm.sh/@supabase/supabase-js@2.116.0?bundle']
+];
+const results=document.getElementById('results');
+const summary=document.getElementById('summary');
+let rows=[],busy=false;
+async function probe(url){
+ const controller=new AbortController();
+ const id=setTimeout(()=>controller.abort(),6500);
+ try{
+   const response=await fetch(url,{method:'GET',cache:'no-store',signal:controller.signal});
+   return response.ok?'ผ่าน (HTTP '+response.status+')':'ไม่ผ่าน (HTTP '+response.status+')';
+ }catch(err){return err.name==='AbortError'?'ไม่ผ่าน (หมดเวลารอ)':'ไม่ผ่าน (เครือข่าย/CORS)';}
+ finally{clearTimeout(id);}
+}
+function paint(){
+ results.innerHTML='';
+ for(const row of rows){
+  const li=document.createElement('li'),a=document.createElement('span'),b=document.createElement('strong');
+  a.textContent=row[0];b.textContent=row[1];b.className=row[1].startsWith('ผ่าน')?'ok':row[1]==='กำลังตรวจ...'?'busy':'no';
+  li.append(a,b);results.append(li);
+ }
+ const data={time:new Date().toISOString(),browser:navigator.userAgent,tests:rows};
+ summary.textContent=JSON.stringify(data,null,2);
+}
+async function run(){
+ if(busy)return;busy=true;rows=[];
+ for(const [name] of endpoints)rows.push([name,'กำลังตรวจ...']);
+ rows.push(['การใช้ Local Storage','กำลังตรวจ...']);
+ rows.push(['Service Worker ของเว็บไซต์','กำลังตรวจ...']);
+ paint();
+ await Promise.all(endpoints.map(async ([name,url],i)=>{rows[i][1]=await probe(url);paint();}));
+ const pos=endpoints.length;
+ try{
+  const key='kru_diag_storage_test';
+  localStorage.setItem(key,'1');
+  const ok=localStorage.getItem(key)==='1';localStorage.removeItem(key);
+  rows[pos][1]=ok?'ผ่าน':'ไม่ผ่าน';
+ }catch{rows[pos][1]='ไม่ผ่าน (Chrome ปิดกั้นข้อมูลเว็บไซต์)';}
+ try{
+  const regs=('serviceWorker' in navigator)?await navigator.serviceWorker.getRegistrations():[];
+  rows[pos+1][1]='ผ่าน (พบ '+regs.length+' รายการ)';
+ }catch{rows[pos+1][1]='ไม่สามารถตรวจได้';}
+ busy=false;paint();
+}
+document.getElementById('rerun').onclick=run;
+document.getElementById('copy').onclick=async()=>{
+ try{await navigator.clipboard.writeText(summary.textContent);alert('คัดลอกผลตรวจแล้ว ส่งข้อความนี้กลับมาได้ครับ');}
+ catch{summary.hidden=false;summary.focus();alert('ไม่สามารถคัดลอกอัตโนมัติได้ กรุณาคัดลอกข้อความในกรอบด้านล่าง');}
+};
+run();
+})();
+</script>
+</body></html>
