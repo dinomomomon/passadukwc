@@ -10,7 +10,7 @@ const demoRecords=[
  mkDemo('demo-2','hire',1,'จ้างทำป้ายประชาสัมพันธ์','ร้านป้ายตัวอย่าง',980,'2026-10-17',[{name:'งานออกแบบและจัดทำป้าย',qty:1,unit:'งาน',price_satang:98000}]),
  mkDemo('demo-3','purchase',2,'ซื้ออุปกรณ์การเรียน','ร้านศึกษาภัณฑ์',1250,'2026-10-18',[{name:'อุปกรณ์การเรียน',qty:5,unit:'ชุด',price_satang:25000}])
 ];
-const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',pendingSignupEmail:'',filter:''};
+const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:''};
 const money=n=>(Number(n||0)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const dateThai=d=>d?new Date(d+'T12:00:00+07:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
 const dateToday=()=>new Date(Date.now()+7*3600000).toISOString().slice(0,10);
@@ -67,7 +67,68 @@ function notify(text,bad=false){if(bad)state.error=text;else state.flash=text;re
 function btn(text,action,cl='primary',attrs=''){return '<button type="button" class="'+cl+'" data-action="'+action+'" '+attrs+'>'+text+'</button>';}
 function landmark(){return '<div class="preview-device"><div class="preview-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="preview-content"><div class="preview-sidebar">'+Array(6).fill(0).map((_,ix)=>'<div class="preview-menu '+(ix===0?'active':'')+'"></div>').join('')+'</div><div class="preview-body"><div class="preview-title"></div><div class="preview-cards"><div class="preview-card"></div><div class="preview-card"></div><div class="preview-card"></div></div><div class="preview-rows">'+Array(7).fill('<div class="preview-row"></div>').join('')+'</div></div></div></div>';}
 function landing(){app.innerHTML='<div class="landing"><div class="land-nav">'+logo()+btn('เข้าสู่ระบบ →','login','secondary')+'</div><div class="land-hero"><div><span class="pill">✦ ระบบพัสดุยุคใหม่สำหรับทุกโรงเรียน</span><h1>งานพัสดุง่ายขึ้น<br>ด้วย <em>ครูพัสดุ</em></h1><p class="lead">จัดซื้อ จัดจ้าง ออกเลขเอกสารจากฐานข้อมูลเดียวกัน สร้างเอกสารราชการและพิมพ์ PDF ได้ในไม่กี่ขั้นตอน</p><div class="land-actions">'+btn('ทดลองดูระบบตัวอย่าง →','demo','primary')+btn('สมัครบัญชีโรงเรียน','signup','secondary')+'</div><div class="land-details"><span>✓ ออนไลน์</span><span>✓ เลขไม่ซ้ำ</span><span>✓ แบบเอกสาร A4</span></div><p class="muted" style="font-size:12px;margin-top:22px">เวอร์ชันทดลอง ยังอยู่ระหว่างตรวจรับข้อความราชการและแบบเอกสาร</p></div>'+landmark()+'</div></div>';}
-function auth(){app.innerHTML='<div class="auth-layout"><div class="auth-art"><h1>จัดการงานพัสดุ<br>จากที่ไหนก็ได้</h1><p>เอกสารเป็นระบบ เจ้าหน้าที่ทำงานพร้อมกัน ข้อมูลของแต่ละโรงเรียนแยกอย่างปลอดภัย</p></div><div class="auth-box"><a href="#" data-action="home">'+logo()+'</a><h2>'+(state.authMode==='login'?'ยินดีต้อนรับกลับ':'เริ่มใช้งานครูพัสดุ')+'</h2><p>'+(state.authMode==='login'?'เข้าสู่ระบบเพื่อจัดการเอกสารพัสดุ':'สมัครบัญชีและรอรับสิทธิ์จากผู้ดูแลโรงเรียน')+'</p>'+msg()+'<form id="auth-form">'+(state.authMode==='signup'?'<div class="field"><label>ชื่อ–นามสกุล</label><input class="input" name="full_name" required autocomplete="name" placeholder="ชื่อ–นามสกุล"></div>':'')+'<div class="field"><label>อีเมล</label><input class="input" type="email" name="email" required autocomplete="email" placeholder="you@school.ac.th"></div><div class="field"><label>รหัสผ่าน</label><input class="input" type="password" name="password" minlength="8" required autocomplete="'+(state.authMode==='login'?'current-password':'new-password')+'" placeholder="อย่างน้อย 8 ตัวอักษร"></div><button class="primary" style="width:100%" type="submit">'+(state.authMode==='login'?'เข้าสู่ระบบ':'สมัครบัญชี')+'</button></form><div class="auth-options">'+(state.authMode==='login'?'ยังไม่มีบัญชี? <a href="#" data-action="signup">สมัครบัญชีใหม่</a>':'มีบัญชีแล้ว? <a href="#" data-action="login">เข้าสู่ระบบ</a>')+' &nbsp;·&nbsp; <a href="#" data-action="demo">ดูตัวอย่างโดยไม่ต้องสมัคร</a></div></div></div>';}
+
+const KP_REMEMBER_EMAIL='kru_pasadu_remember_email';
+function rememberedEmail(){
+  try{return localStorage.getItem(KP_REMEMBER_EMAIL)||'';}catch{return '';}
+}
+function rememberLoginEmail(email,remember){
+  try{if(remember)localStorage.setItem(KP_REMEMBER_EMAIL,String(email||'').trim());else localStorage.removeItem(KP_REMEMBER_EMAIL);}catch{}
+}
+const signupTabs=()=>'<div class="kp-auth-tabs" role="tablist" aria-label="เลือกการเข้าใช้งาน">'+
+  '<button type="button" class="kp-auth-tab" role="tab" aria-selected="'+(state.authMode==='login')+'" data-action="login">เข้าสู่ระบบ</button>'+
+  '<button type="button" class="kp-auth-tab" role="tab" aria-selected="'+(state.authMode==='signup')+'" data-action="signup">สมัครสมาชิก</button></div>';
+function authHero(){
+  const steps=[['file','สร้างรายการ','กรอกข้อมูลครั้งเดียว'],['check','ตรวจสอบ','ดำเนินการตามสิทธิ์'],['download','พิมพ์ PDF','จัดทำชุดเอกสาร'],['cloud','จัดเก็บ','ค้นหาทะเบียนย้อนหลัง']];
+  const benefits=[['file','เอกสารเป็นระบบ','จัดซื้อ–จัดจ้าง พร้อมแบบฟอร์มสำหรับตรวจรับและเบิกจ่าย'],['users','ทำงานเป็นทีม','แยกสิทธิ์ผู้ใช้งานของแต่ละโรงเรียนอย่างชัดเจน'],['cloud','ออนไลน์ทุกที่','เลขรายการจากฐานข้อมูลกลาง ไม่ต้องรันเลขแยกเครื่อง']];
+  return '<section class="kp-auth-intro"><div class="kp-auth-content">'+
+   '<a class="kp-auth-brand" href="#" data-action="home"><img class="kp-auth-logo" src="/kru-pasadu-icon.svg" alt="โลโก้ครูพัสดุ"><span><strong>ครูพัสดุ</strong><small>ทำเรื่องพัสดุให้เป็นเรื่องง่าย</small></span></a>'+
+   '<span class="kp-auth-eyebrow">✦ แพลตฟอร์มงานพัสดุยุคใหม่สำหรับสถานศึกษา</span>'+
+   '<h1>งานพัสดุของโรงเรียน<br><em>ง่ายขึ้นในที่เดียว</em></h1>'+
+   '<p class="kp-auth-lead">จัดซื้อ จัดจ้าง ออกเลขเอกสารกลาง และพิมพ์แบบฟอร์ม PDF ได้จากทุกที่ ให้ทีมเจ้าหน้าที่ทำงานร่วมกันอย่างเป็นระเบียบ</p>'+
+   '<div class="kp-pipeline"><div class="kp-pipeline-title">'+i('dashboard')+' เส้นทางการทำงานที่เข้าใจง่าย</div><div class="kp-pipeline-track">'+
+   steps.map((st,n)=>'<div class="kp-pipeline-node"><span class="kp-pipeline-icon">'+i(st[0])+'</span><b>'+(n+1)+'. '+st[1]+'</b><small>'+st[2]+'</small></div>').join('')+
+   '</div></div><div class="kp-benefits">'+
+   benefits.map(x=>'<article class="kp-benefit">'+i(x[0])+'<h3>'+x[1]+'</h3><p>'+x[2]+'</p></article>').join('')+
+   '</div><div class="kp-intro-note">* ระบบอยู่ระหว่างพัฒนาและตรวจรับแม่แบบเอกสารราชการ การเชื่อมต่อ Google Drive อัตโนมัติยังไม่เปิดใช้งาน</div>'+
+   '</div></section>';
+}
+function auth(){
+  const tab=state.authMode==='signup'?'signup':'login';
+  const mode=state.recoveryMode?'recovery':state.authForgot?'forgot':tab;
+  const mail=e(state.authEmail||rememberedEmail());
+  const title={login:'ยินดีต้อนรับกลับ',signup:'เริ่มต้นกับครูพัสดุ',forgot:'ลืมรหัสผ่าน?',recovery:'ตั้งรหัสผ่านใหม่'}[mode];
+  const subtitle={login:'เข้าสู่ระบบเพื่อจัดการงานพัสดุของโรงเรียน',signup:'สร้างบัญชีแล้วรอผู้ดูแลโรงเรียนกำหนดสิทธิ์',forgot:'กรอกอีเมลที่ใช้สมัคร เพื่อรับลิงก์ตั้งรหัสผ่านใหม่',recovery:'กำหนดรหัสผ่านใหม่สำหรับบัญชีของคุณ'}[mode];
+  const password=(name,label,auto='current-password')=>'<div class="kp-field"><label for="kp-'+name+'">'+label+'</label><div class="kp-password-wrap"><input id="kp-'+name+'" name="'+name+'" type="password" minlength="8" required autocomplete="'+auto+'" placeholder="อย่างน้อย 8 ตัวอักษร"><button type="button" class="kp-eye" data-action="show-password" data-target="kp-'+name+'" aria-label="แสดงรหัสผ่าน">แสดง</button></div></div>';
+  let fields='';
+  if(mode==='login')fields='<form id="auth-form" class="kp-login-form"><div class="kp-field"><label for="kp-email">อีเมล</label><input id="kp-email" name="email" type="email" autocomplete="email" required value="'+mail+'" placeholder="you@school.ac.th"></div>'+
+    password('password','รหัสผ่าน')+
+    '<div class="kp-auth-row"><label class="kp-remember"><input name="remember_email" type="checkbox" '+(rememberedEmail()?'checked':'')+'>จดจำอีเมลของฉัน</label><button type="button" class="kp-inline-link" data-action="forgot-password">ลืมรหัสผ่าน?</button></div>'+
+    '<button class="kp-main-button" type="submit">เข้าสู่ระบบ →</button></form>';
+  else if(mode==='signup')fields='<form id="auth-form" class="kp-login-form"><div class="kp-field"><label for="kp-fullname">ชื่อ–นามสกุลเจ้าหน้าที่</label><input id="kp-fullname" name="full_name" autocomplete="name" required minlength="3" maxlength="150" placeholder="ระบุชื่อ–นามสกุลจริง"></div>'+
+    '<div class="kp-field"><label for="kp-email">อีเมล</label><input id="kp-email" name="email" type="email" autocomplete="email" value="'+mail+'" required placeholder="you@school.ac.th"></div>'+
+    password('password','ตั้งรหัสผ่าน','new-password')+
+    password('confirm_password','ยืนยันรหัสผ่าน','new-password')+
+    '<div class="kp-password-note">อย่างน้อย 8 ตัวอักษร แนะนำใช้รหัสผ่านที่ไม่ซ้ำกับบริการอื่น</div>'+
+    '<button class="kp-main-button" type="submit">สมัครสมาชิก →</button></form>';
+  else if(mode==='forgot')fields='<div class="kp-auth-tip">เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลของคุณ หากมีบัญชีอยู่ในระบบ</div><form class="kp-login-form" id="forgot-form">'+
+    '<div class="kp-field"><label for="kp-forgot-email">อีเมลบัญชี</label><input id="kp-forgot-email" name="email" type="email" autocomplete="email" required value="'+mail+'" placeholder="you@school.ac.th"></div>'+
+    '<button class="kp-main-button" type="submit">ส่งลิงก์ตั้งรหัสผ่านใหม่</button></form>'+
+    '<button class="kp-inline-link kp-back" data-action="login">← กลับไปเข้าสู่ระบบ</button>';
+  else fields='<form class="kp-login-form" id="reset-password-form">'+
+    password('password','รหัสผ่านใหม่','new-password')+password('confirm_password','ยืนยันรหัสผ่านใหม่','new-password')+
+    '<button class="kp-main-button" type="submit">บันทึกรหัสผ่านใหม่</button></form>'+
+    '<p class="kp-auth-footnote">ลิงก์ตั้งรหัสผ่านมีอายุจำกัด หากไม่สามารถบันทึกได้ กรุณาขอลิงก์ใหม่</p>';
+  const note=mode==='login'||mode==='signup'?'<div class="kp-divider">หรือ</div><button class="kp-demo-button" data-action="demo">'+i('eye')+' ทดลองดูระบบโดยไม่ต้องสมัคร</button>':null;
+  app.innerHTML='<main class="kp-auth-screen">'+authHero()+'<section class="kp-auth-right"><div class="kp-login-card">'+
+    '<div class="kp-login-mark"><img src="/kru-pasadu-icon.svg" alt=""><div><strong>ครูพัสดุ</strong><span>ทำเรื่องพัสดุให้เป็นเรื่องง่าย</span></div></div>'+
+    '<h2>'+title+'</h2><p class="kp-login-subtitle">'+subtitle+'</p>'+
+    (mode==='login'||mode==='signup'?signupTabs():'')+
+    msg()+fields+(note||'')+
+    (mode==='login'||mode==='signup'?'<p class="kp-auth-footnote">ใช้ตัวจัดการรหัสผ่านของเบราว์เซอร์ได้อย่างปลอดภัย ระบบจะจดจำเพียงอีเมลเมื่อคุณเลือกเท่านั้น</p>':'')+
+    '</div></section></main>';
+}
+
 function verificationPending(){
  const email=e(state.pendingSignupEmail||'อีเมลที่ลงทะเบียน');
  app.innerHTML='<div class="auth-layout"><div class="auth-art"><h1>ครูพัสดุ<br>พร้อมให้คุณเริ่มต้น</h1><p>ระบบจัดซื้อจัดจ้างออนไลน์สำหรับโรงเรียน พร้อมการกำหนดสิทธิ์เฉพาะบุคลากรของสถานศึกษา</p></div>'+
