@@ -1,0 +1,43 @@
+/* Kru Pasadu government A4 correspondence — fixed margins and 16pt text */
+:root{--gov-font:"TH Sarabun New","TH Sarabun PSK","Sarabun","Noto Sans Thai",Tahoma,sans-serif}
+.paper-page.official,#print-area .paper-page.official{
+ box-sizing:border-box;width:210mm;height:296mm;max-height:296mm;min-height:0;
+ padding:25mm 20mm 20mm 30mm;margin:0 auto;background:white;color:#111;
+ font:400 16pt/1.16 var(--gov-font);overflow:hidden;break-after:page;page-break-after:always
+}
+.paper-page.official:last-child{break-after:auto;page-break-after:auto}
+.paper-page .doc-sheet-body{width:100%;max-width:100%}
+.paper-page .memo-top{height:20mm;margin:0 0 1.5mm;position:relative;padding:0}
+.paper-page .memo-top h1{margin:0;padding:0;text-align:center;font:700 29pt/1.02 var(--gov-font);color:#111}
+.paper-page .garuda-emblem{position:absolute;left:0;top:0;width:15mm;height:15mm;object-fit:contain;display:block}
+.paper-page .draft-stamp{right:20mm;top:8mm;font-size:8pt}
+.paper-page .memo-field{font:400 16pt/1.16 var(--gov-font);margin:.8mm 0;gap:2mm;display:grid;grid-template-columns:28mm minmax(0,1fr);align-items:baseline;break-inside:avoid}
+.paper-page .memo-field strong{display:block;white-space:nowrap;word-break:keep-all;width:auto;min-width:0;flex:none;font:700 16pt/1.16 var(--gov-font)}
+.paper-page .memo-value{min-width:0;overflow-wrap:break-word;word-break:normal}
+.paper-page .memo-field-number{grid-template-columns:9mm 38mm 16mm minmax(0,1fr);column-gap:2mm}
+.paper-page .memo-field-number .date-label{white-space:nowrap}
+.paper-page .memo-line{border:0;height:0;margin:3mm 0 2mm}
+.paper-page .memo-field-to{margin-bottom:3mm}
+.paper-page.official p{font:400 16pt/1.17 var(--gov-font);margin:1.5mm 0;color:#111}
+.paper-page .indent{text-indent:25mm}
+.paper-page ol{font:400 16pt/1.15 var(--gov-font);margin:2mm 0;padding-left:9mm}
+.paper-page li{margin:.7mm 0;padding-left:1mm}
+.paper-page .print-title{font:700 20pt/1.18 var(--gov-font);color:#111;margin:0 0 5mm}
+.paper-page .official-table{font:400 16pt/1.16 var(--gov-font);width:100%;max-width:100%;min-width:0;table-layout:fixed;border:1px solid #222;border-collapse:collapse;margin:3mm 0}
+.paper-page .official-table th,.paper-page .official-table td{font:inherit;color:#111;background:#fff;border:1px solid #222!important;padding:1.1mm .9mm;vertical-align:top}
+.paper-page .official-table th{font-weight:700;text-align:center}
+.paper-page .official-table tr{break-inside:avoid;page-break-inside:avoid}
+.paper-page .official-table-ruled .table-filler td{padding:0 .9mm;border-right:1px solid #222!important;border-left:1px solid #222!important}
+.paper-page .sign-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:5mm;row-gap:3mm;margin-top:4mm;font:400 16pt/1.13 var(--gov-font);break-inside:avoid;page-break-inside:avoid}
+.paper-page .director-sign,.paper-page .inspector-sign{font:400 16pt/1.13 var(--gov-font);margin-top:4mm;break-inside:avoid;page-break-inside:avoid}
+.paper-page .director-sign{width:61%}.paper-page .inspector-sign{width:65%}
+body.print-measuring #print-area .paper-page.official{width:210mm!important;height:296mm!important;min-height:0!important;max-height:296mm!important;padding:25mm 20mm 20mm 30mm!important}
+@page{size:A4;margin:0}
+@media print{
+ html,body{margin:0!important;padding:0!important;background:#fff!important}
+ #app{display:none!important}
+ #print-area{display:block!important;position:static!important;width:210mm!important;margin:0!important;padding:0!important}
+ #print-area .paper-page.official{box-sizing:border-box!important;width:210mm!important;height:296mm!important;min-height:0!important;max-height:296mm!important;margin:0!important;padding:25mm 20mm 20mm 30mm!important;border:0!important;box-shadow:none!important;overflow:hidden!important;break-inside:avoid!important;page-break-inside:avoid!important;break-after:page!important;page-break-after:always!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ #print-area .paper-page.official:last-child{break-after:auto!important;page-break-after:auto!important}
+ #print-area .doc-sheet-body{zoom:1!important}
+}
