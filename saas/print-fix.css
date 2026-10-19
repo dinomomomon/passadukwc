@@ -4,7 +4,7 @@
 
 .paper-page.official {
   width: 210mm;
-  height: 297mm;
+  height: 296mm;
   min-height: 0;
   padding: 12mm 16mm 11mm;
   margin: 0 auto;
@@ -154,7 +154,7 @@ body.print-measuring #print-area {
 body.print-measuring #print-area .paper-page {
   box-shadow: none !important;
   min-height: 0 !important;
-  height: 297mm !important;
+  height: 296mm !important;
   padding: 12mm 16mm 11mm !important;
   margin: 0 !important;
   width: 210mm !important;
@@ -177,9 +177,9 @@ body.print-measuring #print-area .paper-page {
     display: block !important;
     box-sizing: border-box !important;
     width: 210mm !important;
-    height: 297mm !important;
+    height: 296mm !important;
     min-height: 0 !important;
-    max-height: 297mm !important;
+    max-height: 296mm !important;
     margin: 0 !important;
     padding: 12mm 16mm 11mm !important;
     overflow: hidden !important;
