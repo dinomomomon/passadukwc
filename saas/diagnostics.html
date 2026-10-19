@@ -26,7 +26,7 @@ pre{white-space:pre-wrap;word-break:break-word;font:12px/1.7 monospace;backgroun
 <main>
 <header><img src="/kru-pasadu-icon.svg" alt=""><div><h1>ตรวจสอบการเปิดครูพัสดุ</h1><p style="margin:0">ตรวจการทำงานเฉพาะเบราว์เซอร์นี้ โดยไม่ต้องเข้าสู่ระบบ</p></div></header>
 <article>
-<p>หน้านี้ตรวจไฟล์เว็บไซต์ การเข้าถึงส่วนเชื่อมต่อบัญชี และที่จัดเก็บข้อมูลบน Chrome โดยไม่อ่านรหัสผ่านหรือข้อมูลในเอกสาร</p>
+<p>หน้านี้ตรวจไฟล์เว็บไซต์ การเชื่อมต่อ และขั้นตอนล่าสุดที่แอปเริ่มทำงานใน Chrome โดยไม่อ่านรหัสผ่านหรือข้อมูลในเอกสาร</p>
 <ul id="results"><li><span>กำลังเริ่มตรวจสอบ…</span><strong class="busy">รอสักครู่</strong></li></ul>
 <div class="actions">
 <button id="rerun">ตรวจสอบอีกครั้ง</button>
@@ -74,6 +74,7 @@ async function run(){
  for(const [name] of endpoints)rows.push([name,'กำลังตรวจ...']);
  rows.push(['การใช้ Local Storage','กำลังตรวจ...']);
  rows.push(['Service Worker ของเว็บไซต์','กำลังตรวจ...']);
+ rows.push(['ขั้นตอนล่าสุดของหน้าแอป','กำลังตรวจ...']);
  paint();
  await Promise.all(endpoints.map(async ([name,url],i)=>{rows[i][1]=await probe(url);paint();}));
  const pos=endpoints.length;
@@ -87,6 +88,10 @@ async function run(){
   const regs=('serviceWorker' in navigator)?await navigator.serviceWorker.getRegistrations():[];
   rows[pos+1][1]='ผ่าน (พบ '+regs.length+' รายการ)';
  }catch{rows[pos+1][1]='ไม่สามารถตรวจได้';}
+ try{
+  const phase=sessionStorage.getItem('kru_boot_stage');
+  rows[pos+2][1]=phase||'ยังไม่พบ (แอปอาจไม่เริ่มรัน)';
+ }catch{rows[pos+2][1]='อ่านสถานะไม่ได้';}
  busy=false;paint();
 }
 document.getElementById('rerun').onclick=run;
