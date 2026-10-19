@@ -53,3 +53,6 @@ Cloudflare Static Assets ยังใช้ฐานข้อมูล Supabase 
 ## ตรวจสอบการเชื่อม GitHub ก่อน Deploy (19 ตุลาคม 2569)
 หน้าตั้งค่า Cloudflare ยืนยันว่าไม่มีแจ้งเตือน Git disconnected แล้ว โดย Production branch ตั้งเป็น `feature/kru-pasadu-v01`, Root directory `saas`, Build command `npm run build`, Deploy command `npx wrangler deploy` และ Worker `passadukwc`.
 การอัปเดตบันทึกนี้สร้าง Commit ใหม่บน Branch ที่ถูกต้องเพื่อกระตุ้น Cloudflare Workers Builds โดยไม่แตะฐานข้อมูลหรือแอปผู้ใช้.
+
+## ตรวจสอบ package-lock และกระตุ้น Deploy (19 ตุลาคม 2569)
+สร้างและตรวจสอบไฟล์ `saas/package-lock.json` แล้วโดย GitHub Actions (`npm ci` และ `npm run build` ผ่าน) ก่อนสร้าง Commit นี้ เพื่อให้ Cloudflare ตรวจพบการเปลี่ยนแปลงโดยบัญชีที่เชื่อมกับ GitHub โดยตรงและเริ่ม Production Build จาก `feature/kru-pasadu-v01`.
