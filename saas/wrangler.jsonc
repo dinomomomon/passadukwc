@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "kru-pasadu",
+  "name": "passadukwc",
   "compatibility_date": "2026-10-19",
   "assets": {
     "directory": "./dist",
