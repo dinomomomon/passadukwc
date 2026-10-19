@@ -57,19 +57,31 @@ async function printOfficialDocuments(){
     if(document.fonts?.ready)await document.fonts.ready;
     await Promise.all([...root.querySelectorAll('img')].map(img=>img.decode?.().catch(()=>{})||Promise.resolve()));
     const sheets=[...root.querySelectorAll('.paper-page')];
+    let continuedPages=0;
     for(const sheet of sheets){
       const body=sheet.querySelector('.doc-sheet-body');
       if(!body)throw new Error('รูปแบบหน้าเอกสารไม่สมบูรณ์');
+      // Keep TH Sarabun 16pt and 3/2/2.5/2 cm margins unchanged.
+      // Only reduce optional vertical spacing when the document needs room.
       const cs=getComputedStyle(sheet);
-      const available=sheet.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-4;
-      let fitted=false;
-      body.style.zoom='1';
-      await new Promise(resolve=>requestAnimationFrame(resolve));
-      if(body.getBoundingClientRect().height<=available) fitted=true;
-      if(!fitted){
-        throw new Error('เอกสารบางฉบับยาวเกินพื้นที่ A4 มาตรฐาน (ขนาดตัวอักษร 16 pt และระยะขอบตามงานสารบรรณ) จึงยังไม่พิมพ์เพื่อป้องกันข้อความตกหน้า กรุณาลดข้อความหรือแยกเอกสารแนบท้าย');
-      }
+      const available=sheet.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-6;
+      const hasRoom=async ()=>{
+        await new Promise(resolve=>requestAnimationFrame(resolve));
+        return body.getBoundingClientRect().height<=available;
+      };
+      if(await hasRoom())continue;
+      sheet.classList.add('print-compact');
+      if(await hasRoom())continue;
+      sheet.classList.remove('print-compact');
+      sheet.classList.add('print-tight');
+      if(await hasRoom())continue;
+      // Long descriptions or many items legitimately need a continuation page.
+      // Never clip their text and never silently shrink below 16pt.
+      sheet.classList.remove('print-tight');
+      sheet.classList.add('print-flow');
+      continuedPages++;
     }
+    root.dataset.continuationCount=String(continuedPages);
   } catch(err){
     document.body.classList.remove('print-measuring');
     root.innerHTML='';
