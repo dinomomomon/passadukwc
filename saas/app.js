@@ -1,4 +1,29 @@
-import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+// Resilient Supabase SDK loader: pinned version with independent CDN fallback.
+// Chrome can hold a stale cache for an unpinned /@2/+esm dependency.
+const SUPABASE_SDK_SOURCES=[
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm',
+  'https://esm.sh/@supabase/supabase-js@2.116.0?bundle'
+];
+async function loadSupabaseSdk(){
+  const attempts=SUPABASE_SDK_SOURCES.map(async url=>{
+    let timer;
+    try{
+      const module=await Promise.race([
+        import(/* @vite-ignore */ url),
+        new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('SDK CDN timeout')),8500);})
+      ]);
+      if(typeof module.createClient!=='function')throw new Error('Supabase SDK missing createClient');
+      return module;
+    }finally{clearTimeout(timer);}
+  });
+  try{return await Promise.any(attempts);}
+  catch(error){
+    console.error('Unable to load Supabase from either CDN',error);
+    window.dispatchEvent(new CustomEvent('kru:dependency-error'));
+    throw error;
+  }
+}
+const {createClient}=await loadSupabaseSdk();
 import {SUPABASE_URL,SUPABASE_KEY} from './config.js';
 import {buildDocuments,escapeHtml as e} from './print.js';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
