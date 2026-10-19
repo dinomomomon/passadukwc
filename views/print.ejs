@@ -1,1 +1,141 @@
-<%- include('header') %><div class="print-tools card"><h1>ชุดเอกสาร<%= kindName(record.kind) %></h1><p class="notice">ฉบับร่าง ยังไม่ใช่แบบรับรองตามระเบียบ: ต้องตรวจชื่อแบบ เนื้อหา ผู้ลงนาม ขั้นตอน และตราครุฑกับโรงเรียนก่อนใช้งานจริง เอกสารนี้ไม่ยืนยันการอนุมัติ การส่งมอบ หรือการตรวจรับ</p><button id="print">พิมพ์ / บันทึก PDF</button><a href="/records/<%= record.id %>">กลับรายการ</a><p>เลือกกระดาษ A4 ขนาด 100% และปิดหัวกระดาษ/ท้ายกระดาษของเบราว์เซอร์</p></div><% const docs=['รายงานขอ'+kindName(record.kind).replace('จัด',''),'รายงานผลการพิจารณาและขออนุมัติ','ใบสั่ง'+(record.kind==='purchase'?'ซื้อ':'จ้าง'),'บันทึกการตรวจรับ','บันทึกขอเบิกจ่าย'];for(let n=0;n<docs.length;n++){ %><article class="paper"><div class="draft">ฉบับร่าง • รอตรวจรับแบบเอกสาร</div><% if(hasGaruda){ %><img class="garuda" src="/garuda.png" alt="ตราครุฑ"><% }else{ %><div class="crest-placeholder">พื้นที่ตราครุฑ<br><small>รอไฟล์ตราที่โรงเรียนรับรอง</small></div><% } %><h1>บันทึกข้อความ</h1><p><strong>ส่วนราชการ</strong> <%= record.school %></p><div class="doc-row"><span><strong>ที่</strong> <%= kindName(record.kind) %> <%= record.number %>/<%= record.year %></span><span><strong>วันที่</strong> <%= dateTH(record.date) %></span></div><p><strong>เรื่อง</strong> <%= docs[n] %> — <%= record.title %></p><hr><p>เรียน ผู้อำนวยการ<%= record.school %></p><p class="indent pre"><%= record.reason %></p><p>ดำเนินการ<%= kindName(record.kind) %> โดย <%= record.method %> จากแหล่งเงิน <%= record.budget %></p><p>ผู้ขาย / ผู้รับจ้าง <%= record.vendor %><br>ที่อยู่ <%= record.vendorAddress %></p><table><thead><tr><th>ลำดับ</th><th>รายการ</th><th>จำนวน</th><th>ราคาต่อหน่วย</th><th>รวม (บาท)</th></tr></thead><tbody><% items.forEach((i,index)=>{ %><tr><td><%= index+1 %></td><td><%= i.name %></td><td><%= i.qty %> <%= i.unit %></td><td><%= money(i.price) %></td><td><%= money(i.qty*i.price) %></td></tr><% }); %></tbody></table><p class="total">รวมสุทธิทั้งสิ้น <%= money(record.total) %> บาท</p><% if(n===2){ %><p>กำหนดส่งมอบ ____________ สถานที่ส่งมอบ ____________<br>เงื่อนไขและรายละเอียดข้อตกลง: ____________________________________</p><% }else if(n===3){ %><p>วันที่ตรวจรับ ____________ ผลการตรวจรับ __________________________<br>ผู้ตรวจรับ / คณะกรรมการ ________________________________________</p><% }else if(n===4){ %><p>ใบแจ้งหนี้ / ใบเสร็จเลขที่ ____________ วันที่ ____________<br>รายการหลักฐานประกอบ _________________________________________</p><% }else{ %><p>รายละเอียดประกอบและข้อเสนอเพื่อพิจารณา __________________________<br>________________________________________________________________</p><% } %><div class="signatures"><div>ลงชื่อ ____________________<br>(<%= record.officer %>)<br>เจ้าหน้าที่พัสดุ</div><div>ลงชื่อ ____________________<br>(<%= record.head %>)<br>หัวหน้าเจ้าหน้าที่พัสดุ</div><div>ความเห็น / คำสั่ง ____________________<br>ลงชื่อ ____________________<br>(<%= record.director %>)<br>ผู้อำนวยการ<%= record.school %></div></div><p class="doc-note">แบบร่างลำดับ <%= n+1 %>/<%= docs.length %> · ข้อมูลอ้างอิงเดียวกัน ยังต้องเติมรายละเอียดเฉพาะขั้นตอนก่อนใช้จริง</p></article><% } %><%- include('footer') %>
+<%- include('header') %>
+<%
+const isBuy = record.kind === 'purchase';
+const actionName = isBuy ? 'ซื้อ' : 'จ้าง';
+const docs = [
+  'รายงานขอ' + actionName,
+  'รายละเอียด' + (isBuy ? 'พัสดุที่จะซื้อ' : 'งานที่จะจ้าง') + 'แนบท้าย',
+  'รายงานผลการพิจารณาและขออนุมัติสั่ง' + actionName,
+  'ใบตรวจรับ' + (isBuy ? 'พัสดุ' : 'งานจ้าง'),
+  'บันทึกขออนุมัติเบิกจ่าย'
+].concat(isBuy ? ['ใบเบิกพัสดุ'] : []);
+const items = JSON.parse(record.items || '[]');
+const sum = Number(record.total) || 0;
+function numberThai(num) {
+  const nums=['','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
+  const powers=['','สิบ','ร้อย','พัน','หมื่น'];
+  if (!num) return 'ศูนย์';
+  const s=String(num); let out='';
+  for(let i=0;i<s.length;i++){
+    const d=Number(s[i]),p=s.length-1-i;
+    if (!d) continue;
+    if (p===1) out+=d===1?'สิบ':d===2?'ยี่สิบ':nums[d]+'สิบ';
+    else if (p===0 && d===1 && s.length>1) out+='เอ็ด';
+    else out+=nums[d]+(powers[p]||'');
+  }
+  return out;
+}
+const bahtText = numberThai(Math.floor(sum/100))+'บาท'+(sum%100?numberThai(sum%100)+'สตางค์':'ถ้วน');
+%>
+<section class="print-tools card">
+  <div class="print-actions">
+    <div><span class="eyebrow">ครูพัสดุ / เอกสารราชการ</span><h1>ชุดเอกสาร<%= isBuy?'จัดซื้อ':'จัดจ้าง' %></h1>
+    <p class="muted">เลขที่ <%= record.number %>/<%= record.year %> · <%= docs.length %> ฉบับ · <%= money(record.total) %> บาท</p></div>
+    <div class="actions"><button type="button" id="print">พิมพ์ / บันทึกเป็น PDF</button><a class="button quiet" href="/records/<%= record.id %>">กลับรายการ</a></div>
+  </div>
+  <p class="notice">แบบเอกสารรุ่นทดสอบ ต้องให้เจ้าหน้าที่พัสดุตรวจถ้อยคำ ฐานกฎหมาย และลำดับอนุมัติก่อนใช้เป็นหลักฐานราชการ เอกสารนี้ไม่ใช่หลักฐานว่ามีการลงนาม ตรวจรับ หรือเบิกจ่ายแล้ว</p>
+  <p class="muted">เมื่อพิมพ์ เลือกกระดาษ A4 ขนาด 100% และปิดหัว/ท้ายกระดาษของเบราว์เซอร์</p>
+  <div class="doc-quicklinks"><% docs.forEach((doc,i)=>{ %><a href="#doc-<%= i+1 %>"><%= i+1 %>. <%= doc %></a><% }); %></div>
+</section>
+
+<article class="paper official-paper" id="doc-1">
+  <div class="doc-status">ต้นแบบเอกสาร · รอตรวจรับรูปแบบ</div>
+  <%- include('print-parts/memo-head', {subject:'รายงานขอ'+actionName+(isBuy?'พัสดุ':'งานจ้าง')}) %>
+  <p class="official-indent">ด้วยหน่วยงานมีความประสงค์จะ<%= isBuy?'ซื้อพัสดุ':'จ้างดำเนินงาน' %> เรื่อง <strong><%= record.title %></strong> เพื่อใช้ในการดำเนินงานของสถานศึกษา โดยมีเหตุผลและความจำเป็นดังนี้ <%= record.reason %></p>
+  <p class="official-indent">เจ้าหน้าที่ได้พิจารณาความจำเป็นและรายละเอียดการจัดหา จึงขอรายงานเพื่อพิจารณาตามขั้นตอนจัดซื้อจัดจ้างที่เกี่ยวข้อง ดังนี้</p>
+  <ol class="official-list">
+    <li>เหตุผลและความจำเป็น : <%= record.reason %></li>
+    <li>รายละเอียด<%= isBuy?'พัสดุที่ต้องการซื้อ':'งานที่ต้องการจ้าง' %> จำนวน <%= items.length %> รายการ ตามรายละเอียดแนบท้าย</li>
+    <li>ราคาที่ประมาณการรวม <%= money(sum) %> บาท (<%= bahtText %>)</li>
+    <li>วงเงินที่จะ<%= actionName %>ครั้งนี้ <%= money(sum) %> บาท (<%= bahtText %>)</li>
+    <li>กำหนดเวลาที่ต้องการใช้พัสดุ/ส่งมอบงาน : ...........................................................</li>
+    <li>วิธีดำเนินการ : <%= record.method %></li>
+    <li>หลักเกณฑ์การพิจารณาคัดเลือกข้อเสนอ : ราคาและเงื่อนไขที่สอดคล้องกับความต้องการ</li>
+    <li>ข้อเสนออื่น : เสนอแต่งตั้งผู้ตรวจรับหรือคณะกรรมการตรวจรับตามความเหมาะสม</li>
+  </ol>
+  <p>แหล่งเงิน/งาน/โครงการ : <%= record.budget %></p>
+  <p class="official-indent">จึงเรียนมาเพื่อโปรดพิจารณา (1) เห็นชอบรายงานขอ<%= actionName %> และ (2) พิจารณามอบหมายผู้ตรวจรับตามความเหมาะสม</p>
+  <%- include('print-parts/signatures', {showDirector:true}) %>
+</article>
+
+<article class="paper official-paper" id="doc-2">
+  <div class="doc-status">ต้นแบบเอกสาร · รอตรวจรับรูปแบบ</div>
+  <h2 class="official-title">รายละเอียดของ<%= isBuy?'พัสดุที่จะซื้อ':'งานที่จะจ้าง' %> แนบท้ายรายงานขอ<%= actionName %></h2>
+  <p class="center">รายการจัดหา : <%= record.title %></p>
+  <p>จำนวน <%= items.length %> รายการ</p>
+  <table class="official-table"><thead><tr><th style="width:7%">ลำดับ</th><th>รายละเอียดและคุณลักษณะ</th><th style="width:11%">จำนวน</th><th style="width:11%">หน่วย</th><th style="width:16%">ราคาต่อหน่วย</th><th style="width:18%">จำนวนเงิน</th></tr></thead>
+  <tbody><% items.forEach((it,i)=>{ %><tr><td class="center"><%= i+1 %></td><td><%= it.name %></td><td class="center"><%= it.qty %></td><td class="center"><%= it.unit %></td><td class="right"><%= money(it.price) %></td><td class="right"><%= money(it.price*it.qty) %></td></tr><% }); %>
+  <tr><td colspan="5" class="right"><strong>รวมเป็นเงินทั้งสิ้น</strong></td><td class="right"><strong><%= money(sum) %></strong></td></tr></tbody></table>
+  <p class="center">(<%= bahtText %>)</p>
+  <p>หมายเหตุ/คุณลักษณะเฉพาะเพิ่มเติม : .............................................................................................</p>
+  <%- include('print-parts/signatures', {showDirector:false}) %>
+</article>
+
+<article class="paper official-paper" id="doc-3">
+  <div class="doc-status">ต้นแบบเอกสาร · รอตรวจรับรูปแบบ</div>
+  <%- include('print-parts/memo-head', {subject:'รายงานผลการพิจารณาและขออนุมัติสั่ง'+actionName}) %>
+  <p class="official-indent">ตามที่ได้เสนอรายงานขอ<%= actionName %>เรื่อง <%= record.title %> วงเงิน <%= money(sum) %> บาท (<%= bahtText %>) และได้รับความเห็นชอบให้ดำเนินการตามขั้นตอนที่เกี่ยวข้องนั้น</p>
+  <p class="official-indent">เจ้าหน้าที่ได้พิจารณาข้อเสนอและเงื่อนไขของผู้ขาย/ผู้รับจ้าง <strong><%= record.vendor || '.............................................' %></strong> ที่อยู่ <%= record.vendorAddress || '.............................................' %> จึงเสนอให้พิจารณา<%= actionName %>ในวงเงิน <%= money(sum) %> บาท โดยต้องตรวจสอบหลักฐานและราคาที่เสนอจริงประกอบก่อนลงนาม</p>
+  <p class="official-indent">จึงเรียนมาเพื่อโปรดพิจารณา</p>
+  <ol class="official-list"><li>อนุมัติสั่ง<%= actionName %>จาก <%= record.vendor || '.............................................' %> ในวงเงิน <%= money(sum) %> บาท</li><li>พิจารณาการจัดทำใบสั่ง<%= actionName %>/หลักฐานการตกลงที่เหมาะสมตามระเบียบและข้อยกเว้นที่ใช้ได้จริง</li></ol>
+  <p>กำหนดส่งมอบ/เสร็จสิ้นงาน วันที่ ......................................................</p>
+  <%- include('print-parts/signatures', {showDirector:true}) %>
+</article>
+
+<article class="paper official-paper" id="doc-4">
+  <div class="doc-status">ต้นแบบเอกสาร · รอตรวจรับรูปแบบ</div>
+  <h2 class="official-title">ใบตรวจรับ<%= isBuy?'พัสดุ':'งานจ้าง' %></h2>
+  <p class="center">หน่วยงาน <%= record.school %></p>
+  <div class="official-cols"><span>เลขที่ใบตรวจรับ ...............................</span><span>วันที่ ................................</span></div>
+  <p>ตามที่โรงเรียนได้ดำเนินการ<%= isBuy?'จัดซื้อพัสดุ':'จัดจ้าง' %> เรื่อง <%= record.title %> จาก <%= record.vendor || '..................................................' %> จำนวน <%= items.length %> รายการ ตามหลักฐานการสั่ง<%= actionName %>เลขที่ ........................ ลงวันที่ ........................ นั้น</p>
+  <p>ผู้ตรวจรับได้ตรวจสอบ<%= isBuy?'พัสดุ':'ผลงาน' %>และเอกสารประกอบแล้ว โดยมีรายละเอียดดังนี้</p>
+  <table class="official-table"><thead><tr><th>ลำดับ</th><th>รายการ</th><th>จำนวน</th><th>หน่วย</th><th>ผลตรวจรับ</th></tr></thead><tbody><% items.forEach((it,i)=>{ %><tr><td class="center"><%= i+1 %></td><td><%= it.name %></td><td class="center"><%= it.qty %></td><td class="center"><%= it.unit %></td><td>...................</td></tr><% }); %></tbody></table>
+  <p>วันที่ผู้ขาย/ผู้รับจ้างส่งมอบ ..................................... วันที่ตรวจรับจริง .....................................</p>
+  <p>ผลการตรวจรับ : ☐ ถูกต้องครบถ้วน ☐ ไม่ครบถ้วน/ต้องแก้ไข รายละเอียด ..............................................</p>
+  <div class="official-inspector">
+    <p>(ลงชื่อ) .................................................................... ผู้ตรวจรับ<%= isBuy?'พัสดุ':'งานจ้าง' %></p>
+    <p>( .................................................................... )</p>
+    <p>ตำแหน่ง ....................................................................</p>
+    <p>วันที่ ....................................................................</p>
+  </div>
+  <p class="doc-note">ผู้ตรวจรับเว้นชื่อไว้ให้กรอกได้ และไม่ถือว่ามีการตรวจรับจนกว่าผู้มีหน้าที่จะตรวจรับและลงนามจริง</p>
+</article>
+
+<article class="paper official-paper" id="doc-5">
+  <div class="doc-status">ต้นแบบเอกสาร · รอตรวจรับรูปแบบ</div>
+  <%- include('print-parts/memo-head', {subject:'ทราบผลและขออนุมัติเบิกจ่าย'}) %>
+  <p class="official-indent">ตามที่โรงเรียนได้ดำเนินการ<%= isBuy?'จัดซื้อพัสดุ':'จัดจ้าง' %>เรื่อง <%= record.title %> จาก <%= record.vendor || '......................................' %> วงเงิน <%= money(sum) %> บาท นั้น</p>
+  <p class="official-indent">บัดนี้ ผู้ขาย/ผู้รับจ้างได้ยื่นหลักฐานการส่งมอบ และให้ผู้ตรวจรับพิจารณาตรวจรับตามหน้าที่ โดยมีหลักฐานประกอบดังนี้</p>
+  <p>เลขที่ใบส่งของ/ใบเสร็จ ...................................... ลงวันที่ ......................................</p>
+  <p>เลขที่ใบตรวจรับ ...................................... ลงวันที่ ......................................</p>
+  <p class="official-indent">จึงเรียนมาเพื่อโปรดพิจารณา เมื่อมีหลักฐานการตรวจรับถูกต้องครบถ้วนแล้ว อนุมัติเบิกจ่ายตามระเบียบและขั้นตอนการเงินที่เกี่ยวข้อง</p>
+  <table class="official-table"><tbody>
+    <tr><td>มูลค่ารวม</td><td class="right"><%= money(sum) %> บาท</td></tr>
+    <tr><td>ภาษีมูลค่าเพิ่ม (ตามเอกสารผู้ขาย)</td><td class="right">........................ บาท</td></tr>
+    <tr><td>หักภาษี ณ ที่จ่าย (หากมี)</td><td class="right">........................ บาท</td></tr>
+    <tr><td>ค่าปรับ/รายการหักอื่น (หากมี)</td><td class="right">........................ บาท</td></tr>
+    <tr><td>ยอดจ่ายจริง (ตามการตรวจสอบของการเงิน)</td><td class="right">........................ บาท</td></tr>
+  </tbody></table>
+  <p>ความเห็นเจ้าหน้าที่การเงิน : ...........................................................................................................</p>
+  <p class="right">ลงชื่อ .......................................................... เจ้าหน้าที่การเงิน</p>
+  <%- include('print-parts/signatures', {showDirector:true}) %>
+</article>
+
+<% if(isBuy){ %>
+<article class="paper official-paper" id="doc-6">
+  <div class="doc-status">ต้นแบบเอกสาร · รอตรวจรับรูปแบบ</div>
+  <h2 class="official-title">ใบเบิกพัสดุ</h2>
+  <p class="center"><%= record.school %></p>
+  <div class="official-cols"><span>เลขที่ใบเบิก ...............................</span><span>วันที่ ...............................</span></div>
+  <p>หน่วยงานที่ขอเบิก .........................................................................................</p>
+  <p>วัตถุประสงค์ในการใช้ : <%= record.reason %></p>
+  <table class="official-table"><thead><tr><th>ลำดับ</th><th>รายการและคุณลักษณะ</th><th>จำนวน</th><th>หน่วย</th><th>หมายเหตุ</th></tr></thead><tbody><% items.forEach((it,i)=>{ %><tr><td class="center"><%= i+1 %></td><td><%= it.name %></td><td class="center"><%= it.qty %></td><td class="center"><%= it.unit %></td><td></td></tr><% }); %></tbody></table>
+  <div class="official-signs">
+    <div><p>ลงชื่อ .......................................................... ผู้เบิก</p><p>(..........................................................)</p><p>วันที่ ....................................</p></div>
+    <div><p>ลงชื่อ .......................................................... ผู้สั่งจ่าย</p><p>(..........................................................)</p><p>วันที่ ....................................</p></div>
+    <div><p>ลงชื่อ .......................................................... ผู้จ่าย</p><p>(..........................................................)</p><p>วันที่ ....................................</p></div>
+    <div><p>ลงชื่อ .......................................................... ผู้รับของ</p><p>(..........................................................)</p><p>วันที่ ....................................</p></div>
+  </div>
+</article>
+<% } %>
+<%- include('footer') %>
