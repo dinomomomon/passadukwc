@@ -54,7 +54,7 @@ function department(s){return e(s.name||'โรงเรียน')+(officialLoc
 function schoolAddress(s){return v(s.address||officialLocation(s));}
 function signatureBlock(name,role='',date=false,opts={}){
  const kind=opts.kind||'';
- const label=(kind==='director'||kind==='payment')?'<div class="gov-director-position kp-signature-position"><span class="kp-position-part">ผู้อำนวยการ</span><span class="kp-position-part">'+e(opts.schoolName||'โรงเรียน')+'</span></div>':
+ const label=(kind==='director'||kind==='payment')?'<div class="gov-director-position kp-signature-position kp-director-one-line">ผู้อำนวยการ'+e(opts.schoolName||'โรงเรียน')+'</div>':
  '<div class="signature-role kp-signature-position">'+role+'</div>'+
  (opts.position?'<div class="signature-subrole kp-signature-position">'+opts.position+'</div>':'');
  const css=kind==='director'?' gov-director-card':kind==='payment'?' gov-payment-signature':'';
