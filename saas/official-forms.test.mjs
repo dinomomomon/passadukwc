@@ -542,3 +542,26 @@ test('table heading fit measures all headers and works in both preview and A4 pr
  assert.match(app,/fitOfficialTableHeaders\(sheet\)/);
  assert.match(app,/fitOfficialTableHeaders\(previewRoot\)/);
 });
+
+test('remove unfinished archive menu and retain PDF saving through procurement register',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.doesNotMatch(app,/items\.push\(\['storage','จัดเก็บเอกสาร'/);
+ assert.doesNotMatch(app,/data-action="storage"/);
+ assert.doesNotMatch(app,/if\(state\.page==='storage'\)/);
+ assert.doesNotMatch(app,/function storage\(\)/);
+ assert.doesNotMatch(app,/if\(action==='storage'\)/);
+ assert.match(app,/function records\(\)/);
+ assert.match(app,/function recordTable\(rows\)/);
+ assert.match(app,/เปิดดู','open'/);
+ assert.match(app,/พิมพ์ \/ บันทึก PDF','print'/);
+ assert.match(app,/บันทึกเป็น PDF/);
+ assert.match(app,/เลือกตำแหน่งจัดเก็บไฟล์ได้เอง/);
+});
+test('dashboard replaces storage shortcut with document-number register instead of dead link',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(app,/<button class="action-card" data-action="registry">/);
+ assert.match(app,/if\(action==='registry'\|\|action==='registry-refresh'\)/);
+ assert.doesNotMatch(app,/<button class="action-card" data-action="storage">/);
+});
