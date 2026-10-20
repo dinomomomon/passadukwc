@@ -127,7 +127,7 @@ const body='<p class="indent">ตามที่ ผู้อำนวยกา�
  '<p class="indent">จึงเรียนมาเพื่อโปรดทราบ และพิจารณาเห็นชอบ</p>'+
  '<ol class="gov-numbered"><li>ให้สั่ง'+verb+(buy?'พัสดุ':'')+'จาก '+vendor+' ในวงเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+') กำหนดส่งมอบภายในวันที่ '+(r.due_date?thaiDate(r.due_date):blank)+'</li>'+
  '<li>ลงนามใน'+(buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง')+' ดังแนบ</li></ol>';
-const signatures='<div class="gov-vertical-sign">'+sign(officer(r,s),'เจ้าหน้าที่')+sign(head(r,s),'หัวหน้าเจ้าหน้าที่')+'</div>'+directorSign(r,s,'เห็นชอบ<br>ลงนามแล้ว');
+const signatures='<div class="gov-vertical-sign">'+sign(officer(r,s),'เจ้าหน้าที่',true)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true)+'</div>'+directorSign(r,s,'เห็นชอบ<br>ลงนามแล้ว');
 return memo(r,s,'รายงานผลการพิจารณาและขออนุมัติสั่ง'+verb,body,signatures,'gov-approval');}
 function acceptance(r,s,buy){const noun=buy?'พัสดุ':'งานจ้าง',vendor=v(r.vendor_name),m=meta(r);const dd= r.due_date?thaiDate(r.due_date):blank;
 const body=lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 175')+
@@ -140,7 +140,7 @@ const body=lawLine('ตามระเบียบกระทรวงการ
  '<li>ได้เชิญผู้ชำนาญการหรือผู้ทรงคุณวุฒิมาปรึกษาด้วยคือ '+v(m.inspection_expert,'–')+'</li>'+
  '<li>ได้มอบ'+noun+'ที่ตรวจรับให้เจ้าหน้าที่ พร้อมทำใบตรวจรับโดยลงชื่อไว้เป็นหลักฐาน มอบให้แก่ผู้ขาย/ผู้รับจ้าง 1 ฉบับ และเจ้าหน้าที่ 1 ฉบับ</li></ol>'+
  '<p class="indent">จึงเรียนมาเพื่อโปรดทราบ และพิจารณาให้ดำเนินการเบิกจ่ายเงินให้แก่ผู้'+(buy?'ขาย':'รับจ้าง')+' ตามระเบียบของหน่วยงานต่อไป</p>'+
- '<div class="gov-inspector-sign">'+sign(v(r.inspector_name),'ผู้ตรวจรับ'+noun)+'</div>'+
+ '<div class="gov-inspector-sign">'+sign(v(r.inspector_name),'ผู้ตรวจรับ'+noun,true)+'</div>'+
  '<div class="gov-half-rule"></div><p><b>เรียน</b> &nbsp; ผู้อำนวยการ'+e(s.name||'โรงเรียน')+'</p>'+
  '<p class="indent">ผู้ตรวจรับได้ตรวจรับ'+noun+' ตามระเบียบกระทรวงการคลังฯ พ.ศ. 2560 ข้อ 175 แล้ว เห็นสมควรจ่ายเงินให้แก่ผู้'+(buy?'ขาย':'รับจ้าง')+' รายละเอียดดังนี้ มูลค่าสินค้า '+basePriceAmount(r)+' บาท ภาษีมูลค่าเพิ่ม '+moneyField(m,'vat_baht')+' บาท รวมจำนวนเงิน '+cash(r.total_satang)+' บาท หักภาษี ณ ที่จ่าย '+moneyField(m,'withholding_baht')+' บาท หักค่าปรับ '+moneyField(m,'fine_baht')+' บาท คงเหลือจ่ายจริง '+payableAmount(r)+' บาท</p>'+
  '<div class="gov-inspection-bottom">'+signRow(r,s)+directorSign(r,s,'เห็นชอบ<br>อนุมัติ')+'</div>';
