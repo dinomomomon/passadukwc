@@ -240,10 +240,15 @@ function registryDisplayNumber(row){
 async function loadOfficialNumbers(){
  if(state.demo){state.officialNumbers=[];return;}
  if(!state.school)return;
- const {data,error}=await db.from('official_number_registry').select('*')
-  .eq('school_id',state.school.id).order('created_at',{ascending:false}).limit(1200);
- if(error)throw Error('โหลดทะเบียนคุมเลขไม่สำเร็จ: '+error.message);
- state.officialNumbers=data||[];
+ const all=[];let offset=0;const size=500;
+ for(;;){
+  const {data,error}=await db.from('official_number_registry').select('*')
+   .eq('school_id',state.school.id).order('created_at',{ascending:false})
+   .order('id',{ascending:false}).range(offset,offset+size-1);
+  if(error)throw Error('โหลดทะเบียนคุมเลขไม่สำเร็จ: '+error.message);
+  all.push(...(data||[]));if(!data||data.length<size)break;offset+=size;
+ }
+ state.officialNumbers=all;
 }
 function officialRegistry(){
  const all=state.officialNumbers||[],q=String(state.numberFilter||'').toLowerCase();
