@@ -82,8 +82,8 @@ Deno.serve(async (request: Request): Promise<Response> => {
         throw new HttpError(400, "กรุณากรอกอีเมลให้ถูกต้อง");
       if (name.length < 3 || name.length > 200)
         throw new HttpError(400, "กรุณากรอกชื่อ–นามสกุล 3–200 ตัวอักษร");
-      if (password.length < 10 || password.length > 128)
-        throw new HttpError(400, "รหัสผ่านต้องมี 10–128 ตัวอักษร");
+      if (password.length < 6 || password.length > 128)
+        throw new HttpError(400, "รหัสผ่านต้องมี 6–128 ตัวอักษร");
       if (!roles.has(role)) throw new HttpError(400, "บทบาทไม่ถูกต้อง");
 
       const created = await admin.auth.admin.createUser({
@@ -150,7 +150,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
     if (action === "password") {
       const password = String(payload.password || "");
-      if (password.length < 10 || password.length > 128) throw new HttpError(400,"รหัสผ่านต้องมี 10–128 ตัวอักษร");
+      if (password.length < 6 || password.length > 128) throw new HttpError(400,"รหัสผ่านต้องมี 6–128 ตัวอักษร");
       const cross = await admin.from("memberships").select("school_id").eq("user_id",targetId).neq("school_id",schoolId).limit(1);
       if (cross.error) throw new HttpError(500,"ตรวจสอบบัญชีร่วมไม่สำเร็จ");
       if ((cross.data||[]).length) throw new HttpError(403,"บัญชีนี้เชื่อมกับโรงเรียนอื่น กรุณาให้เจ้าของบัญชีเปลี่ยนรหัสผ่านด้วยตนเอง");
