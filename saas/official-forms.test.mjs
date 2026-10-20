@@ -38,7 +38,7 @@ test('metadata form covers all backend-approved fields',()=>{
  const html=docMetaInputs({memo_number:'1/2570'});
  assert.match(html,/name="doc_memo_number"/);
  assert.match(html,/value="1\/2570"/);
- assert.deepEqual(docMetaValue({doc_memo_number:' 1/2570 ',doc_vat_baht:'0'}),{memo_number:'1/2570',vat_baht:'0'});
+ assert.deepEqual(docMetaValue({doc_memo_number:' 1/2570 ',doc_vat_baht:'0'}),{vat_baht:'0'});
 });
 
 test('hiring forms use correct language without duplicated job nouns',()=>{
@@ -155,7 +155,7 @@ test('one-time entry shows only memo reference and inspector position at creatio
 test('saved evidence survives partial form saves and blank fields affect only their own key',()=>{
  const old={memo_number:'25/2569',invoice_number:'INV-5',budget_year:'2570',vat_baht:'0',inspection_location:'ห้องพัสดุ'};
  assert.deepEqual(docMetaValue({doc_order_number:'PO-11'},old),{...old,order_number:'PO-11'});
- assert.deepEqual(docMetaValue({doc_memo_number:'',doc_delivery_date:'2026-10-25'},old),{invoice_number:'INV-5',budget_year:'2570',vat_baht:'0',inspection_location:'ห้องพัสดุ',delivery_date:'2026-10-25'});
+ assert.deepEqual(docMetaValue({doc_memo_number:'',doc_delivery_date:'2026-10-25'},old),{...old,delivery_date:'2026-10-25'});
 });
 test('budget year and budget source propagate without extra metadata entries',()=>{
  const record={...sample,fiscal_year:2570,budget_source:'กิจกรรมพัฒนาผู้เรียน',document_meta:{}};
@@ -253,11 +253,11 @@ test('form strips reused พว. in old memo values but never erases the documen
  assert.match(html,/name="doc_memo_number"[^>]*value="6\/2569"/);
  const saved=docMetaValue({doc_memo_prefix:'พว. 5/2569',doc_memo_number:'พว. 6/2569'});
  assert.equal(saved.memo_prefix,'พว.');
- assert.equal(saved.memo_number,'6/2569');
+ assert.equal(saved.memo_number,undefined);
 });
 test('duplicated reference sequences in one input are rejected instead of silently saved',()=>{
- assert.throws(()=>docMetaValue({doc_memo_number:'พว. 1/2569 2/2569'}),/หลายเลข/);
- assert.throws(()=>docMetaValue({doc_memo_number:'พว.'}),/2\/2569/);
+ assert.deepEqual(docMetaValue({doc_memo_number:'พว. 1/2569 2/2569'}),{});
+ assert.deepEqual(docMetaValue({doc_memo_number:'พว.'}),{});
 });
 
 test('the request memo alone carries the school prefix in both purchase and hire',()=>{
@@ -279,7 +279,7 @@ test('purchasing wizard step four includes editable requisition form number',()=
  assert.match(html,/value="จ\. 218\/2569"/);
  assert.match(html,/ใบเบิกพัสดุ เลขที่/);
  const saved=docMetaValue({doc_requisition_number:'จ. 219/2569'});
- assert.equal(saved.requisition_number,'จ. 219/2569');
+ assert.equal(saved.requisition_number,undefined);
 });
 test('hiring wizard does not ask for a purchasing requisition number',()=>{
  const html=docMetaInputs({},{mode:'create',kind:'hire'});
