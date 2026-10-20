@@ -235,12 +235,66 @@ async function printOfficialDocuments(){
  const root=document.getElementById('print-area');
  if(!root)return notify('ไม่พบพื้นที่พิมพ์เอกสาร',true);
  root.innerHTML=buildDocuments(state.currentRecord,state.school);
+ document.body.classList.add('print-measuring');
+ const pages=[...root.querySelectorAll('.paper-page.official.gov-doc')];
+ const fitSheet=sheet=>{
+  const box=sheet.querySelector('.doc-sheet-body'),filler=sheet.querySelector('.table-filler');
+  if(!box)return false;
+  const original=filler?Math.max(0,parseFloat(filler.style.height)||0):0;
+  const heights=filler?[original,...[72,56,40,25,8,0].filter(n=>n<original)]:[0];
+  const margins=['normal','tight','minimum'];
+  const densities=['comfortable','balanced','fitted','compact','minimum','extra'];
+  const zooms=[1,.96,.92,.88,.84,.8,.75];
+  const doesFit=()=>{
+   const paper=sheet.getBoundingClientRect(),content=box.getBoundingClientRect();
+   const style=getComputedStyle(sheet);
+   const bottom=paper.bottom-(parseFloat(style.paddingBottom)||0)-8;
+   const top=paper.top+(parseFloat(style.paddingTop)||0);
+   const last=[...box.querySelectorAll('.signature-card,.gov-requisition-signatures,.gov-inspection-bottom,.gov-finance-sign,.memo-signatures')];
+   return content.top>=top-3&&content.bottom<=bottom&&last.every(el=>el.getBoundingClientRect().bottom<=bottom);
+  };
+  for(const height of heights){
+   if(filler)filler.style.height=height+'mm';
+   for(const margin of margins){
+    if(margin==='normal')delete sheet.dataset.fitMargin;else sheet.dataset.fitMargin=margin;
+    for(const density of densities){
+     sheet.dataset.density=density;
+     sheet.dataset.signDensity='compact';
+     for(const zoom of zooms){
+      sheet.style.setProperty('--gov-zoom',String(zoom));
+      if(doesFit())return true;
+     }
+    }
+   }
+  }
+  // Exceptional long narrative: shrink to fit without detaching signers.
+  // Never put a bare signature onto a following unheaded sheet.
+  const rect=box.getBoundingClientRect(),paper=sheet.getBoundingClientRect();
+  const available=paper.height-parseFloat(getComputedStyle(sheet).paddingTop)-parseFloat(getComputedStyle(sheet).paddingBottom)-12;
+  const computed=Math.min(.75,Math.max(.55,.75*available/Math.max(1,rect.height)));
+  sheet.style.setProperty('--gov-zoom',String(computed));
+  return doesFit();
+ };
  try{
   if(document.fonts?.ready)await document.fonts.ready;
   await Promise.all([...root.querySelectorAll('img')].map(img=>img.decode?.().catch(()=>{})||Promise.resolve()));
-  root.dataset.printPagination='browser';
-  window.print();
- }catch(err){notify('ไม่สามารถเปิดหน้าพิมพ์ได้: '+(err.message||err),true);}
+  await new Promise(resolve=>requestAnimationFrame(resolve));
+  const failures=[];
+  for(const page of pages)if(!fitSheet(page)){
+   const title=page.querySelector('.memo-field-subject .memo-value,.print-title')?.textContent?.trim()||'เอกสาร';
+   failures.push(title);
+  }
+  if(failures.length){
+   root.innerHTML='';return notify('เอกสารมีข้อความมากเกินพื้นที่ A4: '+failures.join(', ')+' กรุณาลดข้อความรายการที่ยาวมากก่อนพิมพ์ เพื่อป้องกันลายเซ็นถูกตัด',true);
+  }
+  root.dataset.printPagination='complete-a4-pages';
+ }catch(error){
+  root.innerHTML='';return notify('ไม่สามารถจัดหน้ากระดาษได้: '+(error.message||error),true);
+ }finally{
+  document.body.classList.remove('print-measuring');
+ }
+ await new Promise(resolve=>requestAnimationFrame(resolve));
+ window.print();
 }
 
 function preview(){detail();const sheet=buildDocuments(state.currentRecord,state.school);document.getElementById('print-area').innerHTML=sheet;const target=app.querySelector('.content');target.insertAdjacentHTML('beforeend','<div class="card" id="preview-output"><div class="section-head"><h2>ตัวอย่างเอกสารสำหรับพิมพ์</h2>'+btn('พิมพ์ / PDF','print')+'</div><div class="doc-preview"><div class="preview-page"><div class="official">'+sheet+'</div></div></div><p class="hint">กรุณาตรวจข้อความและจำนวนหน้าก่อนใช้งานจริง</p></div>');document.querySelector('#preview-output')?.scrollIntoView({behavior:'smooth'});}
