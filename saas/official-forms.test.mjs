@@ -292,13 +292,30 @@ test('requisition number entered once prints on all requisition continuation she
  assert.equal((html.match(/ใบเบิก เลขที่ จ\. 218\/2569/g)||[]).length,2);
  assert.equal((html.match(/class="gov-requisition-signatures"/g)||[]).length,2);
 });
-test('payment director approval is moved upward without affecting other forms',async()=>{
+test('payment signature blocks occupy full width and avoid detached decision/identity rows',async()=>{
  const {readFileSync}=await import('node:fs');
  const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
- assert.match(css,/\.gov-payment \.memo-signatures\{\s*margin-top:0!important/);
- assert.match(css,/\.gov-payment \.gov-payment-director\{\s*margin-top:0!important/);
- assert.match(css,/\.gov-payment \.gov-payment-decision\{\s*position:relative!important;\s*top:-14mm!important/);
- assert.match(css,/@media print\{[\s\S]*?\.gov-payment \.gov-payment-decision\{\s*position:relative!important;\s*top:-14mm!important/);
+ assert.match(css,/\.gov-payment \.memo-signatures\{\s*display:block!important/);
+ assert.match(css,/\.gov-payment \.gov-payment-director\{\s*display:grid!important;\s*grid-template-columns:36% minmax\(0,1fr\)!important/);
+ assert.match(css,/\.gov-payment \.gov-payment-decision\{\s*position:static!important;\s*top:auto!important/);
+ assert.match(css,/\.gov-payment \.gov-finance-signature\{/);
+ assert.match(css,/@media print\{[\s\S]*?\.gov-payment \.gov-payment-decision\{\s*position:static!important;\s*top:auto!important/);
+});
+test('payment finance note is not redundantly printed and signatures have separate rows',()=>{
+ const html=buildDocuments(sample,school);
+ const paymentPage=html.slice(html.indexOf('gov-payment'));
+ assert.doesNotMatch(paymentPage,/หมายเหตุเจ้าหน้าที่การเงิน/);
+ assert.match(paymentPage,/class="signature-card gov-finance-signature"/);
+ assert.match(paymentPage,/class="signature-name">\([^<]+\)<\/div><div class="signature-role">เจ้าหน้าที่การเงิน<\/div>/);
+ assert.match(paymentPage,/class="signature-date">วันที่ <span class="date-rule"><\/span><\/div>/);
+ assert.match(paymentPage,/class="gov-payment-director"/);
+ assert.match(paymentPage,/class="gov-director-position">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
+});
+test('finance notes entered as real values are still available as optional additional notes',()=>{
+ const rec={...sample,document_meta:{...sample.document_meta,finance_note:'เอกสารครบถ้วน'}};
+ const html=buildDocuments(rec,school);
+ assert.match(html,/class="gov-finance-extra-note">หมายเหตุเพิ่มเติม เอกสารครบถ้วน/);
+ assert.doesNotMatch(html,/หมายเหตุเจ้าหน้าที่การเงิน/);
 });
 
 
