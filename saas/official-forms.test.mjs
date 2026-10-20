@@ -34,7 +34,7 @@ test('optional evidence fields do not get invented and are escaped',()=>{
  assert.match(html,/................................../);
 });
 test('metadata form covers all backend-approved fields',()=>{
- assert.equal(documentInfoFields.length,23);
+ assert.equal(documentInfoFields.length,27);
  const html=docMetaInputs({memo_number:'1/2570'});
  assert.match(html,/name="doc_memo_number"/);
  assert.match(html,/value="1\/2570"/);
@@ -160,7 +160,7 @@ test('saved evidence survives partial form saves and blank fields affect only th
 test('budget year and budget source propagate without extra metadata entries',()=>{
  const record={...sample,fiscal_year:2570,budget_source:'กิจกรรมพัฒนาผู้เรียน',document_meta:{}};
  const html=buildDocuments(record,school);
- assert.match(html,/มีเงินงบประมาณ ปี 2570/);
+ assert.match(html,/ปีงบประมาณ 2570/);
  assert.match(html,/แผนงาน\/กิจกรรม\/โครงการ กิจกรรมพัฒนาผู้เรียน/);
 });
 test('shared delivery date is used for receiving and requisition dates',()=>{
