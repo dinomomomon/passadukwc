@@ -228,7 +228,7 @@ const registryFields={
  requisition_number:'ใบเบิกพัสดุ',
  procurement_number:'ทะเบียนจัดซื้อ/จัดจ้าง'
 };
-const registryStatusLabel={reserved:'จองเลข',used:'ใช้แล้ว',void:'ยกเลิก',conflict:'ต้องตรวจสอบ'};
+const registryStatusLabel={reserved:'จองเลข',used:'ใช้แล้ว',void:'ยกเลิก',conflict:'ต้องตรวจสอบ',resolved:'แก้รายการเดิมแล้ว'};
 function registryDisplayNumber(row){
  if(!row)return '';
  const suffix=row.serial_no?row.serial_no+'/'+row.year_be:row.original_text||'เลขเดิมผิดรูปแบบ';
@@ -267,7 +267,7 @@ function officialRegistry(){
  const rows=filtered.map(n=>{
   const rec=recordsById.get(n.procurement_id),canUse=n.status==='reserved'&&canEditDocumentMeta(rec),canAdmin=isSchoolAdmin();
   const controls=(canUse?btn('ใช้เลข','registry-use','mini-btn','data-id="'+e(n.id)+'"'):'')+
-   (canAdmin&&['reserved','used'].includes(n.status)?btn('แก้เลข','registry-edit','mini-btn','data-id="'+e(n.id)+'"')+btn('ยกเลิก','registry-void','mini-btn','data-id="'+e(n.id)+'"'):'');
+   (canAdmin&&['reserved','used'].includes(n.status)?btn('แก้เลข','registry-edit','mini-btn','data-id="'+e(n.id)+'"')+btn('ยกเลิก','registry-void','mini-btn','data-id="'+e(n.id)+'"'):canAdmin&&n.status==='conflict'?btn('แก้เลขเดิมที่ผิดรูปแบบ','registry-resolve','mini-btn','data-id="'+e(n.id)+'"'):'');
   const title=rec?.title||'เลขเดิมจากรายการที่บันทึกไว้';
   return '<tr><td><strong>'+e(registryDisplayNumber(n))+'</strong><small class="muted" style="display:block">'+e(registrySeriesLabels[n.series]||n.series)+'</small></td>'+
   '<td>'+e(registryFields[n.document_field]||n.document_field)+'</td>'+
@@ -648,11 +648,11 @@ if(action==='registry-issue'){
  state.currentRecord=state.records.find(r=>r.id===id);state.page='detail';
  state.flash='จองเลขเอกสารอัตโนมัติแล้ว ตรวจสอบได้ในทะเบียนคุมเลข';return render();
 }
-if(['registry-use','registry-edit','registry-void'].includes(action)){
+if(['registry-use','registry-edit','registry-void','registry-resolve'].includes(action)){
  const n=state.officialNumbers.find(x=>x.id===el.dataset.id);
  if(!n)return notify('ไม่พบเลขทะเบียน',true);
  if(action!=='registry-use'&&!isSchoolAdmin())return notify('แก้ไขและยกเลิกได้เฉพาะแอดมินโรงเรียน',true);
- const act=action==='registry-use'?'use':action==='registry-edit'?'renumber':'void';
+ const act=action==='registry-use'?'use':action==='registry-edit'||action==='registry-resolve'?'renumber':'void';
  let next=null,reason='';
  if(act==='use'){if(!confirm('ยืนยันว่าเอกสารเลข '+registryDisplayNumber(n)+' มีการนำไปใช้งานจริงแล้ว?'))return;}
  if(act==='renumber'){
@@ -665,7 +665,7 @@ if(['registry-use','registry-edit','registry-void'].includes(action)){
   if(reason.trim().length<5)return notify('กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร',true);
   if(!confirm('ยืนยัน'+(act==='void'?'ยกเลิกเลข ':'เปลี่ยนเลข ')+registryDisplayNumber(n)+'? ระบบจะเก็บเลขเดิมไว้ตรวจสอบ'))return;
  }
- const {error}=await db.rpc('manage_official_number',{p_registry_id:n.id,p_action:act,p_new_serial:next,p_reason:reason});
+ const {error}=action==='registry-resolve'?await db.rpc('resolve_official_number_conflict',{p_registry_id:n.id,p_new_serial:next,p_reason:reason}):await db.rpc('manage_official_number',{p_registry_id:n.id,p_action:act,p_new_serial:next,p_reason:reason});
  if(error)return notify('ดำเนินการไม่สำเร็จ: '+error.message,true);
  await Promise.all([loadOfficialNumbers(),loadRecords()]);
  if(state.currentRecord)state.currentRecord=state.records.find(r=>r.id===state.currentRecord.id)||state.currentRecord;
