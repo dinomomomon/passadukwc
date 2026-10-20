@@ -53,3 +53,30 @@ test('VAT line adds to gross without inventing VAT rate',()=>{
  assert.match(html,/14\.00/);
  assert.match(html,/200\.00/);
 });
+
+
+test('director approvals have a dedicated ruled signature and separate position',()=>{
+ const html=buildDocuments(sample,school);
+ assert.match(html,/class="gov-director-writing"/);
+ assert.match(html,/class="gov-director-rule"/);
+ assert.match(html,/class="gov-director-position">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
+});
+test('editing drafts remains separate from issuing another numbered record',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const code=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(code,/update_procurement_draft/);
+ assert.match(code,/p_expected_updated_at:original.updated_at/);
+ assert.match(code,/state.editingRecordId=null/);
+ assert.match(code,/data-action="open-edit"|open-edit/);
+ assert.match(code,/canEditMainRecord/);
+});
+test('Chrome A4 print uses native page continuation instead of blocking long documents',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const code=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ assert.doesNotMatch(code,/มีข้อความยาวเกินหน้ากระดาษ A4 แม้ปรับขนาดตัวอักษรแล้ว/);
+ assert.match(code,/window\.print\(\)/);
+ assert.match(css,/overflow:visible!important/);
+ assert.match(css,/break-inside:auto!important/);
+ assert.match(css,/gov-director-position/);
+});
