@@ -309,7 +309,7 @@ test('payment finance note is not redundantly printed and signatures have separa
  assert.match(paymentPage,/class="signature-name">\([^<]+\)<\/div><div class="signature-role kp-signature-position">เจ้าหน้าที่การเงิน<\/div>/);
  assert.match(paymentPage,/class="signature-date">วันที่ <span class="date-rule"><\/span><\/div>/);
  assert.match(paymentPage,/class="gov-payment-director"/);
- assert.match(paymentPage,/class="gov-director-position">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
+ assert.match(paymentPage,/class="gov-director-position kp-signature-position"><span class="kp-position-part">ผู้อำนวยการ<\/span><span class="kp-position-part">โรงเรียนกาวิละวิทยาลัย<\/span>/);
 });
 test('finance notes entered as real values are still available as optional additional notes',()=>{
  const rec={...sample,document_meta:{...sample.document_meta,finance_note:'เอกสารครบถ้วน'}};
