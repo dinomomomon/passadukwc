@@ -336,3 +336,22 @@ test('ledger schema permanently reserves void numbers and isolates school RLS',a
  assert.match(sql,/FOR EACH ROW EXECUTE FUNCTION public.auto_register_procurement_numbers/);
  assert.match(fix,/m\.school_id=official_number_registry\.school_id/);
 });
+
+test('admins can reconcile historical malformed numbers without deleting audit entries',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('../supabase/migrations/20261020_resolve_legacy_official_number_conflicts.sql',import.meta.url),'utf8');
+ assert.match(app,/registry-resolve/);
+ assert.match(app,/resolve_official_number_conflict/);
+ assert.match(sql,/status='resolved'/);
+ assert.match(sql,/status='reserved'/);
+ assert.match(sql,/audit_logs/);
+});
+test('receipt and requisition only reserve after the actual delivery is recorded',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const sql=readFileSync(new URL('../supabase/migrations/20261020_registry_workflow_legacy_rpc.sql',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(sql,/after_delivery_allocate_official_numbers/);
+ assert.match(sql,/NEW\.document_meta->>'delivery_date'/);
+ assert.match(app,/!r\.document_meta\?\.delivery_date/);
+});
