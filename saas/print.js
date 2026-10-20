@@ -15,6 +15,9 @@ export function thaiBahtText(satang){let n=Math.round(Number(satang)||0);if(n<0)
 function meta(r){return r.document_meta&&typeof r.document_meta==='object'&&!Array.isArray(r.document_meta)?r.document_meta:{};}
 const numericMoney=x=>x!==undefined&&x!==null&&String(x).trim()!==''&&Number.isFinite(Number(x))&&Number(x)>=0;
 function moneyField(m,key){return numericMoney(m[key])?baht(Number(m[key])):'–';}
+function paymentNetSatang(r){const m=meta(r);if(numericMoney(m.withholding_baht)&&numericMoney(m.fine_baht))return Math.max(0,Number(r.total_satang)-Math.round(Number(m.withholding_baht)*100)-Math.round(Number(m.fine_baht)*100));if(!numericMoney(m.withholding_baht)&&!numericMoney(m.fine_baht)&&numericMoney(m.payable_baht))return Math.round(Number(m.payable_baht)*100);return null;}
+function payableAmount(r){const n=paymentNetSatang(r);return n===null?'–':cash(n);}
+function basePriceAmount(r){const m=meta(r);if(numericMoney(m.vat_baht))return baht(Math.max(0,amt(r.total_satang)-Number(m.vat_baht)));return numericMoney(m.item_base_baht)?moneyField(m,'item_base_baht'):cash(r.total_satang);}
 function officer(r,s){return v(r.signers?.officer||s.officer_name);}
 function head(r,s){return v(r.signers?.head||s.head_name);}
 function director(r,s){return v(r.signers?.director||s.director_name);}
@@ -36,14 +39,14 @@ function page(title,body,cls=''){return '<section class="paper-page official gov
 function lawLine(text){return '<p class="gov-law">'+e(text)+'</p>';}
 function dataHead(r,s,kind){const m=meta(r),isAcceptance=kind==='acceptance';
  const number=isAcceptance?(m.acceptance_number||'ร. ........../'+String((Number(String(r.document_date||'').slice(0,4))||2026)+543)):(m.requisition_number||blank);
- const date=isAcceptance?(m.acceptance_date||m.delivery_date):m.requisition_date;
+ const date=isAcceptance?(m.acceptance_date||m.inspection_date||m.delivery_date):(m.requisition_date||m.delivery_date);
  return '<div class="gov-right-head"><div>'+(isAcceptance?'ใบตรวจรับ เลขที่':'ใบเบิก เลขที่')+' '+v(number)+'</div><div>วันที่ '+(date?thaiDate(date):blank)+'</div><div>ส่วนราชการ '+e(s.name||'โรงเรียน')+'</div><div>ที่อยู่ '+schoolAddress(s)+'</div></div>';
 }
 function itemTable(r,kind='annex',height=85){
  const priced=kind==='annex',items=r.items||[],offset=r.__item_offset||0,showTotals=r.__show_totals!==false;
  const rows=items.map((x,i)=>'<tr class="gov-data-row"><td class="center">'+(offset+i+1)+'</td><td>'+e(x.name)+'</td><td class="center">'+e(x.qty)+'</td><td class="center">'+e(x.unit)+'</td>'+(priced?'<td class="right">'+cash(x.price_satang)+'</td><td class="right">'+cash(Math.round(Number(x.qty)*Number(x.price_satang)))+'</td>':'<td></td>')+'</tr>').join('');
  const filler=height>0?'<tr class="table-filler" style="height:'+height+'mm">'+Array.from({length:priced?6:5},()=>'<td>&nbsp;</td>').join('')+'</tr>':'';
- const m=meta(r),subtotal=numericMoney(m.item_base_baht)?moneyField(m,'item_base_baht'):(numericMoney(m.vat_baht)?baht(Math.max(0,amt(r.total_satang)-Number(m.vat_baht))):cash(r.total_satang));
+ const m=meta(r),subtotal=basePriceAmount(r);
  const total=priced&&showTotals?'<tr class="gov-summary-start"><td rowspan="3" colspan="4" class="gov-money-words">('+e(thaiBahtText(r.total_satang))+')</td><td class="gov-summary-label">รวมเป็นเงิน</td><td class="right">'+subtotal+'</td></tr><tr><td class="gov-summary-label">ภาษีมูลค่าเพิ่ม</td><td class="right">'+moneyField(m,'vat_baht')+'</td></tr><tr><td class="gov-summary-label">รวมเป็นเงินทั้งสิ้น</td><td class="right">'+cash(r.total_satang)+'</td></tr>':'';
  return '<table class="official-table official-table-ruled gov-items '+(priced?'gov-price-table':'gov-requisition-table')+'"><thead><tr><th class="col-order">ลำดับ</th><th>รายละเอียดและคุณลักษณะ</th><th class="col-quantity">จำนวน</th><th class="col-unit">หน่วย</th>'+(priced?'<th class="col-price">ราคาต่อหน่วย</th><th class="col-total">จำนวนเงิน</th>':'<th class="col-note">หมายเหตุ</th>')+'</tr></thead><tbody>'+rows+filler+total+'</tbody></table>';
 }
@@ -95,7 +98,7 @@ const body=lawLine('ตามระเบียบกระทรวงการ
  '<p class="indent">จึงเรียนมาเพื่อโปรดทราบ และพิจารณาให้ดำเนินการเบิกจ่ายเงินให้แก่ผู้'+(buy?'ขาย':'รับจ้าง')+' ตามระเบียบของหน่วยงานต่อไป</p>'+
  '<div class="gov-inspector-sign">'+sign(v(r.inspector_name),'ผู้ตรวจรับ'+noun)+'</div>'+
  '<div class="gov-half-rule"></div><p><b>เรียน</b> &nbsp; ผู้อำนวยการ'+e(s.name||'โรงเรียน')+'</p>'+
- '<p class="indent">ผู้ตรวจรับได้ตรวจรับ'+noun+' ตามระเบียบกระทรวงการคลังฯ พ.ศ. 2560 ข้อ 175 แล้ว เห็นสมควรจ่ายเงินให้แก่ผู้'+(buy?'ขาย':'รับจ้าง')+' รายละเอียดดังนี้ มูลค่าสินค้า '+cash(r.total_satang)+' บาท ภาษีมูลค่าเพิ่ม '+moneyField(m,'vat_baht')+' บาท รวมจำนวนเงิน '+cash(r.total_satang)+' บาท หักภาษี ณ ที่จ่าย '+moneyField(m,'withholding_baht')+' บาท หักค่าปรับ '+moneyField(m,'fine_baht')+' บาท คงเหลือจ่ายจริง '+moneyField(m,'payable_baht')+' บาท</p>'+
+ '<p class="indent">ผู้ตรวจรับได้ตรวจรับ'+noun+' ตามระเบียบกระทรวงการคลังฯ พ.ศ. 2560 ข้อ 175 แล้ว เห็นสมควรจ่ายเงินให้แก่ผู้'+(buy?'ขาย':'รับจ้าง')+' รายละเอียดดังนี้ มูลค่าสินค้า '+basePriceAmount(r)+' บาท ภาษีมูลค่าเพิ่ม '+moneyField(m,'vat_baht')+' บาท รวมจำนวนเงิน '+cash(r.total_satang)+' บาท หักภาษี ณ ที่จ่าย '+moneyField(m,'withholding_baht')+' บาท หักค่าปรับ '+moneyField(m,'fine_baht')+' บาท คงเหลือจ่ายจริง '+payableAmount(r)+' บาท</p>'+
  '<div class="gov-inspection-bottom">'+signRow(r,s)+directorSign(r,s,'เห็นชอบ<br>อนุมัติ')+'</div>';
 return page('ใบตรวจรับ'+noun,body,'gov-acceptance');}
 function payment(r,s,buy){const verb=buy?'ซื้อ':'จ้าง',noun=buy?'พัสดุ':'งานจ้าง',m=meta(r),vendor=v(r.vendor_name);
@@ -104,16 +107,16 @@ const body='<p class="indent">ตามที่ได้อนุมัติ�
  '<p class="indent">จึงเรียนมาเพื่อโปรด</p><ol class="gov-numbered"><li>ทราบผลการตรวจรับ'+noun+'</li>'+
  '<li>อนุมัติจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+') รายละเอียดดังนี้</li></ol>'+
  '<div class="gov-money-list">'+[
- ['มูลค่าสินค้า',moneyField(m,'item_base_baht')==='–'?cash(r.total_satang):moneyField(m,'item_base_baht')],
+ ['มูลค่าสินค้า',basePriceAmount(r)],
  ['บวก ภาษีมูลค่าเพิ่ม',moneyField(m,'vat_baht')],['จำนวนเงินที่ขอเบิก',cash(r.total_satang)],
  ['หัก ภาษีเงินได้',moneyField(m,'withholding_baht')],['ค่าปรับ',moneyField(m,'fine_baht')],
- ['คงเหลือจ่ายจริง',moneyField(m,'payable_baht')]
+ ['คงเหลือจ่ายจริง',payableAmount(r)]
  ].map(row=>'<div><span>'+row[0]+'</span><span>'+row[1]+'</span><span>บาท</span></div>').join('')+'</div>'+
- '<p class="gov-words">('+ (numericMoney(m.payable_baht)?e(thaiBahtText(Math.round(Number(m.payable_baht)*100))):'........................................')+')</p>'+
+ '<p class="gov-words">('+ (paymentNetSatang(r)!==null?e(thaiBahtText(paymentNetSatang(r))):'........................................')+')</p>'+
  '<div class="gov-finance-title">ความเห็นของเจ้าหน้าที่การเงิน</div>'+
- '<p class="indent">ได้ตรวจสอบหลักฐานแล้ว มีเอกสารครบถ้วนและมีเงินงบประมาณ ปี '+v(m.budget_year)+' ☐ งบดำเนินการ ☐ งบลงทุน ตามแผนงาน '+v(m.budget_plan)+' กิจกรรม '+v(m.budget_activity)+' งาน/โครงการ '+v(m.budget_project)+'</p>'+
- '<p>เป็นเงิน '+moneyField(m,'budget_total_baht')+' บาท จ่ายไปแล้ว '+moneyField(m,'budget_paid_baht')+' บาท จ่ายครั้งนี้ '+moneyField(m,'payable_baht')+' บาท คงเหลืองบประมาณ '+(numericMoney(m.budget_total_baht)&&numericMoney(m.budget_paid_baht)&&numericMoney(m.payable_baht)?baht(Math.max(0,Number(m.budget_total_baht)-Number(m.budget_paid_baht)-Number(m.payable_baht))):'–')+' บาท</p>'+
- '<p class="indent">เห็นสมควรอนุมัติเบิกจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+')</p>'+
+ '<p class="indent">ได้ตรวจสอบหลักฐานแล้ว มีเอกสารครบถ้วนและมีเงินงบประมาณ ปี '+v(r.fiscal_year||m.budget_year)+' ☐ งบดำเนินการ ☐ งบลงทุน แผนงาน/กิจกรรม/โครงการ '+v(r.budget_source||m.budget_activity||m.budget_project)+'</p>'+
+ '<p>เป็นเงิน '+moneyField(m,'budget_total_baht')+' บาท จ่ายไปแล้ว '+moneyField(m,'budget_paid_baht')+' บาท จ่ายครั้งนี้ '+payableAmount(r)+' บาท คงเหลืองบประมาณ '+(numericMoney(m.budget_total_baht)&&numericMoney(m.budget_paid_baht)&&paymentNetSatang(r)!==null?baht(Math.max(0,Number(m.budget_total_baht)-Number(m.budget_paid_baht)-paymentNetSatang(r)/100)):'–')+' บาท</p>'+
+ '<p class="indent">เห็นสมควรอนุมัติเบิกจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+payableAmount(r)+' บาท ('+(paymentNetSatang(r)!==null?e(thaiBahtText(paymentNetSatang(r))):blank)+')</p>'+
  '<p>หมายเหตุเจ้าหน้าที่การเงิน '+v(m.finance_note,'................................................')+'</p>'+
  '<div class="gov-finance-sign">'+sign(v(s.finance_name),'เจ้าหน้าที่การเงิน',true)+'</div>';
 const approvalPart='<div class="gov-payment-director"><div>1. ทราบ<br>2. อนุมัติจ่ายเงิน</div>'+sign(director(r,s),'ผู้อำนวยการ'+e(s.name||'โรงเรียน'))+'</div>';
