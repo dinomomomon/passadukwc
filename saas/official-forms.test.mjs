@@ -295,6 +295,8 @@ test('requisition number entered once prints on all requisition continuation she
 test('payment director approval is moved upward without affecting other forms',async()=>{
  const {readFileSync}=await import('node:fs');
  const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
- assert.match(css,/\.gov-payment \.memo-signatures\{\s*margin-top:2mm!important/);
- assert.match(css,/\.gov-payment \.gov-payment-director\{\s*margin-top:3mm!important/);
+ assert.match(css,/\.gov-payment \.memo-signatures\{\s*margin-top:0!important/);
+ assert.match(css,/\.gov-payment \.gov-payment-director\{\s*margin-top:0!important/);
+ assert.match(css,/\.gov-payment \.gov-payment-decision\{\s*position:relative!important;\s*top:-14mm!important/);
+ assert.match(css,/@media print\{[\s\S]*?\.gov-payment \.gov-payment-decision\{\s*position:relative!important;\s*top:-14mm!important/);
 });
