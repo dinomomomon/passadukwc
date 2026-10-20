@@ -236,7 +236,6 @@ async function printOfficialDocuments(){
  if(!root)return notify('ไม่พบพื้นที่พิมพ์เอกสาร',true);
  root.innerHTML=buildDocuments(state.currentRecord,state.school);
  document.body.classList.add('print-measuring');
- const pages=[...root.querySelectorAll('.paper-page.official.gov-doc')];
  const fitSheet=sheet=>{
   const box=sheet.querySelector('.doc-sheet-body'),filler=sheet.querySelector('.table-filler');
   if(!box)return false;
@@ -279,13 +278,24 @@ async function printOfficialDocuments(){
   if(document.fonts?.ready)await document.fonts.ready;
   await Promise.all([...root.querySelectorAll('img')].map(img=>img.decode?.().catch(()=>{})||Promise.resolve()));
   await new Promise(resolve=>requestAnimationFrame(resolve));
-  const failures=[];
-  for(const page of pages)if(!fitSheet(page)){
-   const title=page.querySelector('.memo-field-subject .memo-value,.print-title')?.textContent?.trim()||'เอกสาร';
-   failures.push(title);
+  let failures=[];
+  // Long item descriptions can consume a different number of A4 rows.
+  // Rebuild COMPLETE forms at progressively smaller page sizes. Every
+  // continuation retains the original heading, legal citation and signers.
+  for(const count of [9,7,5,3,2,1]){
+   root.innerHTML=buildDocuments({...state.currentRecord,__items_per_page:count},state.school);
+   failures=[];
+   for(const page of [...root.querySelectorAll('.paper-page.official.gov-doc')]){
+    if(!fitSheet(page)){
+     const title=page.querySelector('.memo-field-subject .memo-value,.print-title')?.textContent?.trim()||'เอกสาร';
+     failures.push({title,items:page.classList.contains('gov-annex')||page.classList.contains('gov-requisition')});
+    }
+   }
+   if(!failures.length)break;
+   if(failures.some(f=>!f.items))break;
   }
   if(failures.length){
-   root.innerHTML='';return notify('เอกสารมีข้อความมากเกินพื้นที่ A4: '+failures.join(', ')+' กรุณาลดข้อความรายการที่ยาวมากก่อนพิมพ์ เพื่อป้องกันลายเซ็นถูกตัด',true);
+   root.innerHTML='';return notify('เอกสารมีข้อความมากเกินพื้นที่ A4: '+failures.map(f=>f.title).join(', ')+' กรุณาลดข้อความที่ยาวมากเพื่อป้องกันลายเซ็นถูกตัด',true);
   }
   root.dataset.printPagination='complete-a4-pages';
  }catch(error){
