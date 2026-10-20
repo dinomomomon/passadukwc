@@ -37,7 +37,7 @@ const demoRecords=[
  mkDemo('demo-2','hire',1,'จ้างทำป้ายประชาสัมพันธ์','ร้านป้ายตัวอย่าง',980,'2026-10-17',[{name:'งานออกแบบและจัดทำป้าย',qty:1,unit:'งาน',price_satang:98000}]),
  mkDemo('demo-3','purchase',2,'ซื้ออุปกรณ์การเรียน','ร้านศึกษาภัณฑ์',1250,'2026-10-18',[{name:'อุปกรณ์การเรียน',qty:5,unit:'ชุด',price_satang:25000}])
 ];
-const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:''};
+const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:'',memberEditingId:null,memberResetId:null};
 const money=n=>(Number(n||0)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const dateThai=d=>d?new Date(d+'T12:00:00+07:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
 const dateToday=()=>new Date(Date.now()+7*3600000).toISOString().slice(0,10);
@@ -324,8 +324,115 @@ async function printOfficialDocuments(){
 function preview(){detail();const sheet=buildDocuments(state.currentRecord,state.school);document.getElementById('print-area').innerHTML=sheet;const target=app.querySelector('.content');target.insertAdjacentHTML('beforeend','<div class="card" id="preview-output"><div class="section-head"><h2>ตัวอย่างเอกสารสำหรับพิมพ์</h2>'+btn('พิมพ์ / PDF','print')+'</div><div class="doc-preview"><div class="preview-page"><div class="official">'+sheet+'</div></div></div><p class="hint">กรุณาตรวจข้อความและจำนวนหน้าก่อนใช้งานจริง</p></div>');document.querySelector('#preview-output')?.scrollIntoView({behavior:'smooth'});}
 function storage(){shell('จัดเก็บเอกสาร','เชื่อมต่อคลาวด์ของโรงเรียน',heading('จัดเก็บเอกสาร','ข้อมูลรายการบันทึกใน Supabase ส่วน PDF จะเชื่อมกับ Google Drive')+'<div class="card"><span class="tag amber">อยู่ระหว่างพัฒนา</span><h2 style="margin-top:14px">Google Drive สำหรับแต่ละโรงเรียน</h2><p>เวอร์ชันนี้พิมพ์และบันทึกเป็น PDF ลงอุปกรณ์ได้แล้ว การบันทึกไฟล์ขึ้น Google Drive อัตโนมัติยังไม่เปิดใช้งาน เพื่อป้องกันการขอสิทธิ์เข้าถึงบัญชี Google โดยไม่จำเป็น</p><p>ในรุ่นถัดไปจะมีระบบเชื่อมต่อ Drive ผ่าน OAuth และจัดโฟลเดอร์ตามปีงบประมาณ/เลขที่เอกสาร พร้อมเก็บประวัติเวอร์ชัน</p>'+btn('กลับหน้าหลัก','dashboard')+'</div>');}
 function settings(){if(!isAdmin()){notify('เฉพาะผู้ดูแลโรงเรียน',true);return;}const s=state.school;const inp=(t,k)=>'<div class="field"><label>'+t+'</label><input class="input" name="'+k+'" value="'+e(s[k]||'')+'"></div>';shell('ข้อมูลโรงเรียน','ตั้งค่าผู้ลงนาม',heading('ตั้งค่าโรงเรียนและผู้ลงนาม','ชื่อและตำแหน่งที่ตั้งค่าใช้กับรายการใหม่ ส่วนเอกสารเก่าจะเก็บชื่อเดิม')+'<div class="card"><h2>โลโก้โรงเรียน</h2><div class="school-logo-setting">'+schoolLogo('settings')+'<div><b>'+e(s.name)+'</b><p class="muted">สำหรับหน้า Dashboard และเมนูของโรงเรียนเท่านั้น <strong>ไม่แทรกในเอกสารราชการและไม่แทนตราครุฑ</strong></p></div></div><form id="school-logo-form"><div class="field"><label>แนบไฟล์โลโก้โรงเรียน (PNG, JPG หรือ WEBP)</label><input class="input" id="school-logo-file" name="school_logo" type="file" accept="image/png,image/jpeg,image/webp" required><small class="hint">ขนาดไม่เกิน 1 MB แนะนำภาพสี่เหลี่ยมจัตุรัส พื้นหลังโปร่งใส</small></div><div class="logo-form-actions"><button class="secondary" type="submit">อัปโหลดโลโก้โรงเรียน</button>'+(s.logo_path||state.demoLogoUrl?btn('นำโลโก้ออก','remove-school-logo','mini-btn'):'')+'</div></form></div><form class="card" id="school-form"><h2>ข้อมูลสถานศึกษา</h2>'+inp('ชื่อโรงเรียน','name')+'<div class="form-grid">'+inp('อำเภอ','district')+inp('จังหวัด','province')+'</div><h2>ชื่อผู้ลงนาม</h2><div class="form-grid">'+inp('เจ้าหน้าที่พัสดุ','officer_name')+inp('หัวหน้าเจ้าหน้าที่พัสดุ','head_name')+inp('ผู้อำนวยการสถานศึกษา','director_name')+inp('เจ้าหน้าที่การเงิน','finance_name')+'</div><button type="submit" class="primary">บันทึกข้อมูลโรงเรียน</button></form>');}
-async function loadMembers(){if(!isSchoolAdmin()){state.members=[];return;}const {data,error}=await db.rpc('list_school_members',{p_school_id:state.school.id});if(error){state.error=error.message;return;}state.members=data||[];}
-function members(){if(!isSchoolAdmin()){state.page='dashboard';notify('เฉพาะแอดมินของโรงเรียนเท่านั้นที่จัดการผู้ใช้งานได้',true);return;}shell('ผู้ใช้ในโรงเรียน','การกำหนดสิทธิ์',heading('จัดการเจ้าหน้าที่','เพิ่มเจ้าหน้าที่ได้หลังจากเจ้าตัวสมัครบัญชีด้วยอีเมลแล้ว')+'<div class="grid-two"><div class="card"><h2>สมาชิกที่มีสิทธิ์ใช้งาน</h2>'+((state.members.length)?'<div class="table-scroller"><table><thead><tr><th>ชื่อ</th><th>อีเมล</th><th>บทบาท</th></tr></thead><tbody>'+state.members.map(m=>'<tr><td>'+e(m.member_name)+'</td><td>'+e(m.member_email)+'</td><td><span class="tag">'+e(m.member_role)+'</span></td></tr>').join('')+'</tbody></table></div>':'<p>ยังไม่มีรายชื่อที่ดึงได้</p>')+'</div><form id="member-form" class="card"><h2>เพิ่มเจ้าหน้าที่</h2><div class="field"><label>อีเมลที่สมัครบัญชีแล้ว</label><input required class="input" name="email" type="email" placeholder="teacher@school.ac.th"></div><div class="field"><label>หน้าที่ในระบบ</label><select class="select" name="role"><option value="procurement_officer">เจ้าหน้าที่พัสดุ</option><option value="procurement_head">หัวหน้าเจ้าหน้าที่</option><option value="school_admin">แอดมินโรงเรียน</option><option value="director">ผู้อำนวยการ</option><option value="finance">เจ้าหน้าที่การเงิน</option><option value="inspector">ผู้ตรวจรับ</option></select></div><button class="primary" type="submit">เพิ่มสมาชิก</button><p class="hint">สิทธิ์ใช้งานระบบไม่ใช่หลักฐานแต่งตั้งหน้าที่ตามกฎหมาย</p></form></div>');}
+
+const staffRoleLabels={
+  school_admin:'แอดมินโรงเรียน',
+  procurement_officer:'เจ้าหน้าที่พัสดุ',
+  procurement_head:'หัวหน้าเจ้าหน้าที่พัสดุ',
+  director:'ผู้อำนวยการสถานศึกษา',
+  finance:'เจ้าหน้าที่การเงิน',
+  inspector:'ผู้ตรวจรับพัสดุ'
+};
+function staffRoleOptions(selected='procurement_officer'){
+  return Object.entries(staffRoleLabels).map(([value,label])=>
+    '<option value="'+e(value)+'" '+(selected===value?'selected':'')+'>'+e(label)+'</option>').join('');
+}
+async function staffRequest(action,payload={}){
+  if(!isSchoolAdmin()||!state.school?.id)throw Error('เฉพาะแอดมินโรงเรียนที่ยังมีสิทธิ์เท่านั้น');
+  const {data,error}=await db.functions.invoke('school-staff',{
+    body:{action,school_id:state.school.id,...payload}
+  });
+  if(error){
+    let msg='เชื่อมต่อระบบจัดการบัญชีไม่สำเร็จ';
+    try{const detail=await error.context?.json();msg=detail?.error||detail?.message||error.message||msg;}
+    catch{msg=error.message||msg;}
+    throw new Error(msg);
+  }
+  if(!data?.success)throw new Error(data?.error||'ดำเนินการไม่สำเร็จ');
+  return data.message||'ดำเนินการเรียบร้อยแล้ว';
+}
+async function loadMembers(){
+  if(!isSchoolAdmin()){state.members=[];return;}
+  const {data,error}=await db.rpc('list_school_members',{p_school_id:state.school.id});
+  if(error){state.error='โหลดรายชื่อสมาชิกไม่สำเร็จ: '+error.message;return;}
+  state.members=data||[];
+}
+function staffInput(label,name,value='',opts=''){
+  return '<div class="field"><label for="staff-'+e(name)+'">'+e(label)+'</label>'+
+    '<input id="staff-'+e(name)+'" class="input" name="'+e(name)+'" value="'+e(value)+'" '+opts+'></div>';
+}
+function staffPanel(){
+  const editing=state.members.find(m=>m.user_id===state.memberEditingId);
+  const reset=state.members.find(m=>m.user_id===state.memberResetId);
+  if(reset){
+    return '<form id="staff-password-form" class="card staff-card"><h2>ตั้งรหัสผ่านใหม่</h2>'+
+      '<p class="muted">สำหรับ '+e(reset.member_name||reset.member_email)+' — รหัสผ่านจะไม่แสดงหรือเก็บในระบบจัดการ</p>'+
+      '<input type="hidden" name="user_id" value="'+e(reset.user_id)+'">'+
+      staffInput('รหัสผ่านใหม่','password','','type="password" required minlength="10" maxlength="128" autocomplete="new-password"')+
+      staffInput('ยืนยันรหัสผ่านใหม่','confirm_password','','type="password" required minlength="10" maxlength="128" autocomplete="new-password"')+
+      '<div class="staff-form-actions"><button class="primary" type="submit">บันทึกรหัสผ่านใหม่</button>'+
+      btn('ยกเลิก','cancel-staff','secondary')+'</div><p class="hint">โปรดแจ้งรหัสผ่านให้เจ้าหน้าที่ผ่านช่องทางส่วนตัว</p></form>';
+  }
+  if(editing){
+    return '<form id="staff-edit-form" class="card staff-card"><h2>แก้ไขบัญชีเจ้าหน้าที่</h2>'+
+      '<input type="hidden" name="user_id" value="'+e(editing.user_id)+'">'+
+      staffInput('ชื่อ–นามสกุล','full_name',editing.member_name,'required minlength="3" maxlength="200"')+
+      staffInput('อีเมลสำหรับเข้าสู่ระบบ','email',editing.member_email,'type="email" required maxlength="254" autocomplete="off"')+
+      '<div class="field"><label>หน้าที่ในระบบ</label><select name="role" class="select" required>'+
+      staffRoleOptions(editing.member_role)+'</select></div>'+
+      '<div class="staff-form-actions"><button class="primary" type="submit">บันทึกการแก้ไข</button>'+
+      btn('ยกเลิก','cancel-staff','secondary')+'</div>'+
+      '<p class="hint">เปลี่ยนชื่อ อีเมล หรือบทบาทได้ โดยไม่กระทบเอกสารที่เคยจัดทำ</p></form>';
+  }
+  return '<form id="member-form" class="card staff-card"><div class="staff-panel-eyebrow">สร้างบัญชีใหม่</div>'+
+    '<h2>เพิ่มเจ้าหน้าที่โรงเรียน</h2>'+
+    '<p class="muted">แอดมินกำหนดบัญชีและรหัสผ่านให้เจ้าหน้าที่ได้เลย ไม่ต้องให้สมัครสมาชิกเอง</p>'+
+    staffInput('ชื่อ–นามสกุล','full_name','','required minlength="3" maxlength="200" placeholder="ชื่อและนามสกุลเจ้าหน้าที่" autocomplete="off"')+
+    staffInput('อีเมลสำหรับเข้าสู่ระบบ','email','','type="email" required maxlength="254" placeholder="teacher@school.ac.th" autocomplete="off"')+
+    '<div class="field"><label>หน้าที่ในระบบ</label><select name="role" class="select" required>'+staffRoleOptions()+'</select></div>'+
+    staffInput('กำหนดรหัสผ่าน','password','','type="password" required minlength="10" maxlength="128" autocomplete="new-password" placeholder="อย่างน้อย 10 ตัวอักษร"')+
+    staffInput('ยืนยันรหัสผ่าน','confirm_password','','type="password" required minlength="10" maxlength="128" autocomplete="new-password"')+
+    '<button class="primary staff-full-btn" type="submit">+ สร้างบัญชีและให้สิทธิ์ใช้งาน</button>'+
+    '<p class="hint">บัญชีสามารถเข้าสู่ระบบได้ทันที โปรดส่งรหัสผ่านให้เจ้าหน้าที่อย่างปลอดภัย และแนะนำให้เปลี่ยนรหัสผ่านหลังเข้าสู่ระบบ</p>'+
+    '<p class="hint">สิทธิ์ในเว็บไซต์ไม่ใช่คำสั่งแต่งตั้งหน้าที่ตามระเบียบราชการ</p></form>';
+}
+function members(){
+  if(!isSchoolAdmin()){
+    state.page='dashboard';notify('เฉพาะแอดมินของโรงเรียนเท่านั้นที่จัดการผู้ใช้งานได้',true);return;
+  }
+  const rows=state.members||[];
+  const active=rows.filter(m=>m.member_active).length;
+  const administrators=rows.filter(m=>m.member_active&&m.member_role==='school_admin').length;
+  const table=rows.length?
+    '<div class="table-scroller"><table class="staff-table"><thead><tr>'+
+    '<th>เจ้าหน้าที่</th><th>บทบาท</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>'+
+    rows.map(m=>{
+      const self=m.user_id===state.user?.id;
+      return '<tr><td><strong>'+e(m.member_name||'ยังไม่ระบุชื่อ')+'</strong>'+
+        (self?'<span class="staff-self">คุณ</span>':'')+
+        '<small>'+e(m.member_email)+'</small></td>'+
+        '<td><span class="tag">'+e(staffRoleLabels[m.member_role]||m.member_role)+'</span></td>'+
+        '<td><span class="staff-status '+(m.member_active?'is-active':'is-inactive')+'">'+
+        (m.member_active?'ใช้งานได้':'ปิดสิทธิ์')+'</span></td>'+
+        '<td><div class="staff-row-actions">'+
+        btn('แก้ไข','edit-staff','mini-btn','data-id="'+e(m.user_id)+'"')+
+        btn('เปลี่ยนรหัสผ่าน','password-staff','mini-btn','data-id="'+e(m.user_id)+'"')+
+        (self?'':btn(m.member_active?'ปิดสิทธิ์':'เปิดสิทธิ์','toggle-staff','mini-btn','data-id="'+e(m.user_id)+'"'))+
+        (self?'':btn('ลบ','remove-staff','mini-btn staff-danger','data-id="'+e(m.user_id)+'"'))+
+        '</div></td></tr>';
+    }).join('')+'</tbody></table></div>':
+    '<div class="staff-empty">ยังไม่มีเจ้าหน้าที่อื่นในโรงเรียนนี้</div>';
+  shell('จัดการผู้ใช้งาน','เฉพาะแอดมินโรงเรียน',heading('บริหารเจ้าหน้าที่','สร้างบัญชี กำหนดบทบาท และควบคุมสิทธิ์จากที่เดียว')+
+    '<div class="staff-stats"><div><small>ผู้ใช้ทั้งหมด</small><strong>'+rows.length+'</strong></div>'+
+    '<div><small>กำลังใช้งาน</small><strong>'+active+'</strong></div>'+
+    '<div><small>แอดมินโรงเรียน</small><strong>'+administrators+'</strong></div></div>'+
+    '<div class="staff-layout"><section class="card staff-directory"><div class="staff-directory-head"><div>'+
+    '<h2>สมาชิกในโรงเรียน</h2><p class="muted">แสดงเฉพาะบุคลากรของ '+e(state.school.name)+'</p></div>'+
+    btn('↻ รีเฟรช','refresh-staff','secondary')+'</div>'+
+    table+
+    '<div class="staff-directory-note">การลบจะถอนสิทธิ์ผู้ใช้ออกจากโรงเรียน แต่เก็บประวัติเอกสารและบันทึกการทำงานไว้ตรวจสอบย้อนหลัง</div></section>'+
+    staffPanel()+'</div>');
+}
 function ownerSubscriptionsPanel(){
  const rows=state.subscriptions||[];
  const tr=rows.map(x=>{
@@ -373,7 +480,30 @@ async function loadOwner(){
 async function loadRecords(){if(!state.school||state.demo)return;const {data,error}=await db.from('procurements').select('*').eq('school_id',state.school.id).order('created_at',{ascending:false}).limit(300);if(error){state.error=error.message;return;}state.records=data||[];}
 async function startDemo(){state.demo=true;state.user=null;state.school=demoSchool;state.records=[...demoRecords];state.owner=false;state.page='dashboard';render();}
 async function signOut(){if(state.demo){state.demo=false;state.school=null;state.profile=null;state.page='landing';state.records=[];render();return;}const {error}=await db.auth.signOut();if(error)return notify('ออกจากระบบไม่สำเร็จ: '+error.message,true);state.session=null;state.user=null;state.profile=null;state.school=null;state.owner=false;state.page='landing';render();}
-async function go(action,el){if(action==='home'){state.page='landing';state.demo=false;render();return;}if(action==='login'||action==='signup'){
+async function go(action,el){
+if(['edit-staff','password-staff','cancel-staff','refresh-staff','toggle-staff','remove-staff'].includes(action)){
+  if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
+  const id=el.dataset.id;
+  const person=state.members.find(m=>m.user_id===id);
+  if(action==='cancel-staff'){state.memberEditingId=null;state.memberResetId=null;return render();}
+  if(action==='refresh-staff'){await loadMembers();return render();}
+  if(!person)return notify('ไม่พบเจ้าหน้าที่ในรายการ',true);
+  if(action==='edit-staff'){state.memberEditingId=id;state.memberResetId=null;return render();}
+  if(action==='password-staff'){state.memberResetId=id;state.memberEditingId=null;return render();}
+  if(id===state.user?.id)return notify('ไม่สามารถปิดสิทธิ์หรือลบบัญชีตนเองได้',true);
+  if(action==='remove-staff'){
+    if(!confirm('ยืนยันลบ '+(person.member_name||person.member_email)+' ออกจากโรงเรียน?\nเจ้าหน้าที่จะไม่สามารถเข้าถึงข้อมูลโรงเรียนได้อีก แต่เอกสารเก่าจะยังอยู่'))return;
+    const message=await staffRequest('remove',{user_id:id});
+    await loadMembers();state.memberEditingId=null;state.memberResetId=null;return notify(message);
+  }
+  if(action==='toggle-staff'){
+    const active=!person.member_active;
+    if(!confirm((active?'เปิด':'ปิด')+'สิทธิ์การใช้งานของ '+(person.member_name||person.member_email)+' ?'))return;
+    const message=await staffRequest('toggle',{user_id:id,active});
+    await loadMembers();return notify(message);
+  }
+}
+if(action==='home'){state.page='landing';state.demo=false;render();return;}if(action==='login'||action==='signup'){
   state.authEmail=String(document.querySelector('#kp-email')?.value||document.querySelector('#kp-forgot-email')?.value||state.authEmail||'').trim();
   state.authMode=action;state.authForgot=false;state.recoveryMode=false;state.page='auth';render();return;
 }
@@ -497,7 +627,25 @@ if(form.id==='school-logo-form'){
   state.flash='บันทึกโลโก้โรงเรียนเรียบร้อยแล้ว';return render();
 }
 if(form.id==='school-form'){if(state.demo){state.school={...state.school,...f};return notify('ปรับข้อมูลตัวอย่างในหน้านี้แล้ว (ไม่บันทึกจริง)');}const {data,error}=await db.from('schools').update(f).eq('id',state.school.id).select('*').single();if(error)return notify(error.message,true);state.school=data;return notify('บันทึกข้อมูลโรงเรียนแล้ว');}
-if(form.id==='member-form'){if(!isSchoolAdmin())return notify('เฉพาะแอดมินของโรงเรียนเท่านั้นที่เพิ่มเจ้าหน้าที่ได้',true);const {error}=await db.rpc('manage_school_membership',{p_school_id:state.school.id,p_member_email:f.email,p_role:f.role});if(error)return notify(error.message,true);await loadMembers();return notify('กำหนดสิทธิ์ให้เจ้าหน้าที่แล้ว');}
+if(form.id==='member-form'){
+  if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
+  if(f.password!==f.confirm_password)return notify('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน',true);
+  if(String(f.password||'').length<10)return notify('รหัสผ่านต้องมีอย่างน้อย 10 ตัวอักษร',true);
+  const message=await staffRequest('create',{full_name:f.full_name,email:f.email,role:f.role,password:f.password});
+  await loadMembers();state.memberEditingId=null;state.memberResetId=null;return notify(message);
+}
+if(form.id==='staff-edit-form'){
+  if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
+  const message=await staffRequest('edit',{user_id:f.user_id,full_name:f.full_name,email:f.email,role:f.role});
+  state.memberEditingId=null;await loadMembers();return notify(message);
+}
+if(form.id==='staff-password-form'){
+  if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
+  if(f.password!==f.confirm_password)return notify('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน',true);
+  if(String(f.password||'').length<10)return notify('รหัสผ่านต้องมีอย่างน้อย 10 ตัวอักษร',true);
+  const message=await staffRequest('password',{user_id:f.user_id,password:f.password});
+  state.memberResetId=null;await loadMembers();return notify(message);
+}
 if(form.id==='renumber-form'){if(!isAdmin())return notify('ไม่มีสิทธิ์แก้เลข',true);const no=Number(f.number);if(state.demo){if(state.records.some(x=>x!==state.currentRecord&&x.kind===state.currentRecord.kind&&x.fiscal_year===state.currentRecord.fiscal_year&&x.document_number===no))return notify('เลขนี้มีอยู่แล้ว',true);state.currentRecord.document_number=no;state.flash='แก้เลขในโหมดตัวอย่างแล้ว';return render();}const {error}=await db.rpc('change_procurement_number',{p_record_id:state.currentRecord.id,p_new_number:no,p_reason:f.reason});if(error)return notify(error.message,true);await loadRecords();state.currentRecord=state.records.find(x=>x.id===state.currentRecord.id);state.flash='บันทึกการแก้ไขเลขเอกสารแล้ว';return render();}
 if(form.id==='procurement-form'){if(!state.demo){await refreshSubscription();if(!canCreate())return notify('สิทธิ์สร้างเอกสารหมดอายุแล้ว กรุณาติดต่อเจ้าของแพลตฟอร์ม',true);}collectDraft();const d=state.draft;const items=state.items.map(x=>({name:String(x.name).trim(),qty:Number(x.qty),unit:String(x.unit).trim(),price_satang:Math.round(Number(x.price)*100)}));let total=items.reduce((n,x)=>n+x.qty*x.price_satang,0);if(!items.length||items.some(x=>!x.name||!x.qty||!x.unit||!x.price_satang))return notify('กรุณากรอกรายการ จำนวน หน่วย และราคาให้ครบ',true);if(total<=0||total>500000)return notify('วงเงินต้องมากกว่า 0 และไม่เกิน 5,000 บาท',true);if(!d.title||!d.budget_source)return notify('กรุณากรอกเรื่องและงบประมาณ',true);
 let rec;
