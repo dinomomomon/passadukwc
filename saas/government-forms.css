@@ -281,3 +281,30 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
 .doc-meta-card .doc-meta-advanced>summary{font-size:12px;font-weight:700;cursor:pointer;color:#536783}
 .doc-meta-card .doc-meta-advanced .form-grid{margin-top:10px}
 .doc-meta-card .form-grid{margin-bottom:7px}
+
+
+/* Guided entry: reveal only one step at a time */
+.kp-wizard-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:14px 0 20px}
+.kp-wizard-step{padding:11px 7px;border:1px solid #dbe6f8;border-radius:9px;text-align:center;color:#64748b;background:#f4f7fb;font-size:12px;font-weight:700}
+.kp-wizard-step.is-active{background:#0d65dc;color:#fff;border-color:#0d65dc}
+.kp-wizard-step.is-done{color:#11613f;background:#edfbf3;border-color:#bbebd2}
+.kp-wizard-panel{min-height:300px}
+.kp-wizard-footer{display:flex;gap:12px;justify-content:space-between;align-items:center;margin:15px 0}
+.kp-wizard-progress{font-weight:700;font-size:13px;color:#43597a}
+.kp-wizard-footer>.row{margin:0;justify-content:flex-end}
+.kp-wizard-review{margin-top:20px;border-radius:12px;background:#f1f6fe;padding:16px 18px;color:#173b68}
+.kp-wizard-review p{margin:6px 0;font-size:13px}
+.kp-wizard-panel .doc-meta-card{margin-top:10px}
+@media(max-width:730px){.kp-wizard-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.kp-wizard-footer{flex-direction:column;align-items:stretch}.kp-wizard-footer>.row{justify-content:flex-end}}
+.paper-page.official.gov-doc .gov-law-second{margin-top:-3mm;margin-bottom:6mm;text-align:center;font-weight:700}
+.paper-page.official.gov-doc.gov-annex .gov-law-second{font-size:16pt}
+.paper-page.official.gov-doc .gov-payment-director{
+ display:grid;grid-template-columns:42% 58%;gap:0;align-items:start;margin-top:7mm;
+ width:100%;break-inside:avoid
+}
+.paper-page.official.gov-doc .gov-payment-decision{text-align:left;padding-left:2mm;line-height:1.5}
+.paper-page.official.gov-doc .gov-payment-signature{text-align:center;display:flex;flex-direction:column;align-items:center;gap:1mm;margin:2mm 0 0}
+.paper-page.official.gov-doc .gov-payment-signline{display:flex;justify-content:center;gap:2mm;align-items:baseline;white-space:nowrap;width:100%}
+.paper-page.official.gov-doc .gov-payment-signline .gov-director-rule{width:37mm;max-width:80%}
+.paper-page.official.gov-doc .gov-payment-signature .signature-name{margin-top:1.5mm}
+.paper-page.official.gov-doc .gov-payment-signature .gov-director-position{font-size:var(--doc-sign-size);text-align:center}
