@@ -1,4 +1,36 @@
 import {escapeHtml as e} from './print.js';
-export const documentInfoFields=[["memo_number","เลขที่หนังสือ เช่น 25/2569"],["inspector_position","ตำแหน่งผู้ตรวจรับ"],["order_number","เลขที่ใบสั่งซื้อ/ใบสั่งจ้าง"],["order_date","วันที่ใบสั่งซื้อ/ใบสั่งจ้าง","date"],["delivery_date","วันที่ส่งมอบจริง","date"],["inspection_date","วันที่ตรวจรับจริง","date"],["invoice_number","เลขที่ใบส่งของ/ใบเสร็จ"],["invoice_date","วันที่ใบส่งของ/ใบเสร็จ","date"],["acceptance_number","เลขที่ใบตรวจรับ"],["acceptance_date","วันที่ใบตรวจรับ","date"],["inspection_location","สถานที่ส่งมอบ/ตรวจรับ"],["inspection_expert","ผู้ทรงคุณวุฒิที่ปรึกษา (ถ้ามี)"],["item_base_baht","มูลค่าก่อน VAT (บาท)","number"],["vat_baht","VAT (บาท) หากปรากฏในหลักฐาน","number"],["withholding_baht","ภาษีหัก ณ ที่จ่าย (บาท)","number"],["fine_baht","ค่าปรับ (บาท)","number"],["payable_baht","จำนวนเงินจ่ายสุทธิ (บาท)","number"],["budget_year","ปีงบประมาณที่เบิก"],["budget_plan","แผนงานงบประมาณ"],["budget_activity","กิจกรรม"],["budget_project","งาน/โครงการ"],["budget_total_baht","งบประมาณทั้งหมด (บาท)","number"],["budget_paid_baht","จ่ายแล้ว (บาท)","number"],["finance_note","ความเห็นเพิ่มเติมเจ้าหน้าที่การเงิน"],["requisition_number","เลขที่ใบเบิกพัสดุ"],["requisition_date","วันที่ใบเบิกพัสดุ","date"],["requester_name","ชื่อผู้เบิก"],["requester_position","ตำแหน่งผู้เบิก"],["issuer_name","ชื่อผู้สั่งจ่าย"],["issuer_position","ตำแหน่งผู้สั่งจ่าย"],["receiver_name","ชื่อผู้รับของ"],["delegate_name","ผู้รับของแทน/ผู้มอบ"]];
-export function docMetaValue(obj){return Object.fromEntries(documentInfoFields.map(([key])=>[key,String(obj['doc_'+key]??obj[key]??'').trim()]).filter(([,value])=>value!==''));}
-export function docMetaInputs(meta={}){return '<div class="form-grid">'+documentInfoFields.map(([key,label,type])=>'<div class="field"><label>'+e(label)+'</label><input class="input" name="doc_'+e(key)+'" type="'+(type||'text')+'" '+(type==='number'?'min="0" step=".01"':'')+' value="'+e(meta[key]??meta['doc_'+key]??'')+'" placeholder="'+(type==='date'?'เลือกวันที่':'ไม่มีข้อมูลให้เว้นว่าง')+'"></div>').join('')+'</div><p class="hint">กรอกเฉพาะข้อมูลที่มีหลักฐาน ไม่สร้างเลขที่เอกสาร วันที่ หรือจำนวนเงินสมมติขึ้นเอง</p>';}
+/* One source per fact. Derived values such as fiscal year, budget source,
+   gross total, payment subtotal and receipt dates are not requested twice. */
+export const documentInfoFields=[["memo_number","เลขที่หนังสือ (กรอกส่วนหลังรหัสโรงเรียน เช่น 25/2569)"],["inspector_position","ตำแหน่งผู้ตรวจรับพัสดุ"],["order_number","เลขที่ใบสั่งซื้อ / สั่งจ้าง"],["order_date","วันที่ใบสั่งซื้อ / สั่งจ้าง","date"],["delivery_date","วันที่ส่งมอบจริง","date"],["invoice_number","เลขที่ใบส่งของ / ใบเสร็จ"],["invoice_date","วันที่ใบส่งของ / ใบเสร็จ","date"],["acceptance_number","เลขที่ใบตรวจรับ (ระบบออกรันให้ แก้ไขได้)"],["inspection_date","วันที่ตรวจรับจริง (เฉพาะกรณีต่างจากวันส่งมอบ)","date"],["inspection_location","สถานที่ตรวจรับ (เฉพาะกรณีต้องระบุ)"],["inspection_expert","ผู้ทรงคุณวุฒิ (ถ้ามี)"],["vat_baht","ภาษีมูลค่าเพิ่มตามหลักฐาน (บาท)","number"],["withholding_baht","ภาษีหัก ณ ที่จ่าย (บาท)","number"],["fine_baht","ค่าปรับ (บาท)","number"],["budget_total_baht","งบประมาณที่มี (บาท)","number"],["budget_paid_baht","จ่ายไปแล้ว (บาท)","number"],["finance_note","ความเห็นเพิ่มเติมของเจ้าหน้าที่การเงิน"],["requisition_number","เลขที่ใบเบิกพัสดุ"],["requester_name","ชื่อผู้เบิก"],["requester_position","ตำแหน่งผู้เบิก"],["receiver_name","ชื่อผู้รับของ"],["delegate_name","ชื่อผู้รับของแทน (ถ้ามี)"],["requisition_date","วันที่ใบเบิก (เฉพาะเมื่อไม่ใช้วันส่งมอบ)","date"]];
+export const documentInfoGroups=[{"id":"order","title":"1. เอกสารสั่งซื้อ / สั่งจ้าง","description":"กรอกเฉพาะเลขที่และวันที่จากใบสั่งซื้อหรือใบสั่งจ้างจริง","fields":[["order_number","เลขที่ใบสั่งซื้อ / สั่งจ้าง"],["order_date","วันที่ใบสั่งซื้อ / สั่งจ้าง","date"]]},{"id":"delivery","title":"2. ส่งมอบและตรวจรับ","description":"วันที่ตรวจรับและวันที่ใบตรวจรับใช้วันส่งมอบโดยอัตโนมัติ เว้นแต่มีการตรวจรับจริงต่างวัน","fields":[["delivery_date","วันที่ส่งมอบจริง","date"],["invoice_number","เลขที่ใบส่งของ / ใบเสร็จ"],["invoice_date","วันที่ใบส่งของ / ใบเสร็จ","date"],["acceptance_number","เลขที่ใบตรวจรับ (ระบบออกรันให้ แก้ไขได้)"]],"advanced":[["inspection_date","วันที่ตรวจรับจริง (เฉพาะกรณีต่างจากวันส่งมอบ)","date"],["inspection_location","สถานที่ตรวจรับ (เฉพาะกรณีต้องระบุ)"],["inspection_expert","ผู้ทรงคุณวุฒิ (ถ้ามี)"]]},{"id":"finance","title":"3. ข้อมูลเบิกจ่าย","description":"ระบบใช้ยอดรวมและแหล่งเงินเดิม ไม่ต้องกรอกวงเงินและปีงบประมาณซ้ำ","fields":[["vat_baht","ภาษีมูลค่าเพิ่มตามหลักฐาน (บาท)","number"],["withholding_baht","ภาษีหัก ณ ที่จ่าย (บาท)","number"],["fine_baht","ค่าปรับ (บาท)","number"]],"advanced":[["budget_total_baht","งบประมาณที่มี (บาท)","number"],["budget_paid_baht","จ่ายไปแล้ว (บาท)","number"],["finance_note","ความเห็นเพิ่มเติมของเจ้าหน้าที่การเงิน"]]},{"id":"requisition","title":"4. ใบเบิกพัสดุ","description":"ดึงชื่อผู้สั่งจ่ายจากหัวหน้าเจ้าหน้าที่พัสดุ และใช้ข้อมูลรายการพัสดุเดิม","fields":[["requisition_number","เลขที่ใบเบิกพัสดุ"],["requester_name","ชื่อผู้เบิก"],["requester_position","ตำแหน่งผู้เบิก"],["receiver_name","ชื่อผู้รับของ"]],"advanced":[["delegate_name","ชื่อผู้รับของแทน (ถ้ามี)"],["requisition_date","วันที่ใบเบิก (เฉพาะเมื่อไม่ใช้วันส่งมอบ)","date"]]}];
+export const primaryDocumentFields=[["memo_number","เลขที่หนังสือ (กรอกส่วนหลังรหัสโรงเรียน เช่น 25/2569)"],["inspector_position","ตำแหน่งผู้ตรวจรับพัสดุ"]];
+const editableKeys=new Set(documentInfoFields.map(([key])=>key));
+function fieldHtml([key,label,type],meta){
+ const inputType=type||'text',value=meta?.[key]??meta?.['doc_'+key]??'';
+ return '<div class="field"><label for="doc_'+e(key)+'">'+e(label)+'</label><input class="input" id="doc_'+e(key)+'" name="doc_'+e(key)+'" type="'+inputType+'" '+(inputType==='number'?'min="0" step=".01" inputmode="decimal"':'')+' value="'+e(value)+'" placeholder="'+(inputType==='date'?'เลือกวันที่':'ไม่ทราบให้เว้นว่าง')+'"></div>';
+}
+export function docMetaInputs(meta={},options={}){
+ const mode=typeof options==='string'?options:(options.mode||'all');
+ if(mode==='create')return '<div class="form-grid">'+primaryDocumentFields.map(f=>fieldHtml(f,meta)).join('')+'</div><p class="hint">รหัสหนังสือกำหนดที่ข้อมูลโรงเรียน ข้อมูลส่งมอบและเบิกจ่ายค่อยบันทึกเมื่อมีหลักฐาน</p>';
+ const main='<section class="doc-meta-section"><h3>เลขที่หนังสือและผู้ตรวจรับ</h3><div class="form-grid">'+primaryDocumentFields.map(f=>fieldHtml(f,meta)).join('')+'</div></section>';
+ const sections=documentInfoGroups.map(g=>{
+  const extra=g.advanced?.length?'<details class="doc-meta-advanced"><summary>กรณีพิเศษ / ข้อมูลเพิ่มเติม</summary><div class="form-grid">'+g.advanced.map(f=>fieldHtml(f,meta)).join('')+'</div></details>':'';
+  return '<details class="doc-meta-section" '+(g.id==='order'?'open':'')+'><summary>'+e(g.title)+'</summary><p class="hint">'+e(g.description)+'</p><div class="form-grid">'+g.fields.map(f=>fieldHtml(f,meta)).join('')+'</div>'+extra+'</details>';
+ }).join('');
+ return main+sections+'<p class="hint">ข้อมูลเดียวกันจะถูกใช้ในเอกสารทุกฉบับที่เกี่ยวข้อง ช่องว่างไม่ได้หมายถึงการรับรองว่ามีการตรวจรับหรือเบิกจ่ายแล้ว</p>';
+}
+/* Merge with the saved metadata. Do not accidentally delete previously
+   recorded evidence or legacy fields that have no visible input anymore.
+   Clearing a visible field intentionally removes only that particular key. */
+export function docMetaValue(obj={},existing={}){
+ const next={...(existing&&typeof existing==='object'&&!Array.isArray(existing)?existing:{})};
+ for(const [raw,value] of Object.entries(obj||{})){
+  if(!raw.startsWith('doc_'))continue;
+  const key=raw.slice(4);
+  if(!editableKeys.has(key))continue;
+  const normalized=String(value??'').trim();
+  if(normalized)next[key]=normalized;
+  else delete next[key];
+ }
+ return next;
+}
