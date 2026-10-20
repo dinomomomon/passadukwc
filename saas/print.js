@@ -92,7 +92,13 @@ function itemTable(r,kind='annex',height=85){
  const filler=height>0?'<tr class="table-filler" style="height:'+height+'mm">'+Array.from({length:priced?6:5},()=>'<td>&nbsp;</td>').join('')+'</tr>':'';
  const m=meta(r),subtotal=basePriceAmount(r);
  const total=priced&&showTotals?'<tr class="gov-summary-start"><td rowspan="3" colspan="4" class="gov-money-words">('+e(thaiBahtText(r.total_satang))+')</td><td class="gov-summary-label">รวมเป็นเงิน</td><td class="right">'+subtotal+'</td></tr><tr><td class="gov-summary-label">ภาษีมูลค่าเพิ่ม</td><td class="right">'+moneyField(m,'vat_baht')+'</td></tr><tr><td class="gov-summary-label">รวมเป็นเงินทั้งสิ้น</td><td class="right">'+cash(r.total_satang)+'</td></tr>':'';
- return '<table class="official-table official-table-ruled gov-items '+(priced?'gov-price-table':'gov-requisition-table')+'"><thead><tr><th class="col-order">ลำดับ</th><th>รายละเอียดและคุณลักษณะ</th><th class="col-quantity">จำนวน</th><th class="col-unit">หน่วย</th>'+(priced?'<th class="col-price">ราคาต่อหน่วย</th><th class="col-total">จำนวนเงิน</th>':'<th class="col-note">หมายเหตุ</th>')+'</tr></thead><tbody>'+rows+filler+total+'</tbody></table>';
+ // Each A4 table has fixed, explicit column widths. Previous order column
+ // was only 7%, causing the Thai word "ลำดับ" to break after two characters.
+ const cols='<colgroup><col class="col-order"><col class="col-description"><col class="col-quantity"><col class="col-unit">'+
+  (priced?'<col class="col-price"><col class="col-total">':'<col class="col-note">')+'</colgroup>';
+ return '<table class="official-table official-table-ruled gov-items '+(priced?'gov-price-table':'gov-requisition-table')+'">'+cols+
+ '<thead><tr><th class="col-order">ลำดับ</th><th class="col-description">รายละเอียดและคุณลักษณะ</th><th class="col-quantity">จำนวน</th><th class="col-unit">หน่วย</th>'+
+ (priced?'<th class="col-price">ราคาต่อหน่วย</th><th class="col-total">จำนวนเงิน</th>':'<th class="col-note">หมายเหตุ</th>')+'</tr></thead><tbody>'+rows+filler+total+'</tbody></table>';
 }
 function pageChunks(items,size){const all=Array.isArray(items)?items:[],chunks=[];for(let i=0;i<all.length;i+=size)chunks.push({items:all.slice(i,i+size),offset:i});return chunks.length?chunks:[{items:[],offset:0}];}
 function fillerHeight(items,baseline,perItem){const arr=items||[],lines=arr.reduce((n,x)=>n+Math.max(0,Math.ceil(String(x.name||'').length/55)-1),0);return Math.max(0,baseline-Math.max(0,arr.length-1)*perItem-lines*7);}
