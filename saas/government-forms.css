@@ -417,3 +417,150 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
 .kp-registry-admin>.hint{padding-top:12px}
 .kp-registry-admin .kp-registry-filters{margin-bottom:2px}
 @media(max-width:650px){.kp-registry-filters>*{flex:1 1 100%!important}}
+
+
+/* Government official signature standard — ONE indivisible signature block:
+   1. signed line  2. centered full name  3. job position
+   4. deliberately spaced date. Never append job title to the line. */
+.paper-page.official.gov-doc .kp-signature{
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:center!important;
+ justify-content:flex-start!important;
+ width:100%!important;
+ min-width:0!important;
+ box-sizing:border-box!important;
+ padding:0 1mm!important;
+ margin:0!important;
+ gap:0!important;
+ text-align:center!important;
+ font:400 var(--doc-sign-size)/1.2 "TH Sarabun New","TH Sarabun PSK",Sarabun,sans-serif;
+ break-inside:avoid!important;
+ page-break-inside:avoid!important;
+}
+.paper-page.official.gov-doc .kp-signature>.signature-writing,
+.paper-page.official.gov-doc .kp-signature>.gov-director-writing,
+.paper-page.official.gov-doc .kp-signature>.gov-payment-signline{
+ display:flex!important;
+ flex-direction:row!important;
+ justify-content:center!important;
+ align-items:baseline!important;
+ width:100%!important;
+ gap:1.6mm!important;
+ margin:0!important;
+ line-height:1.19!important;
+ white-space:nowrap!important;
+ font-size:var(--doc-sign-size)!important;
+}
+.paper-page.official.gov-doc .kp-signature .signature-rule,
+.paper-page.official.gov-doc .kp-signature .gov-director-rule{
+ display:inline-block!important;
+ flex:0 1 40mm!important;
+ width:40mm!important;
+ max-width:68%!important;
+ min-width:17mm!important;
+ height:.85em!important;
+ border-bottom:1px dotted #222!important;
+}
+.paper-page.official.gov-doc .kp-signature>.signature-name{
+ display:block!important;
+ width:100%!important;
+ margin:1.1mm 0 .5mm!important;
+ padding:0!important;
+ line-height:1.19!important;
+ font-size:var(--doc-sign-size)!important;
+ text-align:center!important;
+ white-space:nowrap!important;
+ overflow-wrap:normal!important;
+ word-break:normal!important;
+}
+.paper-page.official.gov-doc .kp-signature-compact>.signature-name{
+ font-size:calc(var(--doc-sign-size) * .88)!important;
+ letter-spacing:-.08mm!important;
+}
+.paper-page.official.gov-doc .kp-signature>.signature-role,
+.paper-page.official.gov-doc .kp-signature>.signature-subrole,
+.paper-page.official.gov-doc .kp-signature>.gov-director-position{
+ width:100%!important;
+ margin:0!important;
+ padding:0!important;
+ text-align:center!important;
+ line-height:1.19!important;
+ font-size:var(--doc-sign-size)!important;
+ overflow-wrap:normal!important;
+ word-break:keep-all!important;
+}
+.paper-page.official.gov-doc .kp-signature>.signature-role,
+.paper-page.official.gov-doc .kp-signature>.signature-subrole{
+ white-space:nowrap!important;
+}
+.paper-page.official.gov-doc .kp-signature>.gov-director-position{
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:center!important;
+ gap:0!important;
+ white-space:normal!important;
+}
+.paper-page.official.gov-doc .kp-signature .kp-position-part{
+ display:block!important;
+ width:100%!important;
+ text-align:center!important;
+ white-space:nowrap!important;
+}
+.paper-page.official.gov-doc .kp-signature>.signature-date{
+ display:flex!important;
+ flex-direction:row!important;
+ justify-content:center!important;
+ align-items:baseline!important;
+ gap:1.6mm!important;
+ margin:2.6mm 0 0!important;
+ padding:0!important;
+ font-size:var(--doc-sign-size)!important;
+ line-height:1.2!important;
+ white-space:nowrap!important;
+}
+.paper-page.official.gov-doc .kp-signature>.signature-date .date-rule{
+ width:26mm!important;
+ max-width:58%!important;
+ height:.85em!important;
+ border-bottom:1px dotted #222!important;
+}
+.paper-page.official.gov-doc .director-sign{
+ width:58%!important;
+ max-width:none!important;
+ min-width:0!important;
+ break-inside:avoid!important;
+ page-break-inside:avoid!important;
+}
+.paper-page.official.gov-doc.gov-approval .gov-vertical-sign{
+ width:58%!important;
+ max-width:none!important;
+ margin-left:auto!important;
+}
+/* Keep the acceptance approver comfortably below the preceding signatures,
+   while retaining the complete approver card on the same printed page. */
+.paper-page.official.gov-doc.gov-acceptance .gov-inspection-bottom .director-sign{
+ margin:2mm 0 0 auto!important;
+}
+.paper-page.official.gov-doc.gov-acceptance .gov-inspection-bottom .director-action{
+ margin-bottom:2.4mm!important;
+}
+/* The finance and director signers use exactly the same row ordering. */
+.paper-page.official.gov-doc.gov-payment .gov-finance-wrap,
+.paper-page.official.gov-doc.gov-payment .gov-payment-signature{
+ width:100%!important;
+ min-width:0!important;
+ break-inside:avoid!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-director{
+ break-inside:avoid!important;
+ page-break-inside:avoid!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-director .gov-payment-decision{
+ align-self:start!important;
+ padding-top:0!important;
+}
+/* Statutory annex line is normal-weight text, never another bold heading. */
+.paper-page.official.gov-doc.gov-annex .gov-law-second{
+ font-weight:400!important;
+}
