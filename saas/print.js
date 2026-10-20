@@ -145,8 +145,13 @@ const body='<p class="indent">ตามที่ได้อนุมัติ�
  '<p class="indent">ได้ตรวจสอบหลักฐานแล้ว มีเอกสารครบถ้วน และมีเงินตามกิจกรรม/โครงการ '+v(r.budget_source||m.budget_activity||m.budget_project)+' ปีงบประมาณ '+v(r.fiscal_year||m.budget_year)+'</p>'+
  '<p>เป็นเงิน '+moneyField(m,'budget_total_baht')+' บาท จ่ายไปแล้ว '+moneyField(m,'budget_paid_baht')+' บาท จ่ายครั้งนี้ '+payableAmount(r)+' บาท คงเหลืองบประมาณ '+(numericMoney(m.budget_total_baht)&&numericMoney(m.budget_paid_baht)&&paymentNetSatang(r)!==null?baht(Math.max(0,Number(m.budget_total_baht)-Number(m.budget_paid_baht)-paymentNetSatang(r)/100)):'–')+' บาท</p>'+
  '<p class="indent">เห็นสมควรอนุมัติเบิกจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+payableAmount(r)+' บาท ('+(paymentNetSatang(r)!==null?e(thaiBahtText(paymentNetSatang(r))):blank)+')</p>'+
- '<p>หมายเหตุเจ้าหน้าที่การเงิน '+v(m.finance_note,'................................................')+'</p>'+
- '<div class="gov-finance-sign">'+sign(v(s.finance_name),'เจ้าหน้าที่การเงิน',true)+'</div>';
+ (String(m.finance_note||'').trim()?'<p class="gov-finance-extra-note">หมายเหตุเพิ่มเติม '+v(m.finance_note)+'</p>':'')+
+ '<div class="gov-finance-sign"><div class="signature-card gov-finance-signature">'+
+ '<div class="signature-writing">ลงชื่อ <span class="signature-rule"></span></div>'+
+ '<div class="signature-name">('+v(s.finance_name)+')</div>'+
+ '<div class="signature-role">เจ้าหน้าที่การเงิน</div>'+
+ '<div class="signature-date">วันที่ <span class="date-rule"></span></div>'+
+ '</div></div>';
 const approvalPart='<div class="gov-payment-director"><div class="gov-payment-decision">1. ทราบ<br>2. อนุมัติจ่ายเงิน</div><div class="signature-card gov-payment-signature"><div class="gov-payment-signline">ลงชื่อ <span class="gov-director-rule"></span></div><div class="signature-name">('+director(r,s)+')</div><div class="gov-director-position">ผู้อำนวยการ'+e(s.name||'โรงเรียน')+'</div></div></div>';
 return memo(r,s,'ทราบผลและขออนุมัติเบิกจ่าย',body,approvalPart,'gov-payment');}
 function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name),chunks=pageChunks(r.items,Math.max(1,Math.min(9,Number(r.__items_per_page)||9)));
