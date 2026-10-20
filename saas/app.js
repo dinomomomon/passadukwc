@@ -242,7 +242,7 @@ async function loadOfficialNumbers(){
  if(!state.school)return;
  const all=[];let offset=0;const size=500;
  for(;;){
-  const {data,error}=await db.from('official_number_registry').select('*')
+  const {data,error}=await db.from('official_number_registry').select('*,procurements(title,vendor_name,kind)')
    .eq('school_id',state.school.id).order('created_at',{ascending:false})
    .order('id',{ascending:false}).range(offset,offset+size-1);
   if(error)throw Error('โหลดทะเบียนคุมเลขไม่สำเร็จ: '+error.message);
@@ -254,7 +254,7 @@ function officialRegistry(){
  const all=state.officialNumbers||[],q=String(state.numberFilter||'').toLowerCase();
  const recordsById=new Map(state.records.map(r=>[r.id,r]));
  const filtered=all.filter(n=>{
-  const linked=recordsById.get(n.procurement_id);
+  const linked=recordsById.get(n.procurement_id)||n.procurements;
   if(state.numberSeries!=='all'&&n.series!==state.numberSeries)return false;
   if(state.numberStatus!=='all'&&n.status!==state.numberStatus)return false;
   if(state.numberYear!=='all'&&String(n.year_be)!==String(state.numberYear))return false;
@@ -265,7 +265,7 @@ function officialRegistry(){
  const years=[...new Set(all.map(n=>String(n.year_be)))].sort().reverse();
  const fmt=n=>'<span class="tag '+(n.status==='reserved'?'amber':n.status==='conflict'?'red':n.status==='void'?'gray':'')+'">'+registryStatusLabel[n.status]+'</span>';
  const rows=filtered.map(n=>{
-  const rec=recordsById.get(n.procurement_id),canUse=n.status==='reserved'&&canEditDocumentMeta(rec),canAdmin=isSchoolAdmin();
+  const rec=recordsById.get(n.procurement_id)||n.procurements,canUse=n.status==='reserved'&&(isSchoolAdmin()||state.memberships.some(m=>m.school_id===state.school?.id&&m.role==='procurement_head')||n.created_by===state.user?.id),canAdmin=isSchoolAdmin();
   const controls=(canUse?btn('ใช้เลข','registry-use','mini-btn','data-id="'+e(n.id)+'"'):'')+
    (canAdmin&&['reserved','used'].includes(n.status)?btn('แก้เลข','registry-edit','mini-btn','data-id="'+e(n.id)+'"')+btn('ยกเลิก','registry-void','mini-btn','data-id="'+e(n.id)+'"'):canAdmin&&n.status==='conflict'?btn('แก้เลขเดิมที่ผิดรูปแบบ','registry-resolve','mini-btn','data-id="'+e(n.id)+'"'):'');
   const title=rec?.title||'เลขเดิมจากรายการที่บันทึกไว้';
@@ -634,7 +634,7 @@ if(action==='registry'||action==='registry-refresh'){
 }
 if(action==='registry-open'){
  state.currentRecord=state.records.find(r=>r.id===el.dataset.id);
- if(!state.currentRecord){await loadRecords();state.currentRecord=state.records.find(r=>r.id===el.dataset.id);}
+ if(!state.currentRecord&&!state.demo){const {data,error}=await db.from('procurements').select('*').eq('id',el.dataset.id).eq('school_id',state.school.id).maybeSingle();if(error)return notify(error.message,true);state.currentRecord=data;}
  if(!state.currentRecord)return notify('ไม่พบรายการ กรุณาเปิดจากทะเบียนจัดซื้อจัดจ้าง',true);
  state.page='detail';return render();
 }
