@@ -18,8 +18,9 @@ function moneyField(m,key){return numericMoney(m[key])?baht(Number(m[key])):'–
 function officer(r,s){return v(r.signers?.officer||s.officer_name);}
 function head(r,s){return v(r.signers?.head||s.head_name);}
 function director(r,s){return v(r.signers?.director||s.director_name);}
-function department(s){return e(s.name||'โรงเรียน')+(s.district?'  '+e(s.district):'')+(s.province?'  '+e(s.province):'');}
-function schoolAddress(s){return v(s.address||[s.district,s.province].filter(Boolean).join('  '));}
+function officialLocation(s){const d=String(s.district||'').trim(),p=String(s.province||'').trim();return [d?(/^(อ\.|อำเภอ)/.test(d)?d:'อ.'+d):'',p?(/^(จ\.|จังหวัด|กรุงเทพมหานคร)/.test(p)?p:'จ.'+p):''].filter(Boolean).join('  ');}
+function department(s){return e(s.name||'โรงเรียน')+(officialLocation(s)?'  '+e(officialLocation(s)):'');}
+function schoolAddress(s){return v(s.address||officialLocation(s));}
 function sign(name,role,date=false){return '<div class="signature-card"><div class="signature-writing">ลงชื่อ <span class="signature-rule"></span> '+role+'</div><div class="signature-name">('+name+')</div>'+(date?'<div class="signature-date">วันที่ <span class="date-rule"></span></div>':'')+'</div>';}
 function directorSign(r,s,actions){return '<div class="director-sign"><div class="director-action">'+actions+'</div>'+sign(director(r,s),'ผู้อำนวยการ'+e(s.name||'โรงเรียน'),false)+'</div>';}
 function signRow(r,s){return '<div class="sign-grid">'+sign(officer(r,s),'เจ้าหน้าที่',true)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true)+'</div>';}
@@ -104,15 +105,15 @@ const body='<p class="indent">ตามที่ได้อนุมัติ�
  '<div class="gov-finance-sign">'+sign(v(s.finance_name),'เจ้าหน้าที่การเงิน',true)+'</div>';
 const approvalPart='<div class="gov-payment-director"><div>1. ทราบ<br>2. อนุมัติจ่ายเงิน</div>'+sign(director(r,s),'ผู้อำนวยการ'+e(s.name||'โรงเรียน'))+'</div>';
 return memo(r,s,'ทราบผลและขออนุมัติเบิกจ่าย',body,approvalPart,'gov-payment');}
-function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name);
+function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name);
 const top=lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 204 และ ข้อ 205')+
  dataHead(r,s,'requisition')+
- '<p class="gov-request-text">ข้าพเจ้าขอเบิกพัสดุ ใช้ใน'+v(r.reason,'กิจกรรมภายในโรงเรียน')+' ตามรายการต่อไปนี้</p>'+
+ '<p class="gov-request-text">ข้าพเจ้าขอเบิกพัสดุ '+v(r.reason,'ใช้ในกิจกรรมภายในโรงเรียน')+' ตามรายการต่อไปนี้</p>'+
  itemTable(r,'requisition',96);
 const bottom='<div class="gov-requisition-signatures">'+
  '<div>'+sign(requester,'ผู้เบิก')+'<p class="gov-sign-position">'+v(m.requester_position)+'</p></div>'+
  '<div>'+sign(issuer,'ผู้สั่งจ่าย',true)+'<p class="gov-sign-position">'+v(m.issuer_position,'หัวหน้าหน่วยพัสดุ')+'</p></div>'+
- '<div><p>ได้มอบให้ '+v(m.delegate_name)+' เป็นผู้รับของแทน</p>'+sign(v(m.delegate_name),'ผู้มอบ',true)+'</div>'+
+ '<div><p>ได้มอบให้ '+v(m.delegate_name)+' เป็นผู้รับของแทน</p>'+sign(blank,'ผู้มอบ',true)+'</div>'+
  '<div><p>ได้รับพัสดุครบถ้วนถูกต้องแล้ว</p>'+sign(receiver,'ผู้รับของ',true)+'</div></div>';
 return page('ใบเบิกพัสดุ',top+bottom,'gov-requisition');}
 export function buildDocuments(r,s){const buy=r.kind==='purchase';return [
