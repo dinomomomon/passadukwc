@@ -269,3 +269,15 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
    break-inside:avoid!important;page-break-inside:avoid!important
  }
 }
+
+
+/* Short staged document-entry UI: one field for each distinct fact. */
+.doc-meta-card .doc-meta-section{padding:13px 0;border-bottom:1px solid #e5ebf5;margin:0}
+.doc-meta-card .doc-meta-section:last-of-type{border-bottom:0}
+.doc-meta-card .doc-meta-section>summary{color:#163b78;font-size:15px;font-weight:750;cursor:pointer;list-style:revert}
+.doc-meta-card .doc-meta-section>h3{font-size:15px;margin:0 0 11px;color:#163b78}
+.doc-meta-card .doc-meta-section>.hint{margin:6px 0 12px}
+.doc-meta-card .doc-meta-advanced{border-radius:9px;background:#f6f8fd;padding:10px 12px;margin:12px 0 0}
+.doc-meta-card .doc-meta-advanced>summary{font-size:12px;font-weight:700;cursor:pointer;color:#536783}
+.doc-meta-card .doc-meta-advanced .form-grid{margin-top:10px}
+.doc-meta-card .form-grid{margin-bottom:7px}
