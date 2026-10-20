@@ -564,3 +564,21 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
 .paper-page.official.gov-doc.gov-annex .gov-law-second{
  font-weight:400!important;
 }
+
+/* Keep original printed job title verbatim in ONE line.
+   Font-size is only reduced for this line when the actual rendered text
+   exceeds the card's width. Other job titles keep their original wording. */
+.paper-page.official.gov-doc .kp-signature>.gov-director-position.kp-director-one-line{
+ display:block!important;
+ width:100%!important;
+ max-width:100%!important;
+ min-width:0!important;
+ text-align:center!important;
+ white-space:nowrap!important;
+ overflow-wrap:normal!important;
+ word-break:normal!important;
+ line-height:1.2!important;
+ font-size:var(--doc-sign-size)!important;
+ margin:0!important;
+ padding:0!important;
+}
