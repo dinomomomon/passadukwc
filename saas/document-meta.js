@@ -6,13 +6,14 @@ export const documentInfoGroups=[{"id":"order","title":"1. เอกสารส
 export const primaryDocumentFields=[["memo_prefix","รหัส พว. (ใช้เฉพาะรายงานขอซื้อ/ขอจ้าง)"],["memo_number","ที่ — รายงานขอซื้อ/ขอจ้าง (เฉพาะเลข เช่น 1/2569)"],["approval_memo_number","ที่ — รายงานผลการพิจารณาฯ (ใส่เฉพาะเลข ไม่ใช้ พว.)"],["payment_memo_number","ที่ — ทราบผลและขออนุมัติเบิกจ่าย (ใส่เฉพาะเลข ไม่ใช้ พว.)"],["inspector_position","ตำแหน่งผู้ตรวจรับพัสดุ"]];
 const editableKeys=new Set(documentInfoFields.map(([key])=>key));
 const memoNumbers=new Set(['memo_number','approval_memo_number','payment_memo_number']);
+const registryNumbers=new Set(['memo_number','approval_memo_number','payment_memo_number','acceptance_number','requisition_number']);
 function fieldHtml([key,label,type],meta){
  const inputType=type||'text',raw=meta?.[key]??meta?.['doc_'+key]??'';
  const value=key==='memo_prefix'?normalizeMemoPrefix(raw):
   memoNumbers.has(key)&&memoNumberTokens(raw).length<=1?
    normalizeMemoNumber(raw,meta?.memo_prefix??meta?.doc_memo_prefix??''):raw;
  const placeholder=key==='memo_prefix'?'พว.':memoNumbers.has(key)?'เช่น 2/2569 (ไม่ต้องใส่ พว.)':inputType==='date'?'เลือกวันที่':'ไม่ทราบให้เว้นว่าง';
- return '<div class="field"><label for="doc_'+e(key)+'">'+e(label)+'</label><input class="input" id="doc_'+e(key)+'" name="doc_'+e(key)+'" type="'+inputType+'" '+(inputType==='number'?'min="0" step=".01" inputmode="decimal"':'')+' value="'+e(value)+'" placeholder="'+placeholder+'"></div>';
+ return '<div class="field"><label for="doc_'+e(key)+'">'+e(label)+'</label><input class="input" id="doc_'+e(key)+'" name="doc_'+e(key)+'" type="'+inputType+'" '+(inputType==='number'?'min="0" step=".01" inputmode="decimal"':'')+(registryNumbers.has(key)?' readonly aria-describedby="registry-help"':'')+' value="'+e(value)+'" placeholder="'+(registryNumbers.has(key)?'ระบบออกเลขอัตโนมัติ':placeholder)+'"></div>';
 }
 export function docMetaInputs(meta={},options={}){
  const mode=typeof options==='string'?options:(options.mode||'all');
@@ -23,7 +24,7 @@ export function docMetaInputs(meta={},options={}){
   const extra=g.advanced?.length?'<details class="doc-meta-advanced"><summary>กรณีพิเศษ / ข้อมูลเพิ่มเติม</summary><div class="form-grid">'+g.advanced.map(f=>fieldHtml(f,meta)).join('')+'</div></details>':'';
   return '<details class="doc-meta-section" '+(g.id==='order'?'open':'')+'><summary>'+e(g.title)+'</summary><p class="hint">'+e(g.description)+'</p><div class="form-grid">'+g.fields.map(f=>fieldHtml(f,meta)).join('')+'</div>'+extra+'</details>';
  }).join('');
- return main+sections+'<p class="hint">ใช้ พว. เฉพาะรายงานขอซื้อ/ขอจ้าง เอกสารฉบับอื่นใช้เลขหลังคำว่า ที่ เท่านั้น ยอดเงินรวมและกิจกรรม/โครงการเชื่อมจากข้อมูลหลัก ส่วนยอดเบิกจ่ายคำนวณอัตโนมัติเมื่อไม่กรอกยอดสุทธิเอง</p>';
+ return main+sections+'<p id="registry-help" class="hint">เลขที่เอกสารออกอัตโนมัติและแก้ผ่านเมนูทะเบียนคุมเลขเท่านั้น เพื่อป้องกันเลขซ้ำ</p><p class="hint">ใช้ พว. เฉพาะรายงานขอซื้อ/ขอจ้าง เอกสารฉบับอื่นใช้เลขหลังคำว่า ที่ เท่านั้น ยอดเงินรวมและกิจกรรม/โครงการเชื่อมจากข้อมูลหลัก ส่วนยอดเบิกจ่ายคำนวณอัตโนมัติเมื่อไม่กรอกยอดสุทธิเอง</p>';
 }
 /* Merge with the saved metadata. Do not accidentally delete previously
    recorded evidence or legacy fields that have no visible input anymore.
@@ -34,6 +35,7 @@ export function docMetaValue(obj={},existing={}){
   if(!raw.startsWith('doc_'))continue;
   const key=raw.slice(4);
   if(!editableKeys.has(key))continue;
+  if(registryNumbers.has(key))continue; // Registry owns allocation and corrections
   let normalized=String(value??'').trim();
   if(key==='memo_prefix')normalized=normalizeMemoPrefix(normalized);
   if(memoNumbers.has(key)&&normalized){
