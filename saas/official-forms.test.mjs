@@ -300,3 +300,39 @@ test('payment director approval is moved upward without affecting other forms',a
  assert.match(css,/\.gov-payment \.gov-payment-decision\{\s*position:relative!important;\s*top:-14mm!important/);
  assert.match(css,/@media print\{[\s\S]*?\.gov-payment \.gov-payment-decision\{\s*position:relative!important;\s*top:-14mm!important/);
 });
+
+
+test('official number input is read-only because school ledger allocates and tracks it',()=>{
+ const form=docMetaInputs({memo_number:'2/2569',approval_memo_number:'3/2569',payment_memo_number:'4/2569'},{mode:'create',kind:'purchase'});
+ for(const field of ['memo_number','approval_memo_number','payment_memo_number','requisition_number']){
+  assert.match(form,new RegExp('name="doc_'+field+'"[^>]*readonly'));
+ }
+ const stored=docMetaValue({doc_memo_number:'1/2569',doc_approval_memo_number:'2/2569',
+  doc_requisition_number:'จ. 2/2569',doc_inspector_position:'ครู'});
+ assert.equal(stored.memo_number,undefined);
+ assert.equal(stored.requisition_number,undefined);
+ assert.equal(stored.inspector_position,'ครู');
+});
+test('central registry adds a menu, handles issuance, search, corrections and status',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(app,/ทะเบียนคุมเลขเอกสาร/);
+ assert.match(app,/issue_official_number/);
+ assert.match(app,/manage_official_number/);
+ assert.match(app,/set_official_number_start/);
+ assert.match(app,/official_number_registry/);
+ assert.match(app,/registry-filter-form/);
+ assert.match(app,/registry-edit/);
+ assert.match(app,/registry-void/);
+ assert.match(app,/registry-use/);
+});
+test('ledger schema permanently reserves void numbers and isolates school RLS',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const path=new URL('../supabase/migrations/20261020_official_number_registry.sql',import.meta.url);
+ const sql=readFileSync(path,'utf8');
+ const fix=readFileSync(new URL('../supabase/migrations/20261020_fix_registry_tenant_rls.sql',import.meta.url),'utf8');
+ assert.match(sql,/CREATE UNIQUE INDEX official_registry_unique_number/);
+ assert.match(sql,/WHERE status<>'conflict'/);
+ assert.match(sql,/FOR EACH ROW EXECUTE FUNCTION public.auto_register_procurement_numbers/);
+ assert.match(fix,/m\.school_id=official_number_registry\.school_id/);
+});
