@@ -98,8 +98,8 @@ const body='<p class="indent">ตามที่ได้อนุมัติ�
  ].map(row=>'<div><span>'+row[0]+'</span><span>'+row[1]+'</span><span>บาท</span></div>').join('')+'</div>'+
  '<p class="gov-words">('+ (numericMoney(m.payable_baht)?e(thaiBahtText(Math.round(Number(m.payable_baht)*100))):'........................................')+')</p>'+
  '<div class="gov-finance-title">ความเห็นของเจ้าหน้าที่การเงิน</div>'+
- '<p class="indent">ได้ตรวจสอบหลักฐานแล้ว มีเอกสารครบถ้วนและมีเงินงบประมาณ ปี '+v(m.budget_year)+' ตามแผนงาน '+v(m.budget_plan)+' กิจกรรม '+v(m.budget_activity)+' งาน/โครงการ '+v(m.budget_project)+'</p>'+
- '<p>เป็นเงิน '+moneyField(m,'budget_total_baht')+' บาท จ่ายไปแล้ว '+moneyField(m,'budget_paid_baht')+' บาท จ่ายครั้งนี้ '+moneyField(m,'payable_baht')+' บาท</p>'+
+ '<p class="indent">ได้ตรวจสอบหลักฐานแล้ว มีเอกสารครบถ้วนและมีเงินงบประมาณ ปี '+v(m.budget_year)+' ☐ งบดำเนินการ ☐ งบลงทุน ตามแผนงาน '+v(m.budget_plan)+' กิจกรรม '+v(m.budget_activity)+' งาน/โครงการ '+v(m.budget_project)+'</p>'+
+ '<p>เป็นเงิน '+moneyField(m,'budget_total_baht')+' บาท จ่ายไปแล้ว '+moneyField(m,'budget_paid_baht')+' บาท จ่ายครั้งนี้ '+moneyField(m,'payable_baht')+' บาท คงเหลืองบประมาณ '+(numericMoney(m.budget_total_baht)&&numericMoney(m.budget_paid_baht)&&numericMoney(m.payable_baht)?baht(Math.max(0,Number(m.budget_total_baht)-Number(m.budget_paid_baht)-Number(m.payable_baht))):'–')+' บาท</p>'+
  '<p class="indent">เห็นสมควรอนุมัติเบิกจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+')</p>'+
  '<p>หมายเหตุเจ้าหน้าที่การเงิน '+v(m.finance_note,'................................................')+'</p>'+
  '<div class="gov-finance-sign">'+sign(v(s.finance_name),'เจ้าหน้าที่การเงิน',true)+'</div>';
