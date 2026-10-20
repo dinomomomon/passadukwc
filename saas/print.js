@@ -12,6 +12,34 @@ const digits=['ศูนย์','หนึ่ง','สอง','สาม','ส�
 function sixWords(num){let s=String(num).padStart(1,'0'),out='';for(let i=0;i<s.length;i++){const n=Number(s[i]),place=s.length-i-1;if(!n)continue;if(place===1&&n===1){out+='สิบ';continue;}if(place===1&&n===2){out+='ยี่สิบ';continue;}if(place===0&&n===1&&s.length>1){out+='เอ็ด';continue;}out+=digits[n]+pos[place];}return out;}
 function integerWords(n){n=Math.floor(Number(n)||0);if(n===0)return digits[0];const mil=Math.floor(n/1000000),rest=n%1000000;return (mil?integerWords(mil)+'ล้าน':'')+(rest?sixWords(rest):'');}
 export function thaiBahtText(satang){let n=Math.round(Number(satang)||0);if(n<0)return 'ลบ'+thaiBahtText(-n);let b=Math.floor(n/100),s=n%100;return (b?integerWords(b):'ศูนย์')+'บาท'+(s?integerWords(s)+'สตางค์':'ถ้วน');}
+/** The official prefix (พว.) is NOT itself a document number.
+ * Old records may have saved "พว. 1/2569" in the prefix field.
+ * Normalize at render time too, so printing historic records is safe.
+ */
+export function normalizeMemoPrefix(raw){
+ let prefix=String(raw??'').trim().replace(/\s+/g,' ');
+ const firstReference=prefix.search(/[0-9๐-๙]+\s*\/\s*[0-9๐-๙]{2,4}/u);
+ if(firstReference>=0)prefix=prefix.slice(0,firstReference).trim();
+ return prefix.replace(/\s*[0-9๐-๙]+$/u,'').replace(/[\s,;]+$/u,'').trim();
+}
+export function memoNumberTokens(raw){
+ return [...String(raw??'').matchAll(/[0-9๐-๙]+\s*\/\s*[0-9๐-๙]{2,4}/gu)]
+  .map(match=>match[0].replace(/\s/g,''));
+}
+export function normalizeMemoNumber(raw,prefix=''){
+ const original=String(raw??'').trim();
+ const numbers=memoNumberTokens(original);
+ if(numbers.length)return numbers[numbers.length-1];
+ const normalizedPrefix=normalizeMemoPrefix(prefix);
+ let value=original;
+ if(normalizedPrefix&&value.startsWith(normalizedPrefix))value=value.slice(normalizedPrefix.length).trim();
+ return value.replace(/^ที่\s*/u,'').trim();
+}
+export function renderMemoReference(prefix,number){
+ const code=normalizeMemoPrefix(prefix);
+ const ref=normalizeMemoNumber(number,code)||'........../........';
+ return [code,ref].filter(Boolean).join(' ');
+}
 function meta(r){return r.document_meta&&typeof r.document_meta==='object'&&!Array.isArray(r.document_meta)?r.document_meta:{};}
 const numericMoney=x=>x!==undefined&&x!==null&&String(x).trim()!==''&&Number.isFinite(Number(x))&&Number(x)>=0;
 function moneyField(m,key){return numericMoney(m[key])?baht(Number(m[key])):'–';}
@@ -27,7 +55,7 @@ function schoolAddress(s){return v(s.address||officialLocation(s));}
 function sign(name,role,date=false){return '<div class="signature-card"><div class="signature-writing">ลงชื่อ <span class="signature-rule"></span> '+role+'</div><div class="signature-name">('+name+')</div>'+(date?'<div class="signature-date">วันที่ <span class="date-rule"></span></div>':'')+'</div>';}
 function directorSign(r,s,actions){return '<div class="director-sign"><div class="director-action">'+actions+'</div><div class="signature-card gov-director-card"><div class="gov-director-writing">(ลงชื่อ) <span class="gov-director-rule"></span></div><div class="signature-name">('+director(r,s)+')</div><div class="gov-director-position">ผู้อำนวยการ'+e(s.name||'โรงเรียน')+'</div></div></div>';}
 function signRow(r,s){return '<div class="sign-grid">'+sign(officer(r,s),'เจ้าหน้าที่',true)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true)+'</div>';}
-function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const numberKey=cls==='gov-approval'?'approval_memo_number':cls==='gov-payment'?'payment_memo_number':'memo_number';const no=[m.memo_prefix||s.memo_prefix||'',m[numberKey]||'........../........'].filter(Boolean).join(' ');
+function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const numberKey=cls==='gov-approval'?'approval_memo_number':cls==='gov-payment'?'payment_memo_number':'memo_number';const no=renderMemoReference(m.memo_prefix||s.memo_prefix,m[numberKey]);
  return '<section class="paper-page official gov-doc memo-page '+cls+'"><div class="doc-sheet-body">'+
  '<div class="memo-top"><img class="garuda-emblem" src="/garuda-memo.svg" alt="ตราครุฑ"><h1>บันทึกข้อความ</h1></div>'+
  '<div class="memo-field memo-field-agency"><strong>ส่วนราชการ</strong><span class="memo-value">'+department(s)+'</span></div>'+
