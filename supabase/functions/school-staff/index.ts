@@ -89,8 +89,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
       const created = await admin.auth.admin.createUser({
         email, password, email_confirm: true, user_metadata: { full_name: name }
       });
-      if (created.error || !created.data.user)
+      if (created.error || !created.data.user) {
+        if (created.error?.code === "weak_password" || /password should|weak password/i.test(created.error?.message || ""))
+          throw new HttpError(400, "Supabase ไม่ยอมรับรหัสผ่านนี้ กรุณาเพิ่มความยาวหรือความซับซ้อนตามนโยบายของระบบบัญชี");
         throw new HttpError(409, "สร้างบัญชีไม่สำเร็จ: อีเมลนี้อาจมีบัญชีอยู่แล้ว กรุณาใช้อีเมลใหม่หรือติดต่อผู้ดูแลแพลตฟอร์ม");
+      }
       const uid = created.data.user.id;
       try {
         const p = await admin.from("profiles").upsert({ id: uid, full_name: name });
@@ -152,7 +155,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
       if (cross.error) throw new HttpError(500,"ตรวจสอบบัญชีร่วมไม่สำเร็จ");
       if ((cross.data||[]).length) throw new HttpError(403,"บัญชีนี้เชื่อมกับโรงเรียนอื่น กรุณาให้เจ้าของบัญชีเปลี่ยนรหัสผ่านด้วยตนเอง");
       const result = await admin.auth.admin.updateUserById(targetId,{password});
-      if (result.error) throw new HttpError(500,"ตั้งรหัสผ่านใหม่ไม่สำเร็จ");
+      if (result.error) {
+        if (result.error.code === "weak_password" || /password should|weak password/i.test(result.error.message || ""))
+          throw new HttpError(400,"Supabase ไม่ยอมรับรหัสผ่านนี้ กรุณาเพิ่มความยาวหรือความซับซ้อนตามนโยบายของระบบบัญชี");
+        throw new HttpError(500,"ตั้งรหัสผ่านใหม่ไม่สำเร็จ");
+      }
       await audit("school_staff_password_reset",targetId,{by_school_admin:true});
       return json(200,{success:true,message:"ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว กรุณาแจ้งผู้ใช้ผ่านช่องทางส่วนตัว"});
     }
