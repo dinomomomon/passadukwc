@@ -66,10 +66,13 @@ const body=line+'<p class="indent">งานพัสดุได้ตรวจ
  '<ol class="gov-numbered"><li>เห็นชอบในรายงานขอ'+verb+'ดังกล่าวข้างต้น</li>'+
  '<li>อนุมัติให้แต่งตั้ง '+v(r.inspector_name)+' ตำแหน่ง '+v(meta(r).inspector_position)+' เป็นผู้ตรวจรับ'+item+'</li></ol>';
 return memo(r,s,title,body,signRow(r,s)+directorSign(r,s,'เห็นชอบ &nbsp;&nbsp; อนุมัติ'),'gov-request');}
-function annex(r,s,buy){let noun=buy?'พัสดุที่จะซื้อ':'งานจ้าง',memo=buy?'รายงานขอซื้อ':'รายงานขอจ้าง';
-return page('รายละเอียดของ'+noun+' แนบท้าย'+memo,lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 22 วรรคหนึ่ง (2) และข้อ 22 วรรคสอง')+
- '<p class="gov-count">จำนวน'+(buy?'พัสดุ':'งานจ้าง')+' '+(r.items||[]).length+' รายการ</p>'+itemTable(r,'annex',90)+
- '<div class="gov-annex-sign">'+signRow(r,s)+'</div>','gov-annex');}
+function annex(r,s,buy){const noun=buy?'พัสดุที่จะซื้อ':'งานจ้าง',subject=buy?'รายงานขอซื้อ':'รายงานขอจ้าง',chunks=pageChunks(r.items,9);
+ return chunks.map((part,i)=>page('รายละเอียดของ'+noun+' แนบท้าย'+subject,
+ lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 22 วรรคหนึ่ง (2) และข้อ 22 วรรคสอง')+
+ '<p class="gov-count">จำนวน'+(buy?'พัสดุ':'งานจ้าง')+' '+(r.items||[]).length+' รายการ'+(chunks.length>1?' (หน้าที่ '+(i+1)+'/'+chunks.length+')':'')+'</p>'+
+ itemTable({...r,items:part.items,__item_offset:part.offset,__show_totals:i===chunks.length-1},'annex',fillerHeight(part.items,90,9))+
+ '<div class="gov-annex-sign">'+signRow(r,s)+'</div>','gov-annex')).join('');
+}
 function approval(r,s,buy){const verb=buy?'ซื้อ':'จ้าง',noun=buy?'พัสดุ':'งานจ้าง',m=meta(r),vendor=v(r.vendor_name);
 const body='<p class="indent">ตามที่ ผู้อำนวยการ'+e(s.name||'โรงเรียน')+' เห็นชอบ'+(buy?'รายงานขอซื้อพัสดุ':'รายงานขอจ้าง')+' จำนวน '+(r.items||[]).length+' รายการ เป็นเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+') ตามระเบียบกระทรวงการคลังฯ พ.ศ. 2560 ข้อ 24 รายละเอียดดังแนบ</p>'+
  '<p class="indent">ในการนี้เจ้าหน้าที่ได้เจรจาตกลงราคากับ '+vendor+' ซึ่งมีอาชีพ'+(buy?'ขาย':'รับจ้าง')+'แล้ว ปรากฏว่าเสนอราคาเป็นเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+')</p>'+
@@ -115,17 +118,19 @@ const body='<p class="indent">ตามที่ได้อนุมัติ�
  '<div class="gov-finance-sign">'+sign(v(s.finance_name),'เจ้าหน้าที่การเงิน',true)+'</div>';
 const approvalPart='<div class="gov-payment-director"><div>1. ทราบ<br>2. อนุมัติจ่ายเงิน</div>'+sign(director(r,s),'ผู้อำนวยการ'+e(s.name||'โรงเรียน'))+'</div>';
 return memo(r,s,'ทราบผลและขออนุมัติเบิกจ่าย',body,approvalPart,'gov-payment');}
-function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name);
-const top=lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 204 และ ข้อ 205')+
+function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name),chunks=pageChunks(r.items,9);
+ return chunks.map((part,i)=>{
+ const top=lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 204 และ ข้อ 205')+
  dataHead(r,s,'requisition')+
- '<p class="gov-request-text">ข้าพเจ้าขอเบิกพัสดุ '+v(r.reason,'ใช้ในกิจกรรมภายในโรงเรียน')+' ตามรายการต่อไปนี้</p>'+
- itemTable(r,'requisition',96);
-const bottom='<div class="gov-requisition-signatures">'+
+ '<p class="gov-request-text">ข้าพเจ้าขอเบิกพัสดุ '+v(r.reason,'ใช้ในกิจกรรมภายในโรงเรียน')+' ตามรายการต่อไปนี้'+(chunks.length>1?' (หน้าที่ '+(i+1)+'/'+chunks.length+')':'')+'</p>'+
+ itemTable({...r,items:part.items,__item_offset:part.offset},'requisition',fillerHeight(part.items,96,9));
+ const signatures='<div class="gov-requisition-signatures">'+
  '<div>'+sign(requester,'ผู้เบิก')+'<p class="gov-sign-position">'+v(m.requester_position)+'</p></div>'+
  '<div>'+sign(issuer,'ผู้สั่งจ่าย',true)+'<p class="gov-sign-position">'+v(m.issuer_position,'หัวหน้าหน่วยพัสดุ')+'</p></div>'+
  '<div><p>ได้มอบให้ '+v(m.delegate_name)+' เป็นผู้รับของแทน</p>'+sign(blank,'ผู้มอบ',true)+'</div>'+
  '<div><p>ได้รับพัสดุครบถ้วนถูกต้องแล้ว</p>'+sign(receiver,'ผู้รับของ',true)+'</div></div>';
-return page('ใบเบิกพัสดุ',top+bottom,'gov-requisition');}
+ return page('ใบเบิกพัสดุ',top+signatures,'gov-requisition');}).join('');
+}
 export function buildDocuments(r,s){const buy=r.kind==='purchase';return [
  purchaseRequest(r,s,buy),annex(r,s,buy),approval(r,s,buy),acceptance(r,s,buy),payment(r,s,buy)
  ].concat(buy?[requisition(r,s)]:[]).join('');}
