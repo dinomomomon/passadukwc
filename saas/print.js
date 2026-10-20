@@ -52,8 +52,24 @@ function director(r,s){return v(r.signers?.director||s.director_name);}
 function officialLocation(s){const d=String(s.district||'').trim(),p=String(s.province||'').trim();return [d?(/^(อ\.|อำเภอ)/.test(d)?d:'อ.'+d):'',p?(/^(จ\.|จังหวัด|กรุงเทพมหานคร)/.test(p)?p:'จ.'+p):''].filter(Boolean).join('  ');}
 function department(s){return e(s.name||'โรงเรียน')+(officialLocation(s)?'  '+e(officialLocation(s)):'');}
 function schoolAddress(s){return v(s.address||officialLocation(s));}
-function sign(name,role,date=false){return '<div class="signature-card"><div class="signature-writing">ลงชื่อ <span class="signature-rule"></span> '+role+'</div><div class="signature-name">('+name+')</div>'+(date?'<div class="signature-date">วันที่ <span class="date-rule"></span></div>':'')+'</div>';}
-function directorSign(r,s,actions){return '<div class="director-sign"><div class="director-action">'+actions+'</div><div class="signature-card gov-director-card"><div class="gov-director-writing">(ลงชื่อ) <span class="gov-director-rule"></span></div><div class="signature-name">('+director(r,s)+')</div><div class="gov-director-position">ผู้อำนวยการ'+e(s.name||'โรงเรียน')+'</div></div></div>';}
+function signatureBlock(name,role='',date=false,opts={}){
+ const kind=opts.kind||'';
+ const label=(kind==='director'||kind==='payment')?'<div class="gov-director-position kp-signature-position"><span class="kp-position-part">ผู้อำนวยการ</span><span class="kp-position-part">'+e(opts.schoolName||'โรงเรียน')+'</span></div>':
+ '<div class="signature-role kp-signature-position">'+role+'</div>'+
+ (opts.position?'<div class="signature-subrole kp-signature-position">'+opts.position+'</div>':'');
+ const css=kind==='director'?' gov-director-card':kind==='payment'?' gov-payment-signature':'';
+ const write=kind==='director'?'gov-director-writing':kind==='payment'?'gov-payment-signline':'signature-writing';
+ const line=kind==='director'||kind==='payment'?'gov-director-rule':'signature-rule';
+ const nameLen=String(name).replace(/<[^>]*>/g,'').length;
+ const compact=nameLen>35?' kp-signature-compact':'';
+ return '<div class="signature-card kp-signature'+css+compact+'">'+
+ '<div class="'+write+'">ลงชื่อ <span class="'+line+'"></span></div>'+
+ '<div class="signature-name">('+name+')</div>'+label+
+ (date?'<div class="signature-date">วันที่ <span class="date-rule"></span></div>':'')+'</div>';
+}
+function sign(name,role,date=false,position=''){return signatureBlock(name,role,date,{position});}
+function directorSign(r,s,actions){return '<div class="director-sign"><div class="director-action">'+actions+'</div>'+
+ signatureBlock(director(r,s),'',true,{kind:'director',schoolName:s.name||'โรงเรียน'})+'</div>';}
 function signRow(r,s){return '<div class="sign-grid">'+sign(officer(r,s),'เจ้าหน้าที่',true)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true)+'</div>';}
 function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const numberKey=cls==='gov-approval'?'approval_memo_number':cls==='gov-payment'?'payment_memo_number':'memo_number';const prefix=m.memo_prefix||s.memo_prefix;const no=numberKey==='memo_number'?renderMemoReference(prefix,m[numberKey]):(normalizeMemoNumber(m[numberKey],prefix)||'........../........');
  return '<section class="paper-page official gov-doc memo-page '+cls+'"><div class="doc-sheet-body">'+
@@ -146,13 +162,10 @@ const body='<p class="indent">ตามที่ได้อนุมัติ�
  '<p>เป็นเงิน '+moneyField(m,'budget_total_baht')+' บาท จ่ายไปแล้ว '+moneyField(m,'budget_paid_baht')+' บาท จ่ายครั้งนี้ '+payableAmount(r)+' บาท คงเหลืองบประมาณ '+(numericMoney(m.budget_total_baht)&&numericMoney(m.budget_paid_baht)&&paymentNetSatang(r)!==null?baht(Math.max(0,Number(m.budget_total_baht)-Number(m.budget_paid_baht)-paymentNetSatang(r)/100)):'–')+' บาท</p>'+
  '<p class="indent">เห็นสมควรอนุมัติเบิกจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+payableAmount(r)+' บาท ('+(paymentNetSatang(r)!==null?e(thaiBahtText(paymentNetSatang(r))):blank)+')</p>'+
  (String(m.finance_note||'').trim()?'<p class="gov-finance-extra-note">หมายเหตุเพิ่มเติม '+v(m.finance_note)+'</p>':'')+
- '<div class="gov-finance-sign"><div class="signature-card gov-finance-signature">'+
- '<div class="signature-writing">ลงชื่อ <span class="signature-rule"></span></div>'+
- '<div class="signature-name">('+v(s.finance_name)+')</div>'+
- '<div class="signature-role">เจ้าหน้าที่การเงิน</div>'+
- '<div class="signature-date">วันที่ <span class="date-rule"></span></div>'+
- '</div></div>';
-const approvalPart='<div class="gov-payment-director"><div class="gov-payment-decision">1. ทราบ<br>2. อนุมัติจ่ายเงิน</div><div class="signature-card gov-payment-signature"><div class="gov-payment-signline">ลงชื่อ <span class="gov-director-rule"></span></div><div class="signature-name">('+director(r,s)+')</div><div class="gov-director-position">ผู้อำนวยการ'+e(s.name||'โรงเรียน')+'</div></div></div>';
+ '<div class="gov-finance-sign"><div class="gov-finance-wrap">'+
+ signatureBlock(v(s.finance_name),'เจ้าหน้าที่การเงิน',true)+'</div></div>';
+const approvalPart='<div class="gov-payment-director"><div class="gov-payment-decision">1. ทราบ<br>2. อนุมัติจ่ายเงิน</div>'+
+ signatureBlock(director(r,s),'',true,{kind:'payment',schoolName:s.name||'โรงเรียน'})+'</div>';
 return memo(r,s,'ทราบผลและขออนุมัติเบิกจ่าย',body,approvalPart,'gov-payment');}
 function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name),chunks=pageChunks(r.items,Math.max(1,Math.min(9,Number(r.__items_per_page)||9)));
  return chunks.map((part,i)=>{
@@ -161,8 +174,8 @@ function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v
  '<p class="gov-request-text">ข้าพเจ้าขอเบิกพัสดุ '+v(r.reason,'ใช้ในกิจกรรมภายในโรงเรียน')+' ตามรายการต่อไปนี้'+(chunks.length>1?' (หน้าที่ '+(i+1)+'/'+chunks.length+')':'')+'</p>'+
  itemTable({...r,items:part.items,__item_offset:part.offset},'requisition',fillerHeight(part.items,96,9));
  const signatures='<div class="gov-requisition-signatures">'+
- '<div>'+sign(requester,'ผู้เบิก')+'<p class="gov-sign-position">'+v(m.requester_position)+'</p></div>'+
- '<div>'+sign(issuer,'ผู้สั่งจ่าย',true)+'<p class="gov-sign-position">'+v(m.issuer_position,'หัวหน้าหน่วยพัสดุ')+'</p></div>'+
+ '<div>'+sign(requester,'ผู้เบิก',true,m.requester_position?v(m.requester_position):'')+'</div>'+
+ '<div>'+sign(issuer,'ผู้สั่งจ่าย',true,v(m.issuer_position,'หัวหน้าหน่วยพัสดุ'))+'</div>'+
  '<div><p>ได้มอบให้ '+v(m.delegate_name)+' เป็นผู้รับของแทน</p>'+sign(blank,'ผู้มอบ',true)+'</div>'+
  '<div><p>ได้รับพัสดุครบถ้วนถูกต้องแล้ว</p>'+sign(receiver,'ผู้รับของ',true)+'</div></div>';
  return page('ใบเบิกพัสดุ',top+signatures,'gov-requisition');}).join('');
