@@ -125,3 +125,20 @@ test('PDF layout measures every complete page rather than allowing cut-off signa
  assert.match(css,/height:297mm!important/);
  assert.match(css,/gov-right-head/);
 });
+
+
+test('unusually long requisition lines can be repartitioned with full signatures',()=>{
+ const long={...sample,items:Array.from({length:12},(_,i)=>({name:'รายการพัสดุเลขที่ '+(i+1),qty:1,unit:'ชุด',price_satang:100})),total_satang:1200,__items_per_page:3};
+ const html=buildDocuments(long,school);
+ assert.equal((html.match(/ใบเบิกพัสดุ<\/h2>/g)||[]).length,4);
+ assert.equal((html.match(/class="gov-requisition-signatures"/g)||[]).length,4);
+ assert.equal((html.match(/class="gov-annex-sign"/g)||[]).length,4);
+ assert.match(html,/หน้าที่ 4\/4/);
+});
+test('adaptive layout retries smaller batches only with completed page groups',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const code=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(code,/for\(const count of \[9,7,5,3,2,1\]\)/);
+ assert.match(code,/__items_per_page:count/);
+ assert.match(code,/complete-a4-pages/);
+});
