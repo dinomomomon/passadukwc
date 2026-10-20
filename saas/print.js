@@ -34,12 +34,22 @@ function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const no=[s.m
  '<div class="memo-content">'+body+'</div><div class="memo-signatures">'+signatureHtml+'</div></div></section>';}
 function page(title,body,cls=''){return '<section class="paper-page official gov-doc '+cls+'"><div class="doc-sheet-body"><h2 class="print-title">'+e(title)+'</h2>'+body+'</div></section>';}
 function lawLine(text){return '<p class="gov-law">'+e(text)+'</p>';}
-function dataHead(r,s,kind){const m=meta(r);let numberKey=kind==='acceptance'?'acceptance_number':'requisition_number',dateKey=kind==='acceptance'?'acceptance_date':'requisition_date';
- return '<div class="gov-right-head"><div>'+ (kind==='acceptance'?'ใบตรวจรับ เลขที่':'ใบเบิก เลขที่')+' '+v(m[numberKey])+'</div><div>วันที่ '+(m[dateKey]?thaiDate(m[dateKey]):blank)+'</div><div>ส่วนราชการ '+e(s.name||'โรงเรียน')+'</div><div>ที่อยู่ '+schoolAddress(s)+'</div></div>';}
-function itemTable(r,kind='annex',height=85){
- const priced=kind==='annex',rows=(r.items||[]).map((x,i)=>'<tr><td class="center">'+(i+1)+'</td><td>'+e(x.name)+'</td><td class="center">'+e(x.qty)+'</td><td class="center">'+e(x.unit)+'</td>'+(priced?'<td class="right">'+cash(x.price_satang)+'</td><td class="right">'+cash(Math.round(Number(x.qty)*Number(x.price_satang)))+'</td>':'<td></td>')+'</tr>').join('');
- return '<table class="official-table official-table-ruled gov-items '+(priced?'gov-price-table':'gov-requisition-table')+'"><thead><tr><th class="col-order">ลำดับ</th><th>รายละเอียดและคุณลักษณะ</th><th class="col-quantity">จำนวน</th><th class="col-unit">หน่วย</th>'+(priced?'<th class="col-price">ราคาต่อหน่วย</th><th class="col-total">จำนวนเงิน</th>':'<th class="col-note">หมายเหตุ</th>')+'</tr></thead><tbody>'+rows+'<tr class="table-filler" style="height:'+height+'mm">'+Array.from({length:priced?6:5},()=>'<td>&nbsp;</td>').join('')+'</tr>'+(priced?'<tr><td colspan="4" class="gov-money-words">('+e(thaiBahtText(r.total_satang))+')</td><td class="right">รวมเป็นเงิน</td><td class="right">'+(numericMoney(meta(r).item_base_baht)?moneyField(meta(r),'item_base_baht'):(numericMoney(meta(r).vat_baht)?baht(Math.max(0,amt(r.total_satang)-Number(meta(r).vat_baht))):cash(r.total_satang)))+'</td></tr><tr><td colspan="4"></td><td class="right">ภาษีมูลค่าเพิ่ม</td><td class="right">'+moneyField(meta(r),'vat_baht')+'</td></tr><tr><td colspan="4"></td><td class="right">รวมเป็นเงินทั้งสิ้น</td><td class="right">'+cash(r.total_satang)+'</td></tr>':'')+'</tbody></table>';
+function dataHead(r,s,kind){const m=meta(r),isAcceptance=kind==='acceptance';
+ const number=isAcceptance?(m.acceptance_number||'ร. ........../'+String((Number(String(r.document_date||'').slice(0,4))||2026)+543)):(m.requisition_number||blank);
+ const date=isAcceptance?(m.acceptance_date||m.delivery_date):m.requisition_date;
+ return '<div class="gov-right-head"><div>'+(isAcceptance?'ใบตรวจรับ เลขที่':'ใบเบิก เลขที่')+' '+v(number)+'</div><div>วันที่ '+(date?thaiDate(date):blank)+'</div><div>ส่วนราชการ '+e(s.name||'โรงเรียน')+'</div><div>ที่อยู่ '+schoolAddress(s)+'</div></div>';
 }
+function itemTable(r,kind='annex',height=85){
+ const priced=kind==='annex',items=r.items||[],offset=r.__item_offset||0,showTotals=r.__show_totals!==false;
+ const rows=items.map((x,i)=>'<tr class="gov-data-row"><td class="center">'+(offset+i+1)+'</td><td>'+e(x.name)+'</td><td class="center">'+e(x.qty)+'</td><td class="center">'+e(x.unit)+'</td>'+(priced?'<td class="right">'+cash(x.price_satang)+'</td><td class="right">'+cash(Math.round(Number(x.qty)*Number(x.price_satang)))+'</td>':'<td></td>')+'</tr>').join('');
+ const filler=height>0?'<tr class="table-filler" style="height:'+height+'mm">'+Array.from({length:priced?6:5},()=>'<td>&nbsp;</td>').join('')+'</tr>':'';
+ const m=meta(r),subtotal=numericMoney(m.item_base_baht)?moneyField(m,'item_base_baht'):(numericMoney(m.vat_baht)?baht(Math.max(0,amt(r.total_satang)-Number(m.vat_baht))):cash(r.total_satang));
+ const total=priced&&showTotals?'<tr class="gov-summary-start"><td rowspan="3" colspan="4" class="gov-money-words">('+e(thaiBahtText(r.total_satang))+')</td><td class="gov-summary-label">รวมเป็นเงิน</td><td class="right">'+subtotal+'</td></tr><tr><td class="gov-summary-label">ภาษีมูลค่าเพิ่ม</td><td class="right">'+moneyField(m,'vat_baht')+'</td></tr><tr><td class="gov-summary-label">รวมเป็นเงินทั้งสิ้น</td><td class="right">'+cash(r.total_satang)+'</td></tr>':'';
+ return '<table class="official-table official-table-ruled gov-items '+(priced?'gov-price-table':'gov-requisition-table')+'"><thead><tr><th class="col-order">ลำดับ</th><th>รายละเอียดและคุณลักษณะ</th><th class="col-quantity">จำนวน</th><th class="col-unit">หน่วย</th>'+(priced?'<th class="col-price">ราคาต่อหน่วย</th><th class="col-total">จำนวนเงิน</th>':'<th class="col-note">หมายเหตุ</th>')+'</tr></thead><tbody>'+rows+filler+total+'</tbody></table>';
+}
+function pageChunks(items,size){const all=Array.isArray(items)?items:[],chunks=[];for(let i=0;i<all.length;i+=size)chunks.push({items:all.slice(i,i+size),offset:i});return chunks.length?chunks:[{items:[],offset:0}];}
+function fillerHeight(items,baseline,perItem){const arr=items||[],lines=arr.reduce((n,x)=>n+Math.max(0,Math.ceil(String(x.name||'').length/55)-1),0);return Math.max(0,baseline-Math.max(0,arr.length-1)*perItem-lines*7);}
+
 function purchaseRequest(r,s,buy){const verb=buy?'ซื้อ':'จ้าง',item=buy?'พัสดุ':'งานจ้าง',title=buy?'รายงานขอซื้อพัสดุ':'รายงานขอจ้าง';
 const law='พระราชบัญญัติการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 มาตรา 56 วรรคหนึ่ง (2) (ข) และระเบียบกระทรวงการคลังฯ พ.ศ. 2560 ข้อ 22 ข้อ 79 และข้อ 25 (5)';
 const line='<p class="indent">ด้วย '+v(r.department,'กลุ่มงาน/ฝ่ายที่ขอ')+' มีความประสงค์จะ'+(buy?'ซื้อพัสดุ':'จ้าง')+' จำนวน '+(r.items||[]).length+' รายการ เพื่อ '+v(r.reason,'ใช้ในการดำเนินงานของโรงเรียน')+' ซึ่งได้รับอนุมัติเงินจาก '+v(r.budget_source) +' เป็นเงิน '+cash(r.total_satang)+' บาท</p>';
@@ -76,7 +86,7 @@ const body=lawLine('ตามระเบียบกระทรวงการ
  '<ol class="gov-numbered gov-inspection-list"><li>'+noun+'ครบกำหนดส่งมอบในวันที่ '+dd+'</li>'+
  '<li>ผู้'+(buy?'ขาย':'รับจ้าง')+' ทำการส่งมอบเมื่อวันที่ '+(m.delivery_date?thaiDate(m.delivery_date):blank)+' ณ '+v(m.inspection_location,'สถานที่ส่งมอบตามเอกสาร')+'</li>'+
  '<li>ได้ทำการตรวจรับตามใบส่งของ/ใบสำคัญรับเงิน/ใบเสร็จรับเงิน เลขที่ '+v(m.invoice_number)+' ลงวันที่ '+(m.invoice_date?thaiDate(m.invoice_date):blank)+'</li>'+
- '<li>ได้ถือว่า'+noun+'ถูกต้องครบถ้วนเมื่อวันที่ '+(m.inspection_date?thaiDate(m.inspection_date):blank)+'</li>'+
+ '<li>ได้ถือว่า'+noun+'ถูกต้องครบถ้วนเมื่อวันที่ '+((m.inspection_date||m.delivery_date)?thaiDate(m.inspection_date||m.delivery_date):blank)+'</li>'+
  '<li>ได้เชิญผู้ชำนาญการหรือผู้ทรงคุณวุฒิมาปรึกษาด้วยคือ '+v(m.inspection_expert,'–')+'</li>'+
  '<li>ได้มอบ'+noun+'ที่ตรวจรับให้เจ้าหน้าที่ พร้อมทำใบตรวจรับโดยลงชื่อไว้เป็นหลักฐาน มอบให้แก่ผู้ขาย/ผู้รับจ้าง 1 ฉบับ และเจ้าหน้าที่ 1 ฉบับ</li></ol>'+
  '<p class="indent">จึงเรียนมาเพื่อโปรดทราบ และพิจารณาให้ดำเนินการเบิกจ่ายเงินให้แก่ผู้'+(buy?'ขาย':'รับจ้าง')+' ตามระเบียบของหน่วยงานต่อไป</p>'+
@@ -87,7 +97,7 @@ const body=lawLine('ตามระเบียบกระทรวงการ
 return page('ใบตรวจรับ'+noun,body,'gov-acceptance');}
 function payment(r,s,buy){const verb=buy?'ซื้อ':'จ้าง',noun=buy?'พัสดุ':'งานจ้าง',m=meta(r),vendor=v(r.vendor_name);
 const body='<p class="indent">ตามที่ได้อนุมัติให้'+(buy?'จัดซื้อพัสดุ':'จัดจ้าง')+' จำนวน '+(r.items||[]).length+' รายการ จาก '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ตาม'+(buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง')+'เลขที่ '+v(m.order_number)+' ลงวันที่ '+(m.order_date?thaiDate(m.order_date):blank)+' ซึ่งครบกำหนดส่งมอบเมื่อวันที่ '+(r.due_date?thaiDate(r.due_date):blank)+' นั้น</p>'+
- '<p class="indent">บัดนี้ ผู้'+(buy?'ขาย':'รับจ้าง')+'ได้ส่งมอบ'+noun+' ตามใบส่งของ/ใบเสร็จ เลขที่ '+v(m.invoice_number)+' ลงวันที่ '+(m.invoice_date?thaiDate(m.invoice_date):blank)+' ผู้ตรวจรับ'+noun+'ได้ทำการตรวจรับ'+noun+'ไว้แล้ว ปรากฏว่าครบถ้วนถูกต้อง เมื่อวันที่ '+(m.inspection_date?thaiDate(m.inspection_date):blank)+' ดังหลักฐานการตรวจรับที่แนบ</p>'+
+ '<p class="indent">บัดนี้ ผู้'+(buy?'ขาย':'รับจ้าง')+'ได้ส่งมอบ'+noun+' ตามใบส่งของ/ใบเสร็จ เลขที่ '+v(m.invoice_number)+' ลงวันที่ '+(m.invoice_date?thaiDate(m.invoice_date):blank)+' ผู้ตรวจรับ'+noun+'ได้ทำการตรวจรับ'+noun+'ไว้แล้ว ปรากฏว่าครบถ้วนถูกต้อง เมื่อวันที่ '+((m.inspection_date||m.delivery_date)?thaiDate(m.inspection_date||m.delivery_date):blank)+' ดังหลักฐานการตรวจรับที่แนบ</p>'+
  '<p class="indent">จึงเรียนมาเพื่อโปรด</p><ol class="gov-numbered"><li>ทราบผลการตรวจรับ'+noun+'</li>'+
  '<li>อนุมัติจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+') รายละเอียดดังนี้</li></ol>'+
  '<div class="gov-money-list">'+[
