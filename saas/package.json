@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node build.mjs",
+    "build": "node --test ./official-forms.test.mjs && node build.mjs",
     "deploy:cloudflare": "wrangler deploy"
   },
   "dependencies": {
