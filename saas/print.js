@@ -66,7 +66,7 @@ const body=line+'<p class="indent">งานพัสดุได้ตรวจ
  '<ol class="gov-numbered"><li>เห็นชอบในรายงานขอ'+verb+'ดังกล่าวข้างต้น</li>'+
  '<li>อนุมัติให้แต่งตั้ง '+v(r.inspector_name)+' ตำแหน่ง '+v(meta(r).inspector_position)+' เป็นผู้ตรวจรับ'+item+'</li></ol>';
 return memo(r,s,title,body,signRow(r,s)+directorSign(r,s,'เห็นชอบ &nbsp;&nbsp; อนุมัติ'),'gov-request');}
-function annex(r,s,buy){const noun=buy?'พัสดุที่จะซื้อ':'งานจ้าง',subject=buy?'รายงานขอซื้อ':'รายงานขอจ้าง',chunks=pageChunks(r.items,9);
+function annex(r,s,buy){const noun=buy?'พัสดุที่จะซื้อ':'งานจ้าง',subject=buy?'รายงานขอซื้อ':'รายงานขอจ้าง',chunks=pageChunks(r.items,Math.max(1,Math.min(9,Number(r.__items_per_page)||9)));
  return chunks.map((part,i)=>page('รายละเอียดของ'+noun+' แนบท้าย'+subject,
  lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 22 วรรคหนึ่ง (2) และข้อ 22 วรรคสอง')+
  '<p class="gov-count">จำนวน'+(buy?'พัสดุ':'งานจ้าง')+' '+(r.items||[]).length+' รายการ'+(chunks.length>1?' (หน้าที่ '+(i+1)+'/'+chunks.length+')':'')+'</p>'+
@@ -118,7 +118,7 @@ const body='<p class="indent">ตามที่ได้อนุมัติ�
  '<div class="gov-finance-sign">'+sign(v(s.finance_name),'เจ้าหน้าที่การเงิน',true)+'</div>';
 const approvalPart='<div class="gov-payment-director"><div>1. ทราบ<br>2. อนุมัติจ่ายเงิน</div>'+sign(director(r,s),'ผู้อำนวยการ'+e(s.name||'โรงเรียน'))+'</div>';
 return memo(r,s,'ทราบผลและขออนุมัติเบิกจ่าย',body,approvalPart,'gov-payment');}
-function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name),chunks=pageChunks(r.items,9);
+function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name),chunks=pageChunks(r.items,Math.max(1,Math.min(9,Number(r.__items_per_page)||9)));
  return chunks.map((part,i)=>{
  const top=lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 204 และ ข้อ 205')+
  dataHead(r,s,'requisition')+
