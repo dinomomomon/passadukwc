@@ -180,3 +180,92 @@ body.print-measuring #print-area .paper-page.official.gov-doc{height:297mm!impor
    break-inside:avoid!important
  }
 }
+
+
+/* Exact-form corrections: preserve a complete printed form on every A4 sheet. */
+.paper-page.official.gov-doc .gov-price-table .col-price{width:19%}
+.paper-page.official.gov-doc .gov-price-table .col-total{width:15%}
+.paper-page.official.gov-doc .gov-summary-label{
+ text-align:right;white-space:nowrap;font-size:12.7pt!important;
+ font-weight:400;padding-right:1.4mm
+}
+.paper-page.official.gov-doc .gov-money-words{vertical-align:middle;text-align:center}
+.paper-page.official.gov-doc .gov-items .table-filler td{height:auto!important;min-height:0!important}
+.paper-page.official.gov-doc .gov-items .table-filler{break-inside:avoid}
+.paper-page.official.gov-doc .gov-right-head{
+ box-sizing:border-box;width:45%;margin:2mm 0 6mm auto!important;
+ padding:0;text-align:left;font-size:var(--doc-size);line-height:1.24
+}
+.paper-page.official.gov-doc .gov-right-head>div{margin:0;white-space:normal}
+.paper-page.official.gov-doc.gov-acceptance{
+ --doc-size:14.0pt;--doc-leading:1.21;--doc-gap:.8mm;--doc-list-gap:.15mm;
+ --doc-sign-size:13.3pt
+}
+.paper-page.official.gov-doc.gov-acceptance .print-title{margin-bottom:1.8mm}
+.paper-page.official.gov-doc.gov-acceptance .gov-law{margin:0 0 2mm}
+.paper-page.official.gov-doc.gov-acceptance .gov-right-head{width:43%;margin:1mm 0 4mm auto!important}
+.paper-page.official.gov-doc.gov-acceptance .gov-inspection-list{margin:2mm 0 2mm;padding-left:14mm}
+.paper-page.official.gov-doc.gov-acceptance .gov-inspection-list li{margin:.15mm 0;line-height:1.18}
+.paper-page.official.gov-doc.gov-acceptance .gov-inspector-sign{margin:2mm 0 2mm auto}
+.paper-page.official.gov-doc.gov-acceptance .gov-half-rule{margin:3mm 0 1mm}
+.paper-page.official.gov-doc.gov-acceptance .gov-inspection-bottom{margin:2mm 0 0}
+.paper-page.official.gov-doc.gov-acceptance .gov-inspection-bottom .sign-grid{margin:1mm 0 1mm}
+.paper-page.official.gov-doc.gov-acceptance .gov-inspection-bottom .director-sign{margin:1mm 0 0 auto}
+.paper-page.official.gov-doc.gov-acceptance .gov-inspection-bottom .director-action{margin-bottom:1mm;line-height:1.24}
+.paper-page.official.gov-doc.gov-acceptance .gov-inspection-bottom .signature-card{line-height:1.1}
+.paper-page.official.gov-doc.gov-requisition .gov-right-head{width:43%;margin:5mm 0 6mm auto!important}
+.paper-page.official.gov-doc.gov-requisition .gov-requisition-signatures{gap:8mm 6mm;margin-top:5mm}
+.paper-page.official.gov-doc.gov-requisition .gov-requisition-signatures .signature-card{line-height:1.16}
+.paper-page.official.gov-doc.gov-annex .gov-annex-sign{margin:3mm 0 0}
+.paper-page.official.gov-doc.gov-annex .official-table{margin:4mm 0 1mm}
+.paper-page.official.gov-doc[data-fit-margin="tight"]{
+ padding:12mm 12mm 10mm 17mm!important;
+}
+.paper-page.official.gov-doc[data-fit-margin="minimum"]{
+ padding:9mm 10mm 8mm 14mm!important;
+}
+.paper-page.official.gov-doc[data-density="extra"]{
+ --doc-size:12.6pt;--doc-leading:1.16;--doc-gap:.4mm;
+ --doc-list-gap:0;--doc-sign-size:12.1pt
+}
+body.print-measuring #print-area .paper-page.official.gov-doc[data-fit-margin="tight"]{
+ padding:12mm 12mm 10mm 17mm!important
+}
+body.print-measuring #print-area .paper-page.official.gov-doc[data-fit-margin="minimum"]{
+ padding:9mm 10mm 8mm 14mm!important
+}
+body.print-measuring #print-area .paper-page.official.gov-doc{
+ box-sizing:border-box!important;height:297mm!important;min-height:0!important;
+ max-height:297mm!important;overflow:hidden!important
+}
+body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
+ zoom:var(--gov-zoom,1)!important
+}
+@media print{
+ #print-area .paper-page.official.gov-doc{
+   box-sizing:border-box!important;
+   height:297mm!important;min-height:0!important;max-height:297mm!important;
+   margin:0!important;padding:18mm 15mm 15mm 20mm!important;
+   overflow:hidden!important;break-inside:avoid!important;
+   page-break-inside:avoid!important;break-after:page!important;page-break-after:always!important
+ }
+ #print-area .paper-page.official.gov-doc[data-fit-margin="tight"]{
+   padding:12mm 12mm 10mm 17mm!important
+ }
+ #print-area .paper-page.official.gov-doc[data-fit-margin="minimum"]{
+   padding:9mm 10mm 8mm 14mm!important
+ }
+ #print-area .paper-page.official.gov-doc:last-child{
+   break-after:auto!important;page-break-after:auto!important
+ }
+ #print-area .paper-page.official.gov-doc .doc-sheet-body{
+   zoom:var(--gov-zoom,1)!important;overflow:visible!important;
+   height:auto!important;max-height:none!important
+ }
+ #print-area .paper-page.official.gov-doc .memo-signatures,
+ #print-area .paper-page.official.gov-doc .director-sign,
+ #print-area .paper-page.official.gov-doc .gov-requisition-signatures,
+ #print-area .paper-page.official.gov-doc .gov-inspection-bottom{
+   break-inside:avoid!important;page-break-inside:avoid!important
+ }
+}
