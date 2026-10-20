@@ -712,3 +712,61 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
   margin:0!important;
  }
 }
+
+
+/* Official A4 tables — preserve every ORIGINAL header on one line.
+   Precise colgroup widths sum to 100% for purchase/hire annex and requisition.
+   Row descriptions alone may wrap naturally. */
+.paper-page.official.gov-doc .gov-items{
+ width:100%!important;
+ max-width:100%!important;
+ table-layout:fixed!important;
+ border-collapse:collapse!important;
+}
+.paper-page.official.gov-doc .gov-price-table col.col-order,
+.paper-page.official.gov-doc .gov-price-table th.col-order{width:11.5%!important}
+.paper-page.official.gov-doc .gov-price-table col.col-description,
+.paper-page.official.gov-doc .gov-price-table th.col-description{width:32.5%!important}
+.paper-page.official.gov-doc .gov-price-table col.col-quantity,
+.paper-page.official.gov-doc .gov-price-table th.col-quantity{width:11%!important}
+.paper-page.official.gov-doc .gov-price-table col.col-unit,
+.paper-page.official.gov-doc .gov-price-table th.col-unit{width:10%!important}
+.paper-page.official.gov-doc .gov-price-table col.col-price,
+.paper-page.official.gov-doc .gov-price-table th.col-price{width:19%!important}
+.paper-page.official.gov-doc .gov-price-table col.col-total,
+.paper-page.official.gov-doc .gov-price-table th.col-total{width:16%!important}
+.paper-page.official.gov-doc .gov-requisition-table col.col-order,
+.paper-page.official.gov-doc .gov-requisition-table th.col-order{width:11.5%!important}
+.paper-page.official.gov-doc .gov-requisition-table col.col-description,
+.paper-page.official.gov-doc .gov-requisition-table th.col-description{width:45.5%!important}
+.paper-page.official.gov-doc .gov-requisition-table col.col-quantity,
+.paper-page.official.gov-doc .gov-requisition-table th.col-quantity{width:12%!important}
+.paper-page.official.gov-doc .gov-requisition-table col.col-unit,
+.paper-page.official.gov-doc .gov-requisition-table th.col-unit{width:11.5%!important}
+.paper-page.official.gov-doc .gov-requisition-table col.col-note,
+.paper-page.official.gov-doc .gov-requisition-table th.col-note{width:19.5%!important}
+.paper-page.official.gov-doc .gov-items thead th{
+ white-space:nowrap!important;
+ word-break:keep-all!important;
+ overflow-wrap:normal!important;
+ hyphens:none!important;
+ text-align:center!important;
+ padding-left:.7mm!important;
+ padding-right:.7mm!important;
+ vertical-align:middle!important;
+}
+.paper-page.official.gov-doc .gov-items tbody td{
+ word-break:normal!important;
+ overflow-wrap:break-word!important;
+}
+.paper-page.official.gov-doc .gov-items tbody td.center,
+.paper-page.official.gov-doc .gov-items tbody td.right{
+ white-space:nowrap!important;
+}
+@media print{
+ #print-area .paper-page.official.gov-doc .gov-items thead th{
+  white-space:nowrap!important;
+  word-break:keep-all!important;
+  overflow-wrap:normal!important;
+ }
+}
