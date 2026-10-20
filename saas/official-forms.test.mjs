@@ -495,3 +495,50 @@ test('print layout keeps original approval and finance in the same row, director
  assert.match(section,/\.gov-payment \.gov-payment-director-sign\{\s*margin-top:8mm!important/);
  assert.match(section,/@media print\{[\s\S]*?\.gov-payment \.gov-payment-approval-top\{\s*display:grid!important/);
 });
+
+test('all purchase and hiring annex tables keep every exact Thai header on one line',()=>{
+ const examples=[sample,{...sample,kind:'hire'}];
+ for(const record of examples){
+  const html=buildDocuments(record,school);
+  const tables=[...html.matchAll(/<table class="official-table official-table-ruled gov-items gov-price-table">([\s\S]*?)<\/table>/g)];
+  assert.ok(tables.length>=1,'every procurement requires a price annex');
+  for(const [,body] of tables){
+   assert.match(body,/^<colgroup><col class="col-order"><col class="col-description"><col class="col-quantity"><col class="col-unit"><col class="col-price"><col class="col-total"><\/colgroup>/);
+   for(const text of ['ลำดับ','รายละเอียดและคุณลักษณะ','จำนวน','หน่วย','ราคาต่อหน่วย','จำนวนเงิน']){
+    assert.match(body,new RegExp('<th[^>]*>'+text+'</th>'));
+   }
+  }
+ }
+});
+test('requisition continuation tables use the exact five original headers and fixed width colgroup',()=>{
+ const record={...sample,items:Array.from({length:18},(_,i)=>({name:'พัสดุ '+(i+1),qty:1,unit:'ชุด',price_satang:100})),total_satang:1800};
+ const html=buildDocuments(record,school);
+ const tables=[...html.matchAll(/<table class="official-table official-table-ruled gov-items gov-requisition-table">([\s\S]*?)<\/table>/g)];
+ assert.equal(tables.length,2);
+ for(const [,body] of tables){
+  assert.match(body,/^<colgroup><col class="col-order"><col class="col-description"><col class="col-quantity"><col class="col-unit"><col class="col-note"><\/colgroup>/);
+  for(const text of ['ลำดับ','รายละเอียดและคุณลักษณะ','จำนวน','หน่วย','หมายเหตุ']){
+   assert.match(body,new RegExp('<th[^>]*>'+text+'</th>'));
+  }
+ }
+});
+test('government print CSS fixes order column width and prohibits splitting Thai table headings',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ const rules=css.slice(css.indexOf('Official A4 tables — preserve every ORIGINAL header'));
+ assert.match(rules,/\.gov-price-table col\.col-order,[\s\S]*?width:11\.5%!important/);
+ assert.match(rules,/\.gov-requisition-table col\.col-order,[\s\S]*?width:11\.5%!important/);
+ assert.match(rules,/\.gov-items thead th\{\s*white-space:nowrap!important;\s*word-break:keep-all!important;\s*overflow-wrap:normal!important/);
+ assert.match(rules,/@media print\{[\s\S]*?\.gov-items thead th\{\s*white-space:nowrap!important/);
+ assert.match(rules,/\.gov-items tbody td\{\s*word-break:normal!important;\s*overflow-wrap:break-word!important/);
+});
+test('table heading fit measures all headers and works in both preview and A4 printing',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(app,/function fitOfficialTableHeaders\(root\)/);
+ assert.match(app,/for\(const table of root\.querySelectorAll\('\.gov-items'\)\)/);
+ assert.match(app,/heads\.some\(h=>h\.scrollWidth>h\.clientWidth\+1\)/);
+ assert.match(app,/for\(const head of heads\)head\.style\.setProperty\('font-size',px\+'px','important'\)/);
+ assert.match(app,/fitOfficialTableHeaders\(sheet\)/);
+ assert.match(app,/fitOfficialTableHeaders\(previewRoot\)/);
+});
