@@ -80,3 +80,48 @@ test('Chrome A4 print uses native page continuation instead of blocking long doc
  assert.match(css,/break-inside:auto!important/);
  assert.match(css,/gov-director-position/);
 });
+
+test('annex totals have a single merged amount-in-words cell without extra empty rows',()=>{
+ const html=buildDocuments(sample,school);
+ assert.match(html,/rowspan="3" colspan="4" class="gov-money-words"/);
+ assert.doesNotMatch(html,/<td colspan="4"><\/td><td class="right">ภาษีมูลค่าเพิ่ม/);
+});
+test('receiving header uses Thai receipt prefix and auto delivery date for inspection',()=>{
+ const record={...sample,document_meta:{delivery_date:'2026-10-25'}};
+ const html=buildDocuments(record,school);
+ assert.match(html,/ใบตรวจรับ เลขที่ ร\. ........\.\.\/2569/);
+ assert.match(html,/วันที่ 25 ตุลาคม 2569/);
+ assert.match(html,/ถูกต้องครบถ้วนเมื่อวันที่ 25 ตุลาคม 2569/);
+});
+test('receiving number remains editable and overrides the automatic placeholder',()=>{
+ const html=buildDocuments({...sample,document_meta:{acceptance_number:'ร. 218/2569',delivery_date:'2026-10-25',acceptance_date:'2026-10-26'}},school);
+ assert.match(html,/ใบตรวจรับ เลขที่ ร\. 218\/2569/);
+ assert.match(html,/วันที่ 26 ตุลาคม 2569/);
+});
+test('multipage requisition repeats heading, receiving and issuing signatures on every page',()=>{
+ const long={...sample,items:Array.from({length:21},(_,i)=>({name:'วัสดุ '+(i+1),qty:1,unit:'ชุด',price_satang:100})),total_satang:2100};
+ const html=buildDocuments(long,school);
+ assert.equal((html.match(/ใบเบิกพัสดุ<\/h2>/g)||[]).length,3);
+ assert.equal((html.match(/class="gov-requisition-signatures"/g)||[]).length,3);
+ assert.match(html,/หน้าที่ 1\/3/);
+ assert.match(html,/หน้าที่ 2\/3/);
+ assert.match(html,/หน้าที่ 3\/3/);
+ assert.match(html,/>21<\/td>/);
+ assert.equal((html.match(/<section class="paper-page/g)||[]).length,10);
+});
+test('each annex continuation retains title, official table and both signers',()=>{
+ const long={...sample,items:Array.from({length:11},(_,i)=>({name:'พัสดุ '+(i+1),qty:1,unit:'ชุด',price_satang:100})),total_satang:1100};
+ const html=buildDocuments(long,school);
+ assert.equal((html.match(/รายละเอียดของพัสดุที่จะซื้อ แนบท้ายรายงานขอซื้อ<\/h2>/g)||[]).length,2);
+ assert.equal((html.match(/class="gov-annex-sign"/g)||[]).length,2);
+});
+test('PDF layout measures every complete page rather than allowing cut-off signature',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const js=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ assert.match(js,/fitSheet=sheet=>/);
+ assert.match(js,/data-fit-margin|fitMargin/);
+ assert.match(js,/ensureAcceptanceNumber/);
+ assert.match(css,/height:297mm!important/);
+ assert.match(css,/gov-right-head/);
+});
