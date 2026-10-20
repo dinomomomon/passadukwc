@@ -344,7 +344,7 @@ test('admins can reconcile historical malformed numbers without deleting audit e
  assert.match(app,/registry-resolve/);
  assert.match(app,/resolve_official_number_conflict/);
  assert.match(sql,/status='resolved'/);
- assert.match(sql,/status='reserved'/);
+ assert.match(sql,/'reserved',auth\.uid\(\)/);
  assert.match(sql,/audit_logs/);
 });
 test('receipt and requisition only reserve after the actual delivery is recorded',async()=>{
