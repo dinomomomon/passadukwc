@@ -333,3 +333,15 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
   top:-14mm!important;
  }
 }
+
+
+/* School-wide official document number register */
+.kp-registry-filters{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:14px 0}
+.kp-registry-filters .input{flex:2 1 190px;min-width:130px}
+.kp-registry-filters .select{flex:1 1 145px;min-width:120px}
+.kp-registry-filters button{flex:0 0 auto}
+.kp-registry-admin{margin-top:16px}
+.kp-registry-admin>summary{font-weight:800;cursor:pointer;color:#174778}
+.kp-registry-admin>.hint{padding-top:12px}
+.kp-registry-admin .kp-registry-filters{margin-bottom:2px}
+@media(max-width:650px){.kp-registry-filters>*{flex:1 1 100%!important}}
