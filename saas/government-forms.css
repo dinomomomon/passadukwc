@@ -582,3 +582,80 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
  margin:0!important;
  padding:0!important;
 }
+
+
+/* Payment memo — faithful to the original signed paper form.
+   Finance officer remains at RIGHT. At the LEFT, the decision is followed
+   DOWNWARD by the director's signature, not displayed in a second column.
+   The complete director name, original one-line job title and date are kept
+   together, including in browser print/PDF. */
+.paper-page.official.gov-doc.gov-payment .memo-signatures{
+ display:block!important;
+ width:100%!important;
+ clear:both!important;
+ margin:2mm 0 0!important;
+ break-inside:avoid!important;
+ page-break-inside:avoid!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-director{
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ justify-content:flex-start!important;
+ grid-template-columns:none!important;
+ width:100%!important;
+ gap:0!important;
+ margin:0!important;
+ padding:0!important;
+ break-inside:avoid!important;
+ page-break-inside:avoid!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-director .gov-payment-decision{
+ position:static!important;
+ top:auto!important;
+ display:block!important;
+ width:100%!important;
+ margin:0!important;
+ padding:0 0 0 2mm!important;
+ line-height:1.3!important;
+ text-align:left!important;
+ align-self:flex-start!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-director-sign{
+ display:block!important;
+ box-sizing:border-box!important;
+ width:58%!important;
+ max-width:110mm!important;
+ min-width:0!important;
+ margin:7mm 0 0!important;
+ padding:0!important;
+ align-self:flex-start!important;
+ break-inside:avoid!important;
+ page-break-inside:avoid!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-director-sign .kp-signature{
+ width:100%!important;
+ margin:0!important;
+ padding:0!important;
+ break-inside:avoid!important;
+ page-break-inside:avoid!important;
+}
+@media print{
+ #print-area .paper-page.official.gov-doc.gov-payment .gov-payment-director{
+  display:flex!important;
+  flex-direction:column!important;
+  grid-template-columns:none!important;
+  align-items:flex-start!important;
+  break-inside:avoid!important;
+ }
+ #print-area .paper-page.official.gov-doc.gov-payment .gov-payment-decision{
+  position:static!important;
+  top:auto!important;
+ }
+ #print-area .paper-page.official.gov-doc.gov-payment .gov-payment-director-sign{
+  width:58%!important;
+  margin-top:7mm!important;
+  margin-left:0!important;
+  break-inside:avoid!important;
+ }
+}
