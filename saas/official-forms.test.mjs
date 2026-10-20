@@ -161,7 +161,7 @@ test('budget year and budget source propagate without extra metadata entries',()
  const record={...sample,fiscal_year:2570,budget_source:'กิจกรรมพัฒนาผู้เรียน',document_meta:{}};
  const html=buildDocuments(record,school);
  assert.match(html,/ปีงบประมาณ 2570/);
- assert.match(html,/แผนงาน\/กิจกรรม\/โครงการ กิจกรรมพัฒนาผู้เรียน/);
+ assert.match(html,/มีเงินตามกิจกรรม\/โครงการ กิจกรรมพัฒนาผู้เรียน/);
 });
 test('shared delivery date is used for receiving and requisition dates',()=>{
  const record={...sample,document_meta:{delivery_date:'2026-10-25'}};
