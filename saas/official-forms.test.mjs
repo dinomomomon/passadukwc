@@ -183,11 +183,12 @@ test('unset deductions do not silently imply zero withholding or tax',()=>{
 });
 
 
-test('three memo letters have independent reference numbers and a single prefix',()=>{
+test('request memo uses พว. while approval and payment use only ที่ and reference number',()=>{
  const record={...sample,document_meta:{memo_prefix:'พว.',memo_number:'11/2569',approval_memo_number:'12/2569',payment_memo_number:'13/2569'}};
  const html=buildDocuments(record,school);
- for(const no of ['11/2569','12/2569','13/2569']) assert.match(html,new RegExp('พว\\. '+no.replace('/','\\/')));
- assert.equal((html.match(/พว\.\s+(?:11|12|13)\/2569/g)||[]).length,3);
+ assert.match(html,/พว\. 11\/2569/);
+ for(const no of ['12/2569','13/2569'])assert.match(html,new RegExp('<strong>ที่<\\/strong><span class="memo-value">'+no.replace('/','\\/')+'<\\/span>'));
+ assert.equal((html.match(/พว\.\s+(?:11|12|13)\/2569/g)||[]).length,1);
 });
 test('annex legal article 22 begins its own line',()=>{
  const html=buildDocuments(sample,school);
@@ -222,7 +223,7 @@ test('four-step wizard preserves draft and validates each stage',async()=>{
 test('new memo reference inputs are individually labeled and editable',()=>{
  const html=docMetaInputs({memo_prefix:'พว.',memo_number:'1/2569',approval_memo_number:'2/2569',payment_memo_number:'3/2569'},{mode:'create'});
  for(const key of ['memo_prefix','memo_number','approval_memo_number','payment_memo_number'])assert.match(html,new RegExp('name="doc_'+key+'"'));
- assert.match(html,/ที่ — รายงานผลการพิจารณาและขออนุมัติ/);
+ assert.match(html,/ที่ — รายงานผลการพิจารณาฯ/);
  assert.match(html,/ที่ — ทราบผลและขออนุมัติเบิกจ่าย/);
 });
 
@@ -240,9 +241,9 @@ test('the three printed memo pages use precisely one distinct reference per page
   approval_memo_number:'3/2569',payment_memo_number:'พว. 4/2569'
  }};
  const html=buildDocuments(record,{...school,memo_prefix:'พว. 1/2569'});
- for(const no of ['2/2569','3/2569','4/2569']){
-   assert.match(html,new RegExp('พว\\. '+no.replace('/','\\/')));
- }
+ assert.match(html,/พว\. 2\/2569/);
+ for(const no of ['3/2569','4/2569'])assert.match(html,new RegExp('<strong>ที่<\\/strong><span class="memo-value">'+no.replace('/','\\/')+'<\\/span>'));
+ assert.equal((html.match(/พว\.\s+(?:2|3|4)\/2569/g)||[]).length,1);
  assert.doesNotMatch(html,/พว\.\s+1\/2569\s+2\/2569/);
  assert.equal((html.match(/memo-field-number/g)||[]).length,3);
 });
@@ -257,4 +258,16 @@ test('form strips reused พว. in old memo values but never erases the documen
 test('duplicated reference sequences in one input are rejected instead of silently saved',()=>{
  assert.throws(()=>docMetaValue({doc_memo_number:'พว. 1/2569 2/2569'}),/หลายเลข/);
  assert.throws(()=>docMetaValue({doc_memo_number:'พว.'}),/2\/2569/);
+});
+
+test('the request memo alone carries the school prefix in both purchase and hire',()=>{
+ for(const kind of ['purchase','hire']){
+  const record={...sample,kind,document_meta:{
+   memo_prefix:'พว.',memo_number:'2/2569',
+   approval_memo_number:'พว. 3/2569',payment_memo_number:'พว. 4/2569'
+  }};
+  const html=buildDocuments(record,school);
+  const numbers=[...html.matchAll(/<div class="memo-field memo-field-number"><strong>ที่<\/strong><span class="memo-value">([^<]+)<\/span>/g)].map(m=>m[1]);
+  assert.deepEqual(numbers,['พว. 2/2569','3/2569','4/2569']);
+ }
 });
