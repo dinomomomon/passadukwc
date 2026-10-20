@@ -59,7 +59,7 @@ test('director approvals have a dedicated ruled signature and separate position'
  const html=buildDocuments(sample,school);
  assert.match(html,/class="gov-director-writing"/);
  assert.match(html,/class="gov-director-rule"/);
- assert.match(html,/class="gov-director-position">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
+ assert.match(html,/class="gov-director-position kp-signature-position"><span class="kp-position-part">ผู้อำนวยการ<\/span><span class="kp-position-part">โรงเรียนกาวิละวิทยาลัย<\/span>/);
 });
 test('editing drafts remains separate from issuing another numbered record',async()=>{
  const {readFileSync}=await import('node:fs');
@@ -209,7 +209,7 @@ test('payment director approval prints decision at left and blank sign line then
  const html=buildDocuments(sample,school);
  assert.match(html,/class="gov-payment-decision">1\. ทราบ<br>2\. อนุมัติจ่ายเงิน/);
  assert.match(html,/class="gov-payment-signline">ลงชื่อ <span class="gov-director-rule"><\/span>/);
- assert.match(html,/class="gov-director-position">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
+ assert.match(html,/class="gov-director-position kp-signature-position"><span class="kp-position-part">ผู้อำนวยการ<\/span><span class="kp-position-part">โรงเรียนกาวิละวิทยาลัย<\/span>/);
 });
 test('four-step wizard preserves draft and validates each stage',async()=>{
  const {readFileSync}=await import('node:fs');
@@ -298,15 +298,15 @@ test('payment signature blocks occupy full width and avoid detached decision/ide
  assert.match(css,/\.gov-payment \.memo-signatures\{\s*display:block!important/);
  assert.match(css,/\.gov-payment \.gov-payment-director\{\s*display:grid!important;\s*grid-template-columns:36% minmax\(0,1fr\)!important/);
  assert.match(css,/\.gov-payment \.gov-payment-decision\{\s*position:static!important;\s*top:auto!important/);
- assert.match(css,/\.gov-payment \.gov-finance-signature\{/);
+ assert.match(css,/\.gov-payment \.gov-finance-wrap,/);
  assert.match(css,/@media print\{[\s\S]*?\.gov-payment \.gov-payment-decision\{\s*position:static!important;\s*top:auto!important/);
 });
 test('payment finance note is not redundantly printed and signatures have separate rows',()=>{
  const html=buildDocuments(sample,school);
  const paymentPage=html.slice(html.indexOf('gov-payment'));
  assert.doesNotMatch(paymentPage,/หมายเหตุเจ้าหน้าที่การเงิน/);
- assert.match(paymentPage,/class="signature-card gov-finance-signature"/);
- assert.match(paymentPage,/class="signature-name">\([^<]+\)<\/div><div class="signature-role">เจ้าหน้าที่การเงิน<\/div>/);
+ assert.match(paymentPage,/class="gov-finance-wrap"><div class="signature-card kp-signature"/);
+ assert.match(paymentPage,/class="signature-name">\([^<]+\)<\/div><div class="signature-role kp-signature-position">เจ้าหน้าที่การเงิน<\/div>/);
  assert.match(paymentPage,/class="signature-date">วันที่ <span class="date-rule"><\/span><\/div>/);
  assert.match(paymentPage,/class="gov-payment-director"/);
  assert.match(paymentPage,/class="gov-director-position">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
@@ -379,4 +379,41 @@ test('registry searches all historical document subjects, not only dashboard rec
  assert.match(app,/select\('\*,procurements\(title,vendor_name,kind\)'\)/);
  assert.match(app,/range\(offset,offset\+size-1\)/);
  assert.match(app,/recordsById\.get\(n\.procurement_id\)\|\|n\.procurements/);
+});
+
+test('every official signature card has line, centered full name, separate position and date',()=>{
+ const html=buildDocuments(sample,school);
+ const cards=[...html.matchAll(/<div class="signature-card kp-signature[^"]*">([\s\S]*?)<\/div>/g)];
+ assert.ok(cards.length>=15,'expected signature blocks across all official pages');
+ for(const [,block] of cards){
+  assert.match(block,/ลงชื่อ <span class="(?:signature-rule|gov-director-rule)"/);
+  assert.doesNotMatch(block,/signature-rule"><\/span>\s*(?:เจ้าหน้าที่|หัวหน้าเจ้าหน้าที่|ผู้ตรวจรับ)/);
+ }
+ assert.match(html,/class="signature-role kp-signature-position">หัวหน้าเจ้าหน้าที่<\/div><div class="signature-date">วันที่/);
+ assert.match(html,/class="signature-role kp-signature-position">เจ้าหน้าที่<\/div><div class="signature-date">วันที่/);
+});
+test('director name, entire school title, and date remain in the same atomic card',()=>{
+ const html=buildDocuments(sample,school);
+ assert.match(html,/class="signature-card kp-signature gov-director-card"/);
+ assert.match(html,/class="kp-position-part">ผู้อำนวยการ<\/span><span class="kp-position-part">โรงเรียนกาวิละวิทยาลัย<\/span>/);
+ assert.match(html,/โรงเรียนกาวิละวิทยาลัย<\/span><\/div><div class="signature-date">วันที่/);
+ assert.match(html,/class="signature-card kp-signature gov-payment-signature"/);
+});
+test('uniform signature CSS keeps names whole and dates distinctly spaced',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ assert.match(css,/\.kp-signature\{[\s\S]*?break-inside:avoid!important/);
+ assert.match(css,/\.kp-signature>.signature-name\{[\s\S]*?white-space:nowrap!important/);
+ assert.match(css,/\.kp-signature>.signature-date\{[\s\S]*?margin:2\.6mm 0 0!important/);
+ assert.match(css,/\.kp-signature \.kp-position-part\{[\s\S]*?white-space:nowrap!important/);
+ assert.match(css,/\.gov-annex \.gov-law-second\{[\s\S]*?font-weight:400!important/);
+});
+test('purchase report, approval memo, acceptance and requisition keep all signature pieces',()=>{
+ const html=buildDocuments(sample,school);
+ for(const cls of ['gov-request','gov-approval','gov-acceptance','gov-payment','gov-requisition']){
+  const i=html.indexOf(' '+cls+'"');assert.ok(i>=0,'missing '+cls);
+  const section=html.slice(i,html.indexOf('</section>',i));
+  assert.match(section,/signature-card kp-signature/);
+  assert.match(section,/signature-date/);
+ }
 });
