@@ -34,7 +34,7 @@ test('optional evidence fields do not get invented and are escaped',()=>{
  assert.match(html,/................................../);
 });
 test('metadata form covers all backend-approved fields',()=>{
- assert.equal(documentInfoFields.length,32);
+ assert.equal(documentInfoFields.length,23);
  const html=docMetaInputs({memo_number:'1/2570'});
  assert.match(html,/name="doc_memo_number"/);
  assert.match(html,/value="1\/2570"/);
@@ -141,4 +141,43 @@ test('adaptive layout retries smaller batches only with completed page groups',a
  assert.match(code,/for\(const count of \[9,7,5,3,2,1\]\)/);
  assert.match(code,/__items_per_page:count/);
  assert.match(code,/complete-a4-pages/);
+});
+
+
+test('one-time entry shows only memo reference and inspector position at creation',()=>{
+ const html=docMetaInputs({memo_number:'25/2569'},{mode:'create'});
+ assert.match(html,/name="doc_memo_number"/);
+ assert.match(html,/name="doc_inspector_position"/);
+ assert.doesNotMatch(html,/name="doc_budget_year"/);
+ assert.doesNotMatch(html,/name="doc_order_number"/);
+ assert.doesNotMatch(html,/name="doc_vat_baht"/);
+});
+test('saved evidence survives partial form saves and blank fields affect only their own key',()=>{
+ const old={memo_number:'25/2569',invoice_number:'INV-5',budget_year:'2570',vat_baht:'0',inspection_location:'ห้องพัสดุ'};
+ assert.deepEqual(docMetaValue({doc_order_number:'PO-11'},old),{...old,order_number:'PO-11'});
+ assert.deepEqual(docMetaValue({doc_memo_number:'',doc_delivery_date:'2026-10-25'},old),{invoice_number:'INV-5',budget_year:'2570',vat_baht:'0',inspection_location:'ห้องพัสดุ',delivery_date:'2026-10-25'});
+});
+test('budget year and budget source propagate without extra metadata entries',()=>{
+ const record={...sample,fiscal_year:2570,budget_source:'กิจกรรมพัฒนาผู้เรียน',document_meta:{}};
+ const html=buildDocuments(record,school);
+ assert.match(html,/มีเงินงบประมาณ ปี 2570/);
+ assert.match(html,/แผนงาน\/กิจกรรม\/โครงการ กิจกรรมพัฒนาผู้เรียน/);
+});
+test('shared delivery date is used for receiving and requisition dates',()=>{
+ const record={...sample,document_meta:{delivery_date:'2026-10-25'}};
+ const html=buildDocuments(record,school);
+ assert.ok((html.match(/วันที่ 25 ตุลาคม 2569/g)||[]).length>=3);
+});
+test('net amount derived from a single gross and real deductions only',()=>{
+ const record={...sample,document_meta:{withholding_baht:'10',fine_baht:'0',vat_baht:'14'}};
+ const html=buildDocuments(record,school);
+ assert.match(html,/186\.00/);
+ assert.match(html,/190\.00/);
+ assert.match(html,/หนึ่งร้อยเก้าสิบบาทถ้วน/);
+});
+test('unset deductions do not silently imply zero withholding or tax',()=>{
+ const record={...sample,document_meta:{}};
+ const html=buildDocuments(record,school);
+ assert.match(html,/คงเหลือจ่ายจริง/);
+ assert.match(html,/จำนวนเงินที่ขอเบิก/);
 });
