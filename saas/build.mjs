@@ -1,5 +1,6 @@
 import {build} from 'esbuild';
-import {readFile,mkdir,copyFile} from 'node:fs/promises';
+import {readFile,mkdir,copyFile,writeFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
 import {resolve} from 'node:path';
 
 const staticAssets=[
@@ -42,3 +43,14 @@ await build({
   define:{'process.env.NODE_ENV':'"production"'}
 });
 console.log('Built self-hosted Kru Pasadu browser app and',staticAssets.length,'static files');
+
+let gitCommit=process.env.CF_PAGES_COMMIT_SHA||process.env.VERCEL_GIT_COMMIT_SHA||process.env.GITHUB_SHA||'unknown';
+try {gitCommit=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim()||gitCommit;}catch{}
+await writeFile(resolve(root,'dist','build-info.json'),JSON.stringify({
+  application:'kru-pasadu',
+  build_commit:gitCommit,
+  built_at:new Date().toISOString(),
+  source_branch:'feature/kru-pasadu-v01',
+  release:'official-a4-forms-2026-10-20'
+},null,2)+'\n');
+console.log('Build info published for Cloudflare/Vercel version verification:',gitCommit);
