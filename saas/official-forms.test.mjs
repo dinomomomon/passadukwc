@@ -468,3 +468,30 @@ test('payment approval is stacked at the left; officer signature remains at the 
  assert.match(trailing,/@media print\{[\s\S]*?\.gov-payment \.gov-payment-director-sign\{[\s\S]*?margin-left:0!important/);
  assert.match(css,/\.gov-payment \.gov-finance-sign\{\s*width:60%/);
 });
+
+test('payment memo visually follows original: decision LEFT, finance sign RIGHT, director below LEFT',()=>{
+ const html=buildDocuments(sample,school);
+ const sec=html.slice(html.indexOf('gov-payment"'));
+ const wrapper=sec.indexOf('<div class="memo-signatures">');
+ const pair=sec.indexOf('<div class="gov-payment-approval-top">',wrapper);
+ const decision=sec.indexOf('<div class="gov-payment-decision">1. ทราบ<br>2. อนุมัติจ่ายเงิน</div>',pair);
+ const finance=sec.indexOf('<div class="gov-finance-sign">',pair);
+ const financeRole=sec.indexOf('>เจ้าหน้าที่การเงิน</div>',finance);
+ const director=sec.indexOf('<div class="gov-payment-director-sign">',finance);
+ const dirLine=sec.indexOf('class="gov-payment-signline">ลงชื่อ',director);
+ assert.ok(wrapper>=0 && pair>wrapper && decision>pair && finance>decision &&
+  financeRole>finance && director>financeRole && dirLine>director,
+ 'Layout must be (decision at left + finance at right) on top; director signature below');
+ assert.equal((sec.match(/class="gov-finance-sign"/g)||[]).length,1);
+ assert.equal((sec.match(/class="gov-payment-director-sign"/g)||[]).length,1);
+});
+test('print layout keeps original approval and finance in the same row, director below as a whole card',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ const section=css.slice(css.indexOf('Precise original payment approval geometry'));
+ assert.match(section,/\.gov-payment \.gov-payment-approval-top\{\s*display:grid!important;\s*grid-template-columns:minmax\(0,36%\) minmax\(0,64%\)!important/);
+ assert.match(section,/\.gov-payment \.gov-payment-approval-top \.gov-payment-decision\{[\s\S]*?grid-column:1!important/);
+ assert.match(section,/\.gov-payment \.gov-payment-approval-top \.gov-finance-sign\{[\s\S]*?grid-column:2!important/);
+ assert.match(section,/\.gov-payment \.gov-payment-director-sign\{\s*margin-top:8mm!important/);
+ assert.match(section,/@media print\{[\s\S]*?\.gov-payment \.gov-payment-approval-top\{\s*display:grid!important/);
+});
