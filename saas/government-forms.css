@@ -659,3 +659,56 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
   break-inside:avoid!important;
  }
 }
+
+
+/* Precise original payment approval geometry: the first row is a two-column
+   decision LEFT / finance signature RIGHT pair, followed by the director's
+   independent signing block underneath at LEFT. This belongs to the single
+   "memo-signatures" page-break-safe wrapper. */
+.paper-page.official.gov-doc.gov-payment .gov-payment-approval-top{
+ display:grid!important;
+ grid-template-columns:minmax(0,36%) minmax(0,64%)!important;
+ align-items:start!important;
+ column-gap:0!important;
+ width:100%!important;
+ margin:0!important;
+ padding:0!important;
+ break-inside:avoid!important;
+ page-break-inside:avoid!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-approval-top .gov-payment-decision{
+ grid-column:1!important;
+ align-self:start!important;
+ margin:0!important;
+ padding:0 0 0 2mm!important;
+ line-height:1.35!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-approval-top .gov-finance-sign{
+ grid-column:2!important;
+ display:block!important;
+ width:100%!important;
+ max-width:none!important;
+ margin:0!important;
+ padding:0!important;
+ break-inside:avoid!important;
+ page-break-inside:avoid!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-approval-top .gov-finance-wrap{
+ width:100%!important;
+ margin:0!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-director-sign{
+ margin-top:8mm!important;
+}
+@media print{
+ #print-area .paper-page.official.gov-doc.gov-payment .gov-payment-approval-top{
+  display:grid!important;
+  grid-template-columns:minmax(0,36%) minmax(0,64%)!important;
+  break-inside:avoid!important;
+ }
+ #print-area .paper-page.official.gov-doc.gov-payment .gov-payment-approval-top .gov-finance-sign{
+  grid-column:2!important;
+  width:100%!important;
+  margin:0!important;
+ }
+}
