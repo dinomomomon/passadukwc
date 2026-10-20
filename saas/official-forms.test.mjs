@@ -271,3 +271,30 @@ test('the request memo alone carries the school prefix in both purchase and hire
   assert.deepEqual(numbers,['พว. 2/2569','3/2569','4/2569']);
  }
 });
+
+
+test('purchasing wizard step four includes editable requisition form number',()=>{
+ const html=docMetaInputs({requisition_number:'จ. 218/2569'},{mode:'create',kind:'purchase'});
+ assert.match(html,/name="doc_requisition_number"/);
+ assert.match(html,/value="จ\. 218\/2569"/);
+ assert.match(html,/ใบเบิกพัสดุ เลขที่/);
+ const saved=docMetaValue({doc_requisition_number:'จ. 219/2569'});
+ assert.equal(saved.requisition_number,'จ. 219/2569');
+});
+test('hiring wizard does not ask for a purchasing requisition number',()=>{
+ const html=docMetaInputs({},{mode:'create',kind:'hire'});
+ assert.doesNotMatch(html,/name="doc_requisition_number"/);
+ assert.doesNotMatch(docMetaInputs({}, {mode:'all',kind:'hire'}),/name="doc_requisition_number"/);
+});
+test('requisition number entered once prints on all requisition continuation sheets',()=>{
+ const record={...sample,items:Array.from({length:12},(_,i)=>({name:'วัสดุที่ '+(i+1),qty:1,unit:'ชุด',price_satang:100})),total_satang:1200,document_meta:{requisition_number:'จ. 218/2569'}};
+ const html=buildDocuments(record,school);
+ assert.equal((html.match(/ใบเบิก เลขที่ จ\. 218\/2569/g)||[]).length,2);
+ assert.equal((html.match(/class="gov-requisition-signatures"/g)||[]).length,2);
+});
+test('payment director approval is moved upward without affecting other forms',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ assert.match(css,/\.gov-payment \.memo-signatures\{\s*margin-top:2mm!important/);
+ assert.match(css,/\.gov-payment \.gov-payment-director\{\s*margin-top:3mm!important/);
+});
