@@ -181,3 +181,47 @@ test('unset deductions do not silently imply zero withholding or tax',()=>{
  assert.match(html,/คงเหลือจ่ายจริง/);
  assert.match(html,/จำนวนเงินที่ขอเบิก/);
 });
+
+
+test('three memo letters have independent reference numbers and a single prefix',()=>{
+ const record={...sample,document_meta:{memo_prefix:'พว.',memo_number:'11/2569',approval_memo_number:'12/2569',payment_memo_number:'13/2569'}};
+ const html=buildDocuments(record,school);
+ for(const no of ['11/2569','12/2569','13/2569']) assert.match(html,new RegExp('พว\\. '+no.replace('/','\\/')));
+ assert.equal((html.match(/พว\.\s+(?:11|12|13)\/2569/g)||[]).length,3);
+});
+test('annex legal article 22 begins its own line',()=>{
+ const html=buildDocuments(sample,school);
+ assert.match(html,/class="gov-law gov-law-second">ข้อ 22 วรรคหนึ่ง \(2\) และข้อ 22 วรรคสอง/);
+});
+test('payment words are next to payable approval rather than dangling below table',()=>{
+ const record={...sample,document_meta:{withholding_baht:'10.00',fine_baht:'0'}};
+ const html=buildDocuments(record,school);
+ assert.match(html,/อนุมัติจ่ายเงินให้แก่ [^<]+ เป็นเงิน 190\.00 บาท \(หนึ่งร้อยเก้าสิบบาทถ้วน\)/);
+ assert.doesNotMatch(html,/class="gov-words"/);
+});
+test('explicit net amount can be recorded instead of merely displaying a deduction estimate',()=>{
+ const record={...sample,document_meta:{payable_baht:'195.50',withholding_baht:'10.00',fine_baht:'0'}};
+ const html=buildDocuments(record,school);
+ assert.match(html,/195\.50 บาท \(หนึ่งร้อยเก้าสิบห้าบาทห้าสิบสตางค์\)/);
+});
+test('payment director approval prints decision at left and blank sign line then name and position',()=>{
+ const html=buildDocuments(sample,school);
+ assert.match(html,/class="gov-payment-decision">1\. ทราบ<br>2\. อนุมัติจ่ายเงิน/);
+ assert.match(html,/class="gov-payment-signline">ลงชื่อ <span class="gov-director-rule"><\/span>/);
+ assert.match(html,/class="gov-director-position">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
+});
+test('four-step wizard preserves draft and validates each stage',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(app,/function moveWizard\(delta\)/);
+ assert.match(app,/wizard-next/);
+ assert.match(app,/wizard-prev/);
+ assert.match(app,/data-wizard-panel/);
+ assert.match(app,/collectDraft\(\);state\.wizardStep/);
+});
+test('new memo reference inputs are individually labeled and editable',()=>{
+ const html=docMetaInputs({memo_prefix:'พว.',memo_number:'1/2569',approval_memo_number:'2/2569',payment_memo_number:'3/2569'},{mode:'create'});
+ for(const key of ['memo_prefix','memo_number','approval_memo_number','payment_memo_number'])assert.match(html,new RegExp('name="doc_'+key+'"'));
+ assert.match(html,/ที่ — รายงานผลการพิจารณาและขออนุมัติ/);
+ assert.match(html,/ที่ — ทราบผลและขออนุมัติเบิกจ่าย/);
+});
