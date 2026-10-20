@@ -89,7 +89,7 @@ test('annex totals have a single merged amount-in-words cell without extra empty
 test('receiving header uses Thai receipt prefix and auto delivery date for inspection',()=>{
  const record={...sample,document_meta:{delivery_date:'2026-10-25'}};
  const html=buildDocuments(record,school);
- assert.match(html,/ใบตรวจรับ เลขที่ ร\. ........\.\.\/2569/);
+ assert.match(html,/ใบตรวจรับ เลขที่ ร\. \.{5,}\/2569/);
  assert.match(html,/วันที่ 25 ตุลาคม 2569/);
  assert.match(html,/ถูกต้องครบถ้วนเมื่อวันที่ 25 ตุลาคม 2569/);
 });
