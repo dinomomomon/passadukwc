@@ -126,7 +126,7 @@ function auth(){
   const mail=e(state.authEmail||rememberedEmail());
   const title={login:'ยินดีต้อนรับกลับ',signup:'เริ่มต้นกับครูพัสดุ',forgot:'ลืมรหัสผ่าน?',recovery:'ตั้งรหัสผ่านใหม่'}[mode];
   const subtitle={login:'เข้าสู่ระบบเพื่อจัดการงานพัสดุของโรงเรียน',signup:'สร้างบัญชีแล้วรอผู้ดูแลโรงเรียนกำหนดสิทธิ์',forgot:'กรอกอีเมลที่ใช้สมัคร เพื่อรับลิงก์ตั้งรหัสผ่านใหม่',recovery:'กำหนดรหัสผ่านใหม่สำหรับบัญชีของคุณ'}[mode];
-  const password=(name,label,auto='current-password')=>'<div class="kp-field"><label for="kp-'+name+'">'+label+'</label><div class="kp-password-wrap"><input id="kp-'+name+'" name="'+name+'" type="password" minlength="8" required autocomplete="'+auto+'" placeholder="อย่างน้อย 8 ตัวอักษร"><button type="button" class="kp-eye" data-action="show-password" data-target="kp-'+name+'" aria-label="แสดงรหัสผ่าน">แสดง</button></div></div>';
+  const password=(name,label,auto='current-password')=>'<div class="kp-field"><label for="kp-'+name+'">'+label+'</label><div class="kp-password-wrap"><input id="kp-'+name+'" name="'+name+'" type="password" '+(auto==='current-password'?'':'minlength="8" ')+'required autocomplete="'+auto+'" placeholder="อย่างน้อย 8 ตัวอักษร"><button type="button" class="kp-eye" data-action="show-password" data-target="kp-'+name+'" aria-label="แสดงรหัสผ่าน">แสดง</button></div></div>';
   let fields='';
   if(mode==='login')fields='<form id="auth-form" class="kp-login-form"><div class="kp-field"><label for="kp-email">อีเมล</label><input id="kp-email" name="email" type="email" autocomplete="email" required value="'+mail+'" placeholder="you@school.ac.th"></div>'+
     password('password','รหัสผ่าน')+
@@ -368,8 +368,8 @@ function staffPanel(){
     return '<form id="staff-password-form" class="card staff-card"><h2>ตั้งรหัสผ่านใหม่</h2>'+
       '<p class="muted">สำหรับ '+e(reset.member_name||reset.member_email)+' — รหัสผ่านจะไม่แสดงหรือเก็บในระบบจัดการ</p>'+
       '<input type="hidden" name="user_id" value="'+e(reset.user_id)+'">'+
-      staffInput('รหัสผ่านใหม่','password','','type="password" required minlength="10" maxlength="128" autocomplete="new-password"')+
-      staffInput('ยืนยันรหัสผ่านใหม่','confirm_password','','type="password" required minlength="10" maxlength="128" autocomplete="new-password"')+
+      staffInput('รหัสผ่านใหม่','password','','type="password" required minlength="6" maxlength="128" autocomplete="new-password"')+
+      staffInput('ยืนยันรหัสผ่านใหม่','confirm_password','','type="password" required minlength="6" maxlength="128" autocomplete="new-password"')+
       '<div class="staff-form-actions"><button class="primary" type="submit">บันทึกรหัสผ่านใหม่</button>'+
       btn('ยกเลิก','cancel-staff','secondary')+'</div><p class="hint">โปรดแจ้งรหัสผ่านให้เจ้าหน้าที่ผ่านช่องทางส่วนตัว</p></form>';
   }
@@ -390,8 +390,8 @@ function staffPanel(){
     staffInput('ชื่อ–นามสกุล','full_name','','required minlength="3" maxlength="200" placeholder="ชื่อและนามสกุลเจ้าหน้าที่" autocomplete="off"')+
     staffInput('อีเมลสำหรับเข้าสู่ระบบ','email','','type="email" required maxlength="254" placeholder="teacher@school.ac.th" autocomplete="off"')+
     '<div class="field"><label>หน้าที่ในระบบ</label><select name="role" class="select" required>'+staffRoleOptions()+'</select></div>'+
-    staffInput('กำหนดรหัสผ่าน','password','','type="password" required minlength="10" maxlength="128" autocomplete="new-password" placeholder="อย่างน้อย 10 ตัวอักษร"')+
-    staffInput('ยืนยันรหัสผ่าน','confirm_password','','type="password" required minlength="10" maxlength="128" autocomplete="new-password"')+
+    staffInput('กำหนดรหัสผ่าน','password','','type="password" required minlength="6" maxlength="128" autocomplete="new-password" placeholder="อย่างน้อย 6 ตัวอักษร"')+
+    staffInput('ยืนยันรหัสผ่าน','confirm_password','','type="password" required minlength="6" maxlength="128" autocomplete="new-password"')+
     '<button class="primary staff-full-btn" type="submit">+ สร้างบัญชีและให้สิทธิ์ใช้งาน</button>'+
     '<p class="hint">บัญชีสามารถเข้าสู่ระบบได้ทันที โปรดส่งรหัสผ่านให้เจ้าหน้าที่อย่างปลอดภัย และแนะนำให้เปลี่ยนรหัสผ่านหลังเข้าสู่ระบบ</p>'+
     '<p class="hint">สิทธิ์ในเว็บไซต์ไม่ใช่คำสั่งแต่งตั้งหน้าที่ตามระเบียบราชการ</p></form>';
@@ -630,7 +630,7 @@ if(form.id==='school-form'){if(state.demo){state.school={...state.school,...f};r
 if(form.id==='member-form'){
   if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
   if(f.password!==f.confirm_password)return notify('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน',true);
-  if(String(f.password||'').length<10)return notify('รหัสผ่านต้องมีอย่างน้อย 10 ตัวอักษร',true);
+  if(String(f.password||'').length<6)return notify('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',true);
   const message=await staffRequest('create',{full_name:f.full_name,email:f.email,role:f.role,password:f.password});
   await loadMembers();state.memberEditingId=null;state.memberResetId=null;return notify(message);
 }
@@ -642,7 +642,7 @@ if(form.id==='staff-edit-form'){
 if(form.id==='staff-password-form'){
   if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
   if(f.password!==f.confirm_password)return notify('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน',true);
-  if(String(f.password||'').length<10)return notify('รหัสผ่านต้องมีอย่างน้อย 10 ตัวอักษร',true);
+  if(String(f.password||'').length<6)return notify('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',true);
   const message=await staffRequest('password',{user_id:f.user_id,password:f.password});
   state.memberResetId=null;await loadMembers();return notify(message);
 }
