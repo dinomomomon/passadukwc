@@ -164,8 +164,11 @@ const body='<p class="indent">ตามที่ได้อนุมัติ�
  (String(m.finance_note||'').trim()?'<p class="gov-finance-extra-note">หมายเหตุเพิ่มเติม '+v(m.finance_note)+'</p>':'')+
  '<div class="gov-finance-sign"><div class="gov-finance-wrap">'+
  signatureBlock(v(s.finance_name),'เจ้าหน้าที่การเงิน',true)+'</div></div>';
+// Original form: the director's decision is at left, followed immediately BELOW
+// by the director's signing area on the same left side (not a right-hand column).
 const approvalPart='<div class="gov-payment-director"><div class="gov-payment-decision">1. ทราบ<br>2. อนุมัติจ่ายเงิน</div>'+
- signatureBlock(director(r,s),'',true,{kind:'payment',schoolName:s.name||'โรงเรียน'})+'</div>';
+ '<div class="gov-payment-director-sign">'+
+ signatureBlock(director(r,s),'',true,{kind:'payment',schoolName:s.name||'โรงเรียน'})+'</div></div>';
 return memo(r,s,'ทราบผลและขออนุมัติเบิกจ่าย',body,approvalPart,'gov-payment');}
 function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name),chunks=pageChunks(r.items,Math.max(1,Math.min(9,Number(r.__items_per_page)||9)));
  return chunks.map((part,i)=>{
