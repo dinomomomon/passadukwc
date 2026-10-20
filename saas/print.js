@@ -15,7 +15,7 @@ export function thaiBahtText(satang){let n=Math.round(Number(satang)||0);if(n<0)
 function meta(r){return r.document_meta&&typeof r.document_meta==='object'&&!Array.isArray(r.document_meta)?r.document_meta:{};}
 const numericMoney=x=>x!==undefined&&x!==null&&String(x).trim()!==''&&Number.isFinite(Number(x))&&Number(x)>=0;
 function moneyField(m,key){return numericMoney(m[key])?baht(Number(m[key])):'–';}
-function paymentNetSatang(r){const m=meta(r);if(numericMoney(m.withholding_baht)&&numericMoney(m.fine_baht))return Math.max(0,Number(r.total_satang)-Math.round(Number(m.withholding_baht)*100)-Math.round(Number(m.fine_baht)*100));if(!numericMoney(m.withholding_baht)&&!numericMoney(m.fine_baht)&&numericMoney(m.payable_baht))return Math.round(Number(m.payable_baht)*100);return null;}
+function paymentNetSatang(r){const m=meta(r);if(numericMoney(m.payable_baht))return Math.round(Number(m.payable_baht)*100);const withholding=numericMoney(m.withholding_baht)?Number(m.withholding_baht):0,fine=numericMoney(m.fine_baht)?Number(m.fine_baht):0;return Math.max(0,Number(r.total_satang)-Math.round(withholding*100)-Math.round(fine*100));}
 function payableAmount(r){const n=paymentNetSatang(r);return n===null?'–':cash(n);}
 function basePriceAmount(r){const m=meta(r);if(numericMoney(m.vat_baht))return baht(Math.max(0,amt(r.total_satang)-Number(m.vat_baht)));return numericMoney(m.item_base_baht)?moneyField(m,'item_base_baht'):cash(r.total_satang);}
 function officer(r,s){return v(r.signers?.officer||s.officer_name);}
@@ -27,7 +27,7 @@ function schoolAddress(s){return v(s.address||officialLocation(s));}
 function sign(name,role,date=false){return '<div class="signature-card"><div class="signature-writing">ลงชื่อ <span class="signature-rule"></span> '+role+'</div><div class="signature-name">('+name+')</div>'+(date?'<div class="signature-date">วันที่ <span class="date-rule"></span></div>':'')+'</div>';}
 function directorSign(r,s,actions){return '<div class="director-sign"><div class="director-action">'+actions+'</div><div class="signature-card gov-director-card"><div class="gov-director-writing">(ลงชื่อ) <span class="gov-director-rule"></span></div><div class="signature-name">('+director(r,s)+')</div><div class="gov-director-position">ผู้อำนวยการ'+e(s.name||'โรงเรียน')+'</div></div></div>';}
 function signRow(r,s){return '<div class="sign-grid">'+sign(officer(r,s),'เจ้าหน้าที่',true)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true)+'</div>';}
-function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const no=[s.memo_prefix||'',m.memo_number||'........../........'].filter(Boolean).join(' ');
+function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const numberKey=cls==='gov-approval'?'approval_memo_number':cls==='gov-payment'?'payment_memo_number':'memo_number';const no=[m.memo_prefix||s.memo_prefix||'',m[numberKey]||'........../........'].filter(Boolean).join(' ');
  return '<section class="paper-page official gov-doc memo-page '+cls+'"><div class="doc-sheet-body">'+
  '<div class="memo-top"><img class="garuda-emblem" src="/garuda-memo.svg" alt="ตราครุฑ"><h1>บันทึกข้อความ</h1></div>'+
  '<div class="memo-field memo-field-agency"><strong>ส่วนราชการ</strong><span class="memo-value">'+department(s)+'</span></div>'+
@@ -71,7 +71,7 @@ const body=line+'<p class="indent">งานพัสดุได้ตรวจ
 return memo(r,s,title,body,signRow(r,s)+directorSign(r,s,'เห็นชอบ &nbsp;&nbsp; อนุมัติ'),'gov-request');}
 function annex(r,s,buy){const noun=buy?'พัสดุที่จะซื้อ':'งานจ้าง',subject=buy?'รายงานขอซื้อ':'รายงานขอจ้าง',chunks=pageChunks(r.items,Math.max(1,Math.min(9,Number(r.__items_per_page)||9)));
  return chunks.map((part,i)=>page('รายละเอียดของ'+noun+' แนบท้าย'+subject,
- lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 22 วรรคหนึ่ง (2) และข้อ 22 วรรคสอง')+
+ lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560')+'<p class="gov-law gov-law-second">ข้อ 22 วรรคหนึ่ง (2) และข้อ 22 วรรคสอง</p>'+
  '<p class="gov-count">จำนวน'+(buy?'พัสดุ':'งานจ้าง')+' '+(r.items||[]).length+' รายการ'+(chunks.length>1?' (หน้าที่ '+(i+1)+'/'+chunks.length+')':'')+'</p>'+
  itemTable({...r,items:part.items,__item_offset:part.offset,__show_totals:i===chunks.length-1},'annex',fillerHeight(part.items,90,9))+
  '<div class="gov-annex-sign">'+signRow(r,s)+'</div>','gov-annex')).join('');
@@ -105,21 +105,21 @@ function payment(r,s,buy){const verb=buy?'ซื้อ':'จ้าง',noun=buy?
 const body='<p class="indent">ตามที่ได้อนุมัติให้'+(buy?'จัดซื้อพัสดุ':'จัดจ้าง')+' จำนวน '+(r.items||[]).length+' รายการ จาก '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ตาม'+(buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง')+'เลขที่ '+v(m.order_number)+' ลงวันที่ '+(m.order_date?thaiDate(m.order_date):blank)+' ซึ่งครบกำหนดส่งมอบเมื่อวันที่ '+(r.due_date?thaiDate(r.due_date):blank)+' นั้น</p>'+
  '<p class="indent">บัดนี้ ผู้'+(buy?'ขาย':'รับจ้าง')+'ได้ส่งมอบ'+noun+' ตามใบส่งของ/ใบเสร็จ เลขที่ '+v(m.invoice_number)+' ลงวันที่ '+(m.invoice_date?thaiDate(m.invoice_date):blank)+' ผู้ตรวจรับ'+noun+'ได้ทำการตรวจรับ'+noun+'ไว้แล้ว ปรากฏว่าครบถ้วนถูกต้อง เมื่อวันที่ '+((m.inspection_date||m.delivery_date)?thaiDate(m.inspection_date||m.delivery_date):blank)+' ดังหลักฐานการตรวจรับที่แนบ</p>'+
  '<p class="indent">จึงเรียนมาเพื่อโปรด</p><ol class="gov-numbered"><li>ทราบผลการตรวจรับ'+noun+'</li>'+
- '<li>อนุมัติจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+') รายละเอียดดังนี้</li></ol>'+
+ '<li>อนุมัติจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+payableAmount(r)+' บาท ('+e(thaiBahtText(paymentNetSatang(r)))+') รายละเอียดดังนี้</li></ol>'+
  '<div class="gov-money-list">'+[
  ['มูลค่าสินค้า',basePriceAmount(r)],
  ['บวก ภาษีมูลค่าเพิ่ม',moneyField(m,'vat_baht')],['จำนวนเงินที่ขอเบิก',cash(r.total_satang)],
  ['หัก ภาษีเงินได้',moneyField(m,'withholding_baht')],['ค่าปรับ',moneyField(m,'fine_baht')],
  ['คงเหลือจ่ายจริง',payableAmount(r)]
  ].map(row=>'<div><span>'+row[0]+'</span><span>'+row[1]+'</span><span>บาท</span></div>').join('')+'</div>'+
- '<p class="gov-words">('+ (paymentNetSatang(r)!==null?e(thaiBahtText(paymentNetSatang(r))):'........................................')+')</p>'+
+
  '<div class="gov-finance-title">ความเห็นของเจ้าหน้าที่การเงิน</div>'+
- '<p class="indent">ได้ตรวจสอบหลักฐานแล้ว มีเอกสารครบถ้วนและมีเงินงบประมาณ ปี '+v(r.fiscal_year||m.budget_year)+' ☐ งบดำเนินการ ☐ งบลงทุน แผนงาน/กิจกรรม/โครงการ '+v(r.budget_source||m.budget_activity||m.budget_project)+'</p>'+
+ '<p class="indent">ได้ตรวจสอบหลักฐานแล้ว มีเอกสารครบถ้วน และมีเงินตามกิจกรรม/โครงการ '+v(r.budget_source||m.budget_activity||m.budget_project)+' ปีงบประมาณ '+v(r.fiscal_year||m.budget_year)+'</p>'+
  '<p>เป็นเงิน '+moneyField(m,'budget_total_baht')+' บาท จ่ายไปแล้ว '+moneyField(m,'budget_paid_baht')+' บาท จ่ายครั้งนี้ '+payableAmount(r)+' บาท คงเหลืองบประมาณ '+(numericMoney(m.budget_total_baht)&&numericMoney(m.budget_paid_baht)&&paymentNetSatang(r)!==null?baht(Math.max(0,Number(m.budget_total_baht)-Number(m.budget_paid_baht)-paymentNetSatang(r)/100)):'–')+' บาท</p>'+
  '<p class="indent">เห็นสมควรอนุมัติเบิกจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+payableAmount(r)+' บาท ('+(paymentNetSatang(r)!==null?e(thaiBahtText(paymentNetSatang(r))):blank)+')</p>'+
  '<p>หมายเหตุเจ้าหน้าที่การเงิน '+v(m.finance_note,'................................................')+'</p>'+
  '<div class="gov-finance-sign">'+sign(v(s.finance_name),'เจ้าหน้าที่การเงิน',true)+'</div>';
-const approvalPart='<div class="gov-payment-director"><div>1. ทราบ<br>2. อนุมัติจ่ายเงิน</div>'+sign(director(r,s),'ผู้อำนวยการ'+e(s.name||'โรงเรียน'))+'</div>';
+const approvalPart='<div class="gov-payment-director"><div class="gov-payment-decision">1. ทราบ<br>2. อนุมัติจ่ายเงิน</div><div class="signature-card gov-payment-signature"><div class="gov-payment-signline">ลงชื่อ <span class="gov-director-rule"></span></div><div class="signature-name">('+director(r,s)+')</div><div class="gov-director-position">ผู้อำนวยการ'+e(s.name||'โรงเรียน')+'</div></div></div>';
 return memo(r,s,'ทราบผลและขออนุมัติเบิกจ่าย',body,approvalPart,'gov-payment');}
 function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name),chunks=pageChunks(r.items,Math.max(1,Math.min(9,Number(r.__items_per_page)||9)));
  return chunks.map((part,i)=>{
