@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDocuments, thaiBahtText } from './print.js';
+import { buildDocuments, thaiBahtText,normalizeMemoPrefix,normalizeMemoNumber,renderMemoReference } from './print.js';
 import {docMetaInputs, docMetaValue,documentInfoFields} from './document-meta.js';
 const school={name:'โรงเรียนกาวิละวิทยาลัย',district:'อำเภอเมืองเชียงใหม่',province:'เชียงใหม่',memo_prefix:'พว.',officer_name:'เจ้าหน้าที่จริง',head_name:'หัวหน้าพัสดุจริง',director_name:'ผู้อำนวยการจริง',finance_name:'การเงินจริง'};
 const sample={kind:'purchase',title:'ซื้อวัสดุสำนักงาน',reason:'ใช้ในกิจกรรมภายในโรงเรียน',department:'กลุ่มบริหารงานวิชาการ',budget_source:'กิจกรรมพัฒนาผู้เรียน',document_number:1,fiscal_year:2570,document_date:'2026-10-20',vendor_name:'ร้านค้าตัวอย่าง',due_date:'2026-10-25',inspector_name:'ผู้ตรวจรับจริง',items:[{name:'ของที่ระลึก',qty:1,unit:'ชุด',price_satang:20000}],total_satang:20000,signers:{officer:'เจ้าหน้าที่จริง',head:'หัวหน้าพัสดุจริง',director:'ผู้อำนวยการจริง'},document_meta:{memo_number:'25/2569',inspector_position:'ครู',order_number:'ส.1',order_date:'2026-10-20',invoice_number:'001'}};
@@ -224,4 +224,37 @@ test('new memo reference inputs are individually labeled and editable',()=>{
  for(const key of ['memo_prefix','memo_number','approval_memo_number','payment_memo_number'])assert.match(html,new RegExp('name="doc_'+key+'"'));
  assert.match(html,/ที่ — รายงานผลการพิจารณาและขออนุมัติ/);
  assert.match(html,/ที่ — ทราบผลและขออนุมัติเบิกจ่าย/);
+});
+
+test('memo prefix cannot accidentally contain numbers when printing (real duplicated screenshot)',()=>{
+ assert.equal(normalizeMemoPrefix('พว 1/2569'),'พว');
+ assert.equal(normalizeMemoPrefix('พว. 1/2569'),'พว.');
+ assert.equal(normalizeMemoNumber('พว. 2/2569','พว.'),'2/2569');
+ assert.equal(renderMemoReference('พว 1/2569','2/2569'),'พว 2/2569');
+ assert.equal(renderMemoReference('พว. 1/2569','พว. 2/2569'),'พว. 2/2569');
+ assert.equal(renderMemoReference('พว. 1/2569','พว. 1/2569 2/2569'),'พว. 2/2569');
+});
+test('the three printed memo pages use precisely one distinct reference per page',()=>{
+ const record={...sample,document_meta:{
+  memo_prefix:'พว. 1/2569',memo_number:'พว. 2/2569',
+  approval_memo_number:'3/2569',payment_memo_number:'พว. 4/2569'
+ }};
+ const html=buildDocuments(record,{...school,memo_prefix:'พว. 1/2569'});
+ for(const no of ['2/2569','3/2569','4/2569']){
+   assert.match(html,new RegExp('พว\\. '+no.replace('/','\\/')));
+ }
+ assert.doesNotMatch(html,/พว\.\s+1\/2569\s+2\/2569/);
+ assert.equal((html.match(/memo-field-number/g)||[]).length,3);
+});
+test('form strips reused พว. in old memo values but never erases the document number',()=>{
+ const html=docMetaInputs({memo_prefix:'พว. 5/2569',memo_number:'พว. 6/2569'},{mode:'create'});
+ assert.match(html,/name="doc_memo_prefix"[^>]*value="พว\."/);
+ assert.match(html,/name="doc_memo_number"[^>]*value="6\/2569"/);
+ const saved=docMetaValue({doc_memo_prefix:'พว. 5/2569',doc_memo_number:'พว. 6/2569'});
+ assert.equal(saved.memo_prefix,'พว.');
+ assert.equal(saved.memo_number,'6/2569');
+});
+test('duplicated reference sequences in one input are rejected instead of silently saved',()=>{
+ assert.throws(()=>docMetaValue({doc_memo_number:'พว. 1/2569 2/2569'}),/หลายเลข/);
+ assert.throws(()=>docMetaValue({doc_memo_number:'พว.'}),/2\/2569/);
 });
