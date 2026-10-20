@@ -368,6 +368,22 @@ async function ensureAcceptanceNumber(){
  await loadRecords();
  state.currentRecord=state.records.find(x=>x.id===r.id)||r;
 }
+// Preserve the exact school director's title on one line. Unlike length-based
+// guesses, measure the visible text with the active Thai font on each A4 sheet.
+// Only this director title is resized; all other position labels stay untouched.
+function fitDirectorPosition(root){
+ for(const label of root.querySelectorAll('.kp-director-one-line')){
+  label.style.removeProperty('font-size');
+  if(!label.clientWidth)continue;
+  let px=parseFloat(getComputedStyle(label).fontSize)||18;
+  const minPx=9.5*96/72; // Only unusually long school names need this.
+  while(label.scrollWidth>label.clientWidth+1 && px>minPx){
+   px=Math.max(minPx,px-.35);
+   label.style.setProperty('font-size',px+'px','important');
+  }
+ }
+}
+
 async function printOfficialDocuments(){
  await ensureAcceptanceNumber();
  if(!state.currentRecord)return;
@@ -384,6 +400,7 @@ async function printOfficialDocuments(){
   const densities=['comfortable','balanced','fitted','compact','minimum','extra'];
   const zooms=[1,.96,.92,.88,.84,.8,.75];
   const doesFit=()=>{
+   fitDirectorPosition(sheet);
    const paper=sheet.getBoundingClientRect(),content=box.getBoundingClientRect();
    const style=getComputedStyle(sheet);
    const bottom=paper.bottom-(parseFloat(style.paddingBottom)||0)-8;
@@ -446,7 +463,7 @@ async function printOfficialDocuments(){
  window.print();
 }
 
-function preview(){detail();const sheet=buildDocuments(state.currentRecord,state.school);document.getElementById('print-area').innerHTML=sheet;const target=app.querySelector('.content');target.insertAdjacentHTML('beforeend','<div class="card" id="preview-output"><div class="section-head"><h2>ตัวอย่างเอกสารสำหรับพิมพ์</h2>'+btn('พิมพ์ / PDF','print')+'</div><div class="doc-preview"><div class="preview-page"><div class="official">'+sheet+'</div></div></div><p class="hint">กรุณาตรวจข้อความและจำนวนหน้าก่อนใช้งานจริง</p></div>');document.querySelector('#preview-output')?.scrollIntoView({behavior:'smooth'});}
+function preview(){detail();const sheet=buildDocuments(state.currentRecord,state.school);document.getElementById('print-area').innerHTML=sheet;const target=app.querySelector('.content');target.insertAdjacentHTML('beforeend','<div class="card" id="preview-output"><div class="section-head"><h2>ตัวอย่างเอกสารสำหรับพิมพ์</h2>'+btn('พิมพ์ / PDF','print')+'</div><div class="doc-preview"><div class="preview-page"><div class="official">'+sheet+'</div></div></div><p class="hint">กรุณาตรวจข้อความและจำนวนหน้าก่อนใช้งานจริง</p></div>');document.querySelector('#preview-output')?.scrollIntoView({behavior:'smooth'});const previewRoot=app.querySelector('#preview-output');requestAnimationFrame(()=>fitDirectorPosition(previewRoot));document.fonts?.ready?.then(()=>requestAnimationFrame(()=>fitDirectorPosition(previewRoot)));}
 function storage(){shell('จัดเก็บเอกสาร','เชื่อมต่อคลาวด์ของโรงเรียน',heading('จัดเก็บเอกสาร','ข้อมูลรายการบันทึกใน Supabase ส่วน PDF จะเชื่อมกับ Google Drive')+'<div class="card"><span class="tag amber">อยู่ระหว่างพัฒนา</span><h2 style="margin-top:14px">Google Drive สำหรับแต่ละโรงเรียน</h2><p>เวอร์ชันนี้พิมพ์และบันทึกเป็น PDF ลงอุปกรณ์ได้แล้ว การบันทึกไฟล์ขึ้น Google Drive อัตโนมัติยังไม่เปิดใช้งาน เพื่อป้องกันการขอสิทธิ์เข้าถึงบัญชี Google โดยไม่จำเป็น</p><p>ในรุ่นถัดไปจะมีระบบเชื่อมต่อ Drive ผ่าน OAuth และจัดโฟลเดอร์ตามปีงบประมาณ/เลขที่เอกสาร พร้อมเก็บประวัติเวอร์ชัน</p>'+btn('กลับหน้าหลัก','dashboard')+'</div>');}
 function settings(){if(!isAdmin()){notify('เฉพาะผู้ดูแลโรงเรียน',true);return;}const s=state.school;const inp=(t,k)=>'<div class="field"><label>'+t+'</label><input class="input" name="'+k+'" value="'+e(k==='memo_prefix'?normalizeMemoPrefix(s[k]):s[k]||'')+'"></div>';shell('ข้อมูลโรงเรียน','ตั้งค่าผู้ลงนาม',heading('ตั้งค่าโรงเรียนและผู้ลงนาม','ชื่อและตำแหน่งที่ตั้งค่าใช้กับรายการใหม่ ส่วนเอกสารเก่าจะเก็บชื่อเดิม')+'<div class="card"><h2>โลโก้โรงเรียน</h2><div class="school-logo-setting">'+schoolLogo('settings')+'<div><b>'+e(s.name)+'</b><p class="muted">สำหรับหน้า Dashboard และเมนูของโรงเรียนเท่านั้น <strong>ไม่แทรกในเอกสารราชการและไม่แทนตราครุฑ</strong></p></div></div><form id="school-logo-form"><div class="field"><label>แนบไฟล์โลโก้โรงเรียน (PNG, JPG หรือ WEBP)</label><input class="input" id="school-logo-file" name="school_logo" type="file" accept="image/png,image/jpeg,image/webp" required><small class="hint">ขนาดไม่เกิน 1 MB แนะนำภาพสี่เหลี่ยมจัตุรัส พื้นหลังโปร่งใส</small></div><div class="logo-form-actions"><button class="secondary" type="submit">อัปโหลดโลโก้โรงเรียน</button>'+(s.logo_path||state.demoLogoUrl?btn('นำโลโก้ออก','remove-school-logo','mini-btn'):'')+'</div></form></div><form class="card" id="school-form"><h2>ข้อมูลสถานศึกษา</h2>'+inp('ชื่อโรงเรียน','name')+'<div class="form-grid">'+inp('อำเภอ','district')+inp('จังหวัด','province')+'</div><h2>รหัสหนังสือและที่อยู่บนเอกสาร</h2><div class="form-grid">'+inp('รหัสหนังสือเท่านั้น เช่น พว. (ไม่ใส่ 1/2569)','memo_prefix')+inp('ที่อยู่โรงเรียนสำหรับเอกสาร','address')+'</div><h2>ชื่อผู้ลงนาม</h2><div class="form-grid">'+inp('เจ้าหน้าที่พัสดุ','officer_name')+inp('หัวหน้าเจ้าหน้าที่พัสดุ','head_name')+inp('ผู้อำนวยการสถานศึกษา','director_name')+inp('เจ้าหน้าที่การเงิน','finance_name')+'</div><button type="submit" class="primary">บันทึกข้อมูลโรงเรียน</button></form>');}
 
