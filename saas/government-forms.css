@@ -91,3 +91,92 @@ body.print-measuring #print-area .paper-page.official.gov-doc{height:297mm!impor
  #print-area .paper-page.official.gov-doc:last-child{break-after:auto!important;page-break-after:auto!important}
  #print-area .paper-page.official.gov-doc .doc-sheet-body{zoom:1!important}
 }
+
+
+/* Director's action and signed identity follow the reference memorandum.
+   Never squeeze the long school title into the signature line itself. */
+.paper-page.official.gov-doc .director-sign{
+ display:block;text-align:center;box-sizing:border-box;min-width:62mm;
+ width:55%;max-width:90mm;margin:6mm 0 0 auto;
+ font:400 var(--doc-sign-size)/1.28 "TH Sarabun New","TH Sarabun PSK",Sarabun,sans-serif;
+ break-inside:avoid;page-break-inside:avoid
+}
+.paper-page.official.gov-doc .director-action{
+ text-align:center;font-weight:400;font-size:var(--doc-sign-size);
+ line-height:1.5;margin:0 0 4mm
+}
+.paper-page.official.gov-doc .gov-director-card{
+ display:flex;flex-direction:column;align-items:center;gap:1mm;
+ width:100%;min-width:0;margin:0;padding:0;
+ font-size:var(--doc-sign-size);line-height:1.28;
+}
+.paper-page.official.gov-doc .gov-director-writing{
+ display:flex;justify-content:center;align-items:baseline;gap:2mm;
+ width:100%;white-space:nowrap;
+ font:400 var(--doc-sign-size)/1.25 "TH Sarabun New","TH Sarabun PSK",Sarabun,sans-serif
+}
+.paper-page.official.gov-doc .gov-director-rule{
+ display:inline-block;width:47mm;max-width:75%;height:.86em;
+ border-bottom:1px dotted #222
+}
+.paper-page.official.gov-doc .gov-director-position{
+ width:100%;font:400 var(--doc-sign-size)/1.25 "TH Sarabun New","TH Sarabun PSK",Sarabun,sans-serif;
+ white-space:normal;overflow-wrap:break-word;text-align:center
+}
+.paper-page.official.gov-doc .director-sign .signature-name{
+ text-align:center;margin:1mm 0 0;font-size:var(--doc-sign-size)
+}
+.paper-page.official.gov-doc .memo-signatures>.director-sign{
+ width:55%;margin:7mm 0 0 auto
+}
+.paper-page.official.gov-doc .gov-inspection-bottom .director-sign{
+ margin:5mm 0 0 auto
+}
+/* On screen allow the preview to expand rather than silently clipping text. */
+@media screen{
+ .doc-preview .paper-page.official.gov-doc,
+ .preview-page .paper-page.official.gov-doc{
+   height:auto!important;max-height:none!important;min-height:297mm!important;
+   overflow:visible!important
+ }
+}
+/* Print each original form as one or more actual A4 pages if required.
+   The browser's page fragmentation is preferable to rejecting a valid
+   long document or shrinking legal text below a readable size. */
+@media print{
+ html,body{height:auto!important;max-height:none!important;overflow:visible!important}
+ #print-area{height:auto!important;overflow:visible!important;display:block!important}
+ #print-area .paper-page.official.gov-doc{
+   width:210mm!important;
+   height:auto!important;min-height:0!important;max-height:none!important;
+   overflow:visible!important;display:block!important;
+   box-sizing:border-box!important;margin:0!important;
+   padding:18mm 15mm 15mm 20mm!important;
+   break-inside:auto!important;page-break-inside:auto!important;
+   break-after:page!important;page-break-after:always!important;
+ }
+ #print-area .paper-page.official.gov-doc:last-child{
+   break-after:auto!important;page-break-after:auto!important
+ }
+ #print-area .paper-page.official.gov-doc .doc-sheet-body{
+   height:auto!important;max-height:none!important;overflow:visible!important;
+   break-inside:auto!important;page-break-inside:auto!important;
+ }
+ #print-area .paper-page.official.gov-doc .memo-content{
+   height:auto!important;max-height:none!important;overflow:visible!important;
+   break-inside:auto!important;page-break-inside:auto!important
+ }
+ #print-area .paper-page.official.gov-doc .memo-signatures,
+ #print-area .paper-page.official.gov-doc .director-sign,
+ #print-area .paper-page.official.gov-doc .signature-card,
+ #print-area .paper-page.official.gov-doc .gov-inspector-sign{
+   break-inside:avoid!important;page-break-inside:avoid!important;
+ }
+ #print-area .paper-page.official.gov-doc .official-table thead{display:table-header-group}
+ #print-area .paper-page.official.gov-doc .official-table tr{
+   break-inside:avoid!important;page-break-inside:avoid!important
+ }
+ #print-area .paper-page.official.gov-doc .gov-requisition-signatures>div{
+   break-inside:avoid!important
+ }
+}
