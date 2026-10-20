@@ -40,3 +40,16 @@ test('metadata form covers all backend-approved fields',()=>{
  assert.match(html,/value="1\/2570"/);
  assert.deepEqual(docMetaValue({doc_memo_number:' 1/2570 ',doc_vat_baht:'0'}),{memo_number:'1/2570',vat_baht:'0'});
 });
+
+test('hiring forms use correct language without duplicated job nouns',()=>{
+ const html=buildDocuments({...sample,kind:'hire'},school);
+ assert.match(html,/รายงานผลการพิจารณาและขออนุมัติสั่งจ้าง/);
+ assert.match(html,/รายละเอียดของงานจ้าง แนบท้ายรายงานขอจ้าง/);
+ assert.doesNotMatch(html,/สั่งจ้างงานจ้าง|จัดจ้างงานจ้าง|รายงานขอจ้างงานจ้าง/);
+});
+test('VAT line adds to gross without inventing VAT rate',()=>{
+ const html=buildDocuments({...sample,document_meta:{vat_baht:'14.00'}},school);
+ assert.match(html,/186\.00/);
+ assert.match(html,/14\.00/);
+ assert.match(html,/200\.00/);
+});
