@@ -1,0 +1,93 @@
+/* Government original-form layout, loaded after all legacy print styles. */
+.paper-page.official.gov-doc{
+ box-sizing:border-box;width:210mm;height:297mm;max-height:297mm;min-height:0;
+ padding:18mm 15mm 15mm 20mm;background:#fff;color:#111;overflow:hidden;
+ --doc-size:15pt;--doc-leading:1.28;--doc-gap:1.5mm;--doc-list-gap:.7mm;
+ --doc-sign-size:14pt;--doc-sign-gap:4mm;
+ font-family:"TH Sarabun New","TH Sarabun PSK",Sarabun,"Noto Sans Thai",Tahoma,sans-serif;
+ font-size:var(--doc-size);line-height:var(--doc-leading)
+}
+.gov-doc .doc-sheet-body{width:100%;max-width:100%}
+.gov-doc .memo-top{height:22mm;margin:0 0 1mm;position:relative}
+.gov-doc .memo-top h1{font-size:25pt;line-height:1.08;font-weight:700}
+.gov-doc .garuda-emblem{height:18mm;width:18mm;top:0;left:0}
+.gov-doc .memo-field{display:grid;grid-template-columns:23mm minmax(0,1fr);column-gap:2mm;margin:.8mm 0;align-items:baseline;font-size:var(--doc-size);line-height:1.23}
+.gov-doc .memo-field strong{font-size:var(--doc-size);font-weight:700}
+.gov-doc .memo-field-number{grid-template-columns:9mm 44mm 12mm minmax(0,1fr);column-gap:2mm}
+.gov-doc .memo-field-subject{grid-template-columns:15mm minmax(0,1fr)}
+.gov-doc .memo-field-to{grid-template-columns:15mm minmax(0,1fr);margin:0 0 4mm}
+.gov-doc .memo-line{border-bottom:1px solid #222;margin:5mm 0 3mm}
+.gov-doc .memo-content p,.gov-doc .doc-sheet-body>p{font-size:var(--doc-size);line-height:var(--doc-leading);margin:var(--doc-gap) 0}
+.gov-doc p.indent{text-indent:18mm}
+.gov-doc .gov-numbered{list-style:decimal;list-style-position:outside;padding-left:27mm;margin:1mm 0 2mm}
+.gov-doc .gov-numbered li{font-size:var(--doc-size);line-height:var(--doc-leading);padding-left:1mm;margin:var(--doc-list-gap) 0}
+.gov-doc .print-title{font-size:21pt;font-weight:700;text-align:center;line-height:1.15;margin:0 0 4mm}
+.gov-doc .gov-law{text-align:center;font-weight:700;font-size:16pt;line-height:1.24;margin:0 0 5mm}
+.gov-doc .gov-count{margin:4mm 0}
+.gov-doc .official-table{border-collapse:collapse;table-layout:fixed;width:100%;margin:4mm 0 2mm;font-size:var(--doc-size);line-height:1.14}
+.gov-doc .official-table td,.gov-doc .official-table th{border:1px solid #222!important;font-size:var(--doc-size);line-height:1.15;padding:1mm .7mm;vertical-align:top}
+.gov-doc .official-table th{font-weight:700;text-align:center}
+.gov-doc .gov-items .col-order{width:7%}
+.gov-doc .gov-price-table .col-quantity{width:11%}
+.gov-doc .gov-price-table .col-unit{width:10%}
+.gov-doc .gov-price-table .col-price{width:15%}
+.gov-doc .gov-price-table .col-total{width:16%}
+.gov-doc .gov-requisition-table .col-quantity{width:9%}
+.gov-doc .gov-requisition-table .col-unit{width:13%}
+.gov-doc .gov-requisition-table .col-note{width:15%}
+.gov-doc .official-table .center{text-align:center}
+.gov-doc .official-table .right{text-align:right}
+.gov-doc .official-table .gov-money-words{text-align:center;vertical-align:middle}
+.gov-doc .official-table .table-filler td{padding:0;border-top:0!important;vertical-align:top}
+.gov-doc .sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin:5mm 0 0}
+.gov-doc .signature-card{min-width:0;text-align:center;break-inside:avoid;font-size:var(--doc-sign-size);line-height:1.19;padding:0}
+.gov-doc .signature-writing,.gov-doc .signature-date{display:flex;align-items:baseline;justify-content:center;white-space:nowrap;gap:1mm;font-size:var(--doc-sign-size)}
+.gov-doc .signature-rule{border-bottom:1px dotted #222;min-width:17mm;max-width:100%;width:27mm;height:.8em}
+.gov-doc .date-rule{border-bottom:1px dotted #222;width:24mm;max-width:65%;height:.8em}
+.gov-doc .signature-name{margin-top:1.2mm;font-size:var(--doc-sign-size);text-align:center}
+.gov-doc .director-sign{text-align:center;width:48%;margin:5mm 0 0 auto;font-size:var(--doc-sign-size)}
+.gov-doc .director-action{margin:0 0 2mm;line-height:1.27}
+.gov-doc .memo-signatures{display:block;clear:both;margin:4mm 0 0;break-inside:avoid}
+.gov-doc .memo-signatures>.sign-grid{display:grid}
+.gov-doc .memo-signatures .sign-grid>.signature-card{grid-column:auto;grid-row:auto}
+.gov-doc .memo-signatures .director-sign{width:46%;margin:4mm 0 0 auto;display:block;grid-column:auto;grid-row:auto}
+.gov-doc .gov-vertical-sign{margin:6mm 0 2mm auto;display:grid;gap:3mm;width:54%}
+.gov-doc .gov-vertical-sign .signature-card{display:block}
+.gov-doc.gov-approval .memo-signatures>.director-sign{margin:6mm 0 0 auto}
+.gov-doc .gov-annex-sign{margin:5mm 0 0}
+.gov-doc .gov-right-head{width:57%;margin:7mm 0 8mm auto;line-height:1.33}
+.gov-doc .gov-right-head>div{margin:.4mm 0}
+.gov-doc .gov-inspection-list{padding-left:16mm;margin:4mm 0}
+.gov-doc .gov-inspection-list li{margin:1mm 0}
+.gov-doc .gov-inspector-sign{margin:5mm 0 4mm auto;width:55%}
+.gov-doc .gov-half-rule{border-top:1px solid #222;margin:7mm 0 3mm}
+.gov-doc .gov-inspection-bottom{margin:6mm 0 0}
+.gov-doc .gov-inspection-bottom .sign-grid{margin:0 0 4mm}
+.gov-doc .gov-inspection-bottom .director-sign{margin:3mm 0 0 auto}
+.gov-doc .gov-money-list{max-width:123mm;margin:3mm 0 2mm 24mm}
+.gov-doc .gov-money-list>div{display:grid;grid-template-columns:minmax(0,1fr) 26mm 15mm;gap:3mm;align-items:baseline;line-height:1.26}
+.gov-doc .gov-money-list>div>span:nth-child(2){text-align:right}
+.gov-doc .gov-words{margin-left:24mm}
+.gov-doc .gov-finance-title{font-weight:700;text-decoration:underline;margin:5mm 0 2mm}
+.gov-doc .gov-finance-sign{width:53%;margin:4mm 0 0 auto}
+.gov-doc .gov-payment-director{display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:6mm;margin-top:3mm}
+.gov-doc .gov-payment-director .signature-card{margin-top:6mm}
+.gov-doc .gov-requisition-signatures{display:grid;grid-template-columns:1fr 1fr;gap:13mm 6mm;margin-top:7mm}
+.gov-doc .gov-requisition-signatures>div{min-width:0;text-align:center}
+.gov-doc .gov-requisition-signatures>div>p{min-height:1.3em;text-align:left;margin-bottom:3mm}
+.gov-doc .gov-requisition-signatures .gov-sign-position{text-align:center;margin:1mm 0}
+.gov-doc .gov-request-text{margin:5mm 0 2mm}
+.gov-doc.gov-acceptance{--doc-size:14.2pt;--doc-leading:1.25;--doc-sign-size:13.5pt}
+.gov-doc.gov-payment{--doc-size:14.1pt;--doc-leading:1.24;--doc-sign-size:13.4pt}
+.gov-doc.gov-request{--doc-size:14.8pt;--doc-leading:1.26}
+.gov-doc[data-density="balanced"]{--doc-size:14.4pt;--doc-leading:1.25;--doc-sign-size:13.7pt}
+.gov-doc[data-density="fitted"]{--doc-size:14pt;--doc-leading:1.22;--doc-sign-size:13.2pt}
+.gov-doc[data-density="compact"]{--doc-size:13.7pt;--doc-leading:1.2;--doc-sign-size:13pt}
+.gov-doc[data-density="minimum"],.gov-doc[data-density="extra"]{--doc-size:13.2pt;--doc-leading:1.17;--doc-sign-size:12.8pt}
+body.print-measuring #print-area .paper-page.official.gov-doc{height:297mm!important;max-height:297mm!important;padding:18mm 15mm 15mm 20mm!important}
+@page{size:A4;margin:0}
+@media print{
+ #print-area .paper-page.official.gov-doc{box-sizing:border-box!important;width:210mm!important;height:297mm!important;max-height:297mm!important;min-height:0!important;padding:18mm 15mm 15mm 20mm!important;overflow:hidden!important;break-after:page!important;page-break-after:always!important}
+ #print-area .paper-page.official.gov-doc:last-child{break-after:auto!important;page-break-after:auto!important}
+ #print-area .paper-page.official.gov-doc .doc-sheet-body{zoom:1!important}
+}
