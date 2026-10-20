@@ -355,3 +355,11 @@ test('receipt and requisition only reserve after the actual delivery is recorded
  assert.match(sql,/NEW\.document_meta->>'delivery_date'/);
  assert.match(app,/!r\.document_meta\?\.delivery_date/);
 });
+
+test('registry searches all historical document subjects, not only dashboard recent rows',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(app,/select\('\*,procurements\(title,vendor_name,kind\)'\)/);
+ assert.match(app,/range\(offset,offset\+size-1\)/);
+ assert.match(app,/recordsById\.get\(n\.procurement_id\)\|\|n\.procurements/);
+});
