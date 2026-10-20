@@ -59,7 +59,7 @@ test('director approvals have a dedicated ruled signature and separate position'
  const html=buildDocuments(sample,school);
  assert.match(html,/class="gov-director-writing"/);
  assert.match(html,/class="gov-director-rule"/);
- assert.match(html,/class="gov-director-position kp-signature-position"><span class="kp-position-part">ผู้อำนวยการ<\/span><span class="kp-position-part">โรงเรียนกาวิละวิทยาลัย<\/span>/);
+ assert.match(html,/class="gov-director-position kp-signature-position kp-director-one-line">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
 });
 test('editing drafts remains separate from issuing another numbered record',async()=>{
  const {readFileSync}=await import('node:fs');
@@ -209,7 +209,7 @@ test('payment director approval prints decision at left and blank sign line then
  const html=buildDocuments(sample,school);
  assert.match(html,/class="gov-payment-decision">1\. ทราบ<br>2\. อนุมัติจ่ายเงิน/);
  assert.match(html,/class="gov-payment-signline">ลงชื่อ <span class="gov-director-rule"><\/span>/);
- assert.match(html,/class="gov-director-position kp-signature-position"><span class="kp-position-part">ผู้อำนวยการ<\/span><span class="kp-position-part">โรงเรียนกาวิละวิทยาลัย<\/span>/);
+ assert.match(html,/class="gov-director-position kp-signature-position kp-director-one-line">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
 });
 test('four-step wizard preserves draft and validates each stage',async()=>{
  const {readFileSync}=await import('node:fs');
@@ -309,7 +309,7 @@ test('payment finance note is not redundantly printed and signatures have separa
  assert.match(paymentPage,/class="signature-name">\([^<]+\)<\/div><div class="signature-role kp-signature-position">เจ้าหน้าที่การเงิน<\/div>/);
  assert.match(paymentPage,/class="signature-date">วันที่ <span class="date-rule"><\/span><\/div>/);
  assert.match(paymentPage,/class="gov-payment-director"/);
- assert.match(paymentPage,/class="gov-director-position kp-signature-position"><span class="kp-position-part">ผู้อำนวยการ<\/span><span class="kp-position-part">โรงเรียนกาวิละวิทยาลัย<\/span>/);
+ assert.match(paymentPage,/class="gov-director-position kp-signature-position kp-director-one-line">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
 });
 test('finance notes entered as real values are still available as optional additional notes',()=>{
  const rec={...sample,document_meta:{...sample.document_meta,finance_note:'เอกสารครบถ้วน'}};
@@ -395,8 +395,8 @@ test('every official signature card has line, centered full name, separate posit
 test('director name, entire school title, and date remain in the same atomic card',()=>{
  const html=buildDocuments(sample,school);
  assert.match(html,/class="signature-card kp-signature gov-director-card"/);
- assert.match(html,/class="kp-position-part">ผู้อำนวยการ<\/span><span class="kp-position-part">โรงเรียนกาวิละวิทยาลัย<\/span>/);
- assert.match(html,/โรงเรียนกาวิละวิทยาลัย<\/span><\/div><div class="signature-date">วันที่/);
+ assert.match(html,/class="gov-director-position kp-signature-position kp-director-one-line">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
+ assert.match(html,/ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย<\/div><div class="signature-date">วันที่/);
  assert.match(html,/class="signature-card kp-signature gov-payment-signature"/);
 });
 test('uniform signature CSS keeps names whole and dates distinctly spaced',async()=>{
@@ -416,4 +416,31 @@ test('purchase report, approval memo, acceptance and requisition keep all signat
   assert.match(section,/signature-card kp-signature/);
   assert.match(section,/signature-date/);
  }
+});
+
+test('director title must be one unbroken verbatim line in all memo signature blocks',()=>{
+ const html=buildDocuments(sample,school);
+ const title='ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย';
+ assert.equal((html.match(/class="gov-director-position kp-signature-position kp-director-one-line">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย<\/div>/g)||[]).length,4);
+ assert.doesNotMatch(html,/class="kp-position-part"/);
+ assert.equal(html.split('class="signature-role kp-signature-position">เจ้าหน้าที่</div>').length-1>=2,true);
+ assert.ok(html.includes(title));
+});
+test('only the director-position font is resized, with overflow measured from active rendered width',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(css,/\.kp-signature>\.gov-director-position\.kp-director-one-line\{/);
+ assert.match(css,/white-space:nowrap!important/);
+ assert.match(app,/function fitDirectorPosition\(root\)/);
+ assert.match(app,/label\.scrollWidth>label\.clientWidth/);
+ assert.match(app,/label\.style\.setProperty\('font-size',px\+'px','important'\)/);
+ assert.match(app,/fitDirectorPosition\(sheet\)/);
+ assert.match(app,/fitDirectorPosition\(previewRoot\)/);
+});
+test('long school names retain their exact original director title without manual line breaks',()=>{
+ const schoolLong={...school,name:'โรงเรียนตัวอย่างวิทยาลัยเทคโนโลยีและการจัดการศึกษาวิทยาศาสตร์จังหวัดเชียงใหม่'};
+ const html=buildDocuments(sample,schoolLong);
+ assert.ok(html.includes('ผู้อำนวยการ'+schoolLong.name+'</div>'));
+ assert.doesNotMatch(html,/ผู้อำนวยการ<\/span><span/);
 });
