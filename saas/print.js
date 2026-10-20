@@ -22,7 +22,7 @@ function officialLocation(s){const d=String(s.district||'').trim(),p=String(s.pr
 function department(s){return e(s.name||'โรงเรียน')+(officialLocation(s)?'  '+e(officialLocation(s)):'');}
 function schoolAddress(s){return v(s.address||officialLocation(s));}
 function sign(name,role,date=false){return '<div class="signature-card"><div class="signature-writing">ลงชื่อ <span class="signature-rule"></span> '+role+'</div><div class="signature-name">('+name+')</div>'+(date?'<div class="signature-date">วันที่ <span class="date-rule"></span></div>':'')+'</div>';}
-function directorSign(r,s,actions){return '<div class="director-sign"><div class="director-action">'+actions+'</div>'+sign(director(r,s),'ผู้อำนวยการ'+e(s.name||'โรงเรียน'),false)+'</div>';}
+function directorSign(r,s,actions){return '<div class="director-sign"><div class="director-action">'+actions+'</div><div class="signature-card gov-director-card"><div class="gov-director-writing">(ลงชื่อ) <span class="gov-director-rule"></span></div><div class="signature-name">('+director(r,s)+')</div><div class="gov-director-position">ผู้อำนวยการ'+e(s.name||'โรงเรียน')+'</div></div></div>';}
 function signRow(r,s){return '<div class="sign-grid">'+sign(officer(r,s),'เจ้าหน้าที่',true)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true)+'</div>';}
 function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const no=[s.memo_prefix||'',m.memo_number||'........../........'].filter(Boolean).join(' ');
  return '<section class="paper-page official gov-doc memo-page '+cls+'"><div class="doc-sheet-body">'+
