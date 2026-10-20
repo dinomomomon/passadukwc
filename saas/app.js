@@ -38,7 +38,7 @@ const demoRecords=[
  mkDemo('demo-2','hire',1,'จ้างทำป้ายประชาสัมพันธ์','ร้านป้ายตัวอย่าง',980,'2026-10-17',[{name:'งานออกแบบและจัดทำป้าย',qty:1,unit:'งาน',price_satang:98000}]),
  mkDemo('demo-3','purchase',2,'ซื้ออุปกรณ์การเรียน','ร้านศึกษาภัณฑ์',1250,'2026-10-18',[{name:'อุปกรณ์การเรียน',qty:5,unit:'ชุด',price_satang:25000}])
 ];
-const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:'',memberEditingId:null,memberResetId:null};
+const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:'',memberEditingId:null,memberResetId:null,officialNumbers:[],numberFilter:'',numberSeries:'all',numberStatus:'all',numberYear:'all'};
 const money=n=>(Number(n||0)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const dateThai=d=>d?new Date(d+'T12:00:00+07:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
 const dateToday=()=>new Date(Date.now()+7*3600000).toISOString().slice(0,10);
@@ -79,7 +79,7 @@ function openProfileEditor(){
   dialog.querySelector('#profile-full-name')?.focus();
 }
 
-const i=(name)=>{const paths={dashboard:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/>',plus:'<path d="M12 5v14M5 12h14"/>',users:'<circle cx="9" cy="7" r="4"/><path d="M2 21v-2a6 6 0 0 1 12 0v2M16 4a4 4 0 0 1 0 8M17 15a6 6 0 0 1 5 6"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M19 13a7 7 0 0 0 0-2l2-1-2-4-2 1a8 8 0 0 0-2-1l-1-3h-4L9 6a8 8 0 0 0-2 1L5 6 3 10l2 1a7 7 0 0 0 0 2l-2 1 2 4 2-1a8 8 0 0 0 2 1l1 3h4l1-3a8 8 0 0 0 2-1l2 1 2-4z"/>',logout:'<path d="M10 17l5-5-5-5M15 12H3M12 3h5a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4h-5"/>',building:'<rect x="3" y="7" width="18" height="14" rx="1"/><path d="M8 21V3h8v18M10 6h4M7 11h2M15 11h2M7 15h2M15 15h2"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',download:'<path d="M12 3v12M8 11l4 4 4-4M4 17v4h16v-4"/>',check:'<path d="m4 12 5 5L20 6"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',cloud:'<path d="M20 16a5 5 0 0 0-5-5h-1a6 6 0 0 0-12 1 4 4 0 0 0 2 8h14a4 4 0 0 0 2-4z"/>'};return '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.file)+'</svg>';};
+const i=(name)=>{const paths={book:'<path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 0-3 0z"/><path d="M4 4v17M8 8h8M8 12h7"/>',dashboard:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/>',plus:'<path d="M12 5v14M5 12h14"/>',users:'<circle cx="9" cy="7" r="4"/><path d="M2 21v-2a6 6 0 0 1 12 0v2M16 4a4 4 0 0 1 0 8M17 15a6 6 0 0 1 5 6"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M19 13a7 7 0 0 0 0-2l2-1-2-4-2 1a8 8 0 0 0-2-1l-1-3h-4L9 6a8 8 0 0 0-2 1L5 6 3 10l2 1a7 7 0 0 0 0 2l-2 1 2 4 2-1a8 8 0 0 0 2 1l1 3h4l1-3a8 8 0 0 0 2-1l2 1 2-4z"/>',logout:'<path d="M10 17l5-5-5-5M15 12H3M12 3h5a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4h-5"/>',building:'<rect x="3" y="7" width="18" height="14" rx="1"/><path d="M8 21V3h8v18M10 6h4M7 11h2M15 11h2M7 15h2M15 15h2"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',download:'<path d="M12 3v12M8 11l4 4 4-4M4 17v4h16v-4"/>',check:'<path d="m4 12 5 5L20 6"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',cloud:'<path d="M20 16a5 5 0 0 0-5-5h-1a6 6 0 0 0-12 1 4 4 0 0 0 2 8h14a4 4 0 0 0 2-4z"/>'};return '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.file)+'</svg>';};
 
 function logo(){return '<div class="brand"><span class="brand-mark"><img src="/kru-pasadu-icon.svg" alt="สัญลักษณ์ครูพัสดุ" loading="eager"></span><span class="brand-wording"><strong>ครูพัสดุ</strong><small>ทำเรื่องพัสดุให้เป็นเรื่องง่าย</small></span></div>';}
 function schoolLogo(size='normal'){
@@ -179,7 +179,7 @@ function verificationPending(){
  '<p class="hint">ระบบจะไม่ขอรหัสผ่านจากคุณผ่านอีเมล และเมื่อผู้ดูแลระบบปิดการยืนยันอีเมล ขั้นตอนนี้จะไม่ปรากฏสำหรับผู้สมัครใหม่</p>'+
  '</div></div>';
 }
-const menu=[['dashboard','ภาพรวม',i('dashboard')],['records','ทะเบียนจัดซื้อจัดจ้าง',i('file')],['create','สร้างรายการใหม่',i('plus')]];
+const menu=[['dashboard','ภาพรวม',i('dashboard')],['records','ทะเบียนจัดซื้อจัดจ้าง',i('file')],['registry','ทะเบียนคุมเลขเอกสาร',i('book')],['create','สร้างรายการใหม่',i('plus')]];
 
 function subscriptionDate(v){return v?new Date(v).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Bangkok'}):'–';}
 function subscriptionLabel(status){return ({trial:'ทดลองใช้ฟรี',active:'สมาชิกรายปี',expired:'หมดสิทธิ์ใช้งาน',suspended:'ถูกระงับใช้งาน'})[status]||'รอเปิดใช้งาน';}
@@ -211,6 +211,88 @@ function shell(title,sub,body){const top='<header class="topbar"><div class="top
 function heading(title,sub,action=''){return '<div class="page-title"><div><h1>'+title+'</h1><p>'+sub+'</p></div>'+action+'</div>';}
 const badge=r=>'<span class="tag '+(r.state==='draft'?'amber':'')+'">'+({draft:'ฉบับร่าง',review:'รอตรวจสอบ',approved:'อนุมัติ',received:'ตรวจรับแล้ว',completed:'เสร็จสิ้น',cancelled:'ยกเลิก'}[r.state]||'ร่าง')+'</span>';
 function recordTable(rows){return '<div class="table-scroller"><table><thead><tr><th>เลขที่</th><th>วันที่</th><th>รายการ</th><th>ประเภท</th><th>วงเงิน</th><th>สถานะ</th><th></th></tr></thead><tbody>'+ (rows.length?rows.map(r=>'<tr><td><b>'+e(r.document_number)+'/'+e(r.fiscal_year)+'</b></td><td>'+dateThai(r.document_date)+'</td><td><button class="linkish" data-action="open" data-id="'+e(r.id)+'">'+e(r.title)+'</button><br><small class="muted">'+e(r.vendor_name||'ยังไม่ระบุผู้ขาย')+'</small></td><td><span class="tag gray">'+(r.kind==='purchase'?'จัดซื้อ':'จัดจ้าง')+'</span></td><td class="amount">'+money(r.total_satang)+'</td><td>'+badge(r)+'</td><td>'+btn('เปิดดู','open','mini-btn','data-id="'+e(r.id)+'"')+(canEditMainRecord(r)?btn('แก้ไข','open-edit','mini-btn','data-id="'+e(r.id)+'"'):'')+'</td></tr>').join(''):'<tr><td colspan="7" class="empty">ยังไม่มีรายการ เริ่มต้นสร้างรายการใหม่ได้เลย</td></tr>')+'</tbody></table></div>';}
+
+const registrySeriesLabels={
+ request:'รายงานขอซื้อ/ขอจ้าง (พว.)',
+ general:'หนังสือรายงานผล / เบิกจ่าย (เลขร่วม)',
+ acceptance:'ใบตรวจรับพัสดุ (ร.)',
+ requisition:'ใบเบิกพัสดุ (จ.)',
+ procurement_purchase:'ทะเบียนจัดซื้อ',
+ procurement_hire:'ทะเบียนจัดจ้าง'
+};
+const registryFields={
+ memo_number:'รายงานขอซื้อ/ขอจ้าง',
+ approval_memo_number:'รายงานผลการพิจารณาฯ',
+ payment_memo_number:'ทราบผลและขออนุมัติเบิกจ่าย',
+ acceptance_number:'ใบตรวจรับพัสดุ',
+ requisition_number:'ใบเบิกพัสดุ',
+ procurement_number:'ทะเบียนจัดซื้อ/จัดจ้าง'
+};
+const registryStatusLabel={reserved:'จองเลข',used:'ใช้แล้ว',void:'ยกเลิก',conflict:'ต้องตรวจสอบ'};
+function registryDisplayNumber(row){
+ if(!row)return '';
+ const suffix=row.serial_no?row.serial_no+'/'+row.year_be:row.original_text||'เลขเดิมผิดรูปแบบ';
+ if(row.series==='request')return (normalizeMemoPrefix(state.school?.memo_prefix||'พว.')||'พว.')+' '+suffix;
+ if(row.series==='acceptance')return 'ร. '+suffix;
+ if(row.series==='requisition')return 'จ. '+suffix;
+ return suffix;
+}
+async function loadOfficialNumbers(){
+ if(state.demo){state.officialNumbers=[];return;}
+ if(!state.school)return;
+ const {data,error}=await db.from('official_number_registry').select('*')
+  .eq('school_id',state.school.id).order('created_at',{ascending:false}).limit(1200);
+ if(error)throw Error('โหลดทะเบียนคุมเลขไม่สำเร็จ: '+error.message);
+ state.officialNumbers=data||[];
+}
+function officialRegistry(){
+ const all=state.officialNumbers||[],q=String(state.numberFilter||'').toLowerCase();
+ const recordsById=new Map(state.records.map(r=>[r.id,r]));
+ const filtered=all.filter(n=>{
+  const linked=recordsById.get(n.procurement_id);
+  if(state.numberSeries!=='all'&&n.series!==state.numberSeries)return false;
+  if(state.numberStatus!=='all'&&n.status!==state.numberStatus)return false;
+  if(state.numberYear!=='all'&&String(n.year_be)!==String(state.numberYear))return false;
+  return !q||[registryDisplayNumber(n),n.original_text,registryFields[n.document_field],linked?.title,linked?.vendor_name,n.note]
+   .some(t=>String(t||'').toLowerCase().includes(q));
+ });
+ const options=(set,current)=>set.map(([value,label])=>'<option value="'+e(value)+'" '+(current===value?'selected':'')+'>'+e(label)+'</option>').join('');
+ const years=[...new Set(all.map(n=>String(n.year_be)))].sort().reverse();
+ const fmt=n=>'<span class="tag '+(n.status==='reserved'?'amber':n.status==='conflict'?'red':n.status==='void'?'gray':'')+'">'+registryStatusLabel[n.status]+'</span>';
+ const rows=filtered.map(n=>{
+  const rec=recordsById.get(n.procurement_id),canUse=n.status==='reserved'&&canEditDocumentMeta(rec),canAdmin=isSchoolAdmin();
+  const controls=(canUse?btn('ใช้เลข','registry-use','mini-btn','data-id="'+e(n.id)+'"'):'')+
+   (canAdmin&&['reserved','used'].includes(n.status)?btn('แก้เลข','registry-edit','mini-btn','data-id="'+e(n.id)+'"')+btn('ยกเลิก','registry-void','mini-btn','data-id="'+e(n.id)+'"'):'');
+  const title=rec?.title||'เลขเดิมจากรายการที่บันทึกไว้';
+  return '<tr><td><strong>'+e(registryDisplayNumber(n))+'</strong><small class="muted" style="display:block">'+e(registrySeriesLabels[n.series]||n.series)+'</small></td>'+
+  '<td>'+e(registryFields[n.document_field]||n.document_field)+'</td>'+
+  '<td>'+e(title)+(n.note?'<small class="muted" style="display:block">'+e(n.note)+'</small>':'')+'</td>'+
+  '<td>'+dateThai(n.created_at?.slice(0,10))+'</td><td>'+fmt(n)+'</td>'+
+  '<td>'+((rec)?btn('เปิดรายการ','registry-open','mini-btn','data-id="'+e(rec.id)+'"'):'')+controls+'</td></tr>';
+ }).join('');
+ const summary='<div class="stats-grid">'+[
+  ['เลขทั้งหมด',all.length],['ใช้แล้ว',all.filter(n=>n.status==='used').length],
+  ['จองเลข',all.filter(n=>n.status==='reserved').length],['ต้องตรวจสอบ',all.filter(n=>n.status==='conflict').length]
+ ].map(([title,n])=>'<div class="stat"><div class="stat-top">'+title+'</div><strong>'+n+'</strong></div>').join('')+'</div>';
+ const filter='<form id="registry-filter-form" class="kp-registry-filters">'+
+ '<input class="input" name="query" aria-label="ค้นหาเลขที่หรือเรื่อง" placeholder="ค้นหาเลขที่ / เรื่อง / ผู้ขาย..." value="'+e(state.numberFilter)+'">'+
+ '<select class="select" name="series">'+options([['all','ทุกประเภท'],...Object.entries(registrySeriesLabels)],state.numberSeries)+'</select>'+
+ '<select class="select" name="year">'+options([['all','ทุกปี'],...years.map(y=>[y,y])],state.numberYear)+'</select>'+
+ '<select class="select" name="status">'+options([['all','ทุกสถานะ'],...Object.entries(registryStatusLabel)],state.numberStatus)+'</select>'+
+ '<button class="secondary" type="submit">ค้นหา</button></form>';
+ const configs=isSchoolAdmin()?'<details class="card kp-registry-admin"><summary>ตั้งค่าเลขเริ่มต้นของทะเบียน (แอดมินโรงเรียน)</summary><p class="hint">ใช้เมื่อมีเลขจากทะเบียนกระดาษที่ออกไปแล้ว เลขเริ่มใหม่ต้องสูงกว่าที่เคยใช้ทั้งหมด</p><form id="registry-start-form" class="kp-registry-filters">'+
+ '<select class="select" name="series">'+options(Object.entries(registrySeriesLabels).filter(([v])=>!v.startsWith('procurement_')),'request')+'</select>'+
+ '<input class="input" type="number" name="year" min="2500" max="2700" value="'+(new Date().getFullYear()+543)+'" required aria-label="ปี พ.ศ.">'+
+ '<input class="input" type="number" name="next" min="1" max="9999999" placeholder="เลขถัดไป" required aria-label="เลขถัดไป">'+
+ '<button class="primary" type="submit">ตั้งค่าเลขถัดไป</button></form></details>':'';
+ shell('ทะเบียนคุมเลขเอกสาร','โรงเรียน / งานพัสดุ',heading('ทะเบียนคุมเลขเอกสาร','ตรวจสอบเลขที่ ใช้กับเรื่องอะไร ใครจองและสถานะล่าสุด',btn('รีเฟรช','registry-refresh','secondary'))+
+  '<div class="alert">เลขที่ใหม่ออกจากฐานข้อมูลกลาง ป้องกันเลขซ้ำระหว่างเจ้าหน้าที่ เลขยกเลิกจะไม่ถูกนำกลับมาใช้ ข้อมูลเดิมที่ซ้ำต้องตรวจสอบก่อนออกเลขใหม่</div>'+
+ summary+'<section class="card"><h2>รายการเลขเอกสาร '+filtered.length+' รายการ</h2>'+filter+
+ '<div class="table-scroller"><table><thead><tr><th>เลขที่ / ทะเบียน</th><th>เอกสาร</th><th>เรื่อง</th><th>วันที่ลงทะเบียน</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>'+
+ (rows||'<tr><td colspan="6" class="empty">ไม่พบเลขตามเงื่อนไขการค้นหา</td></tr>')+
+ '</tbody></table></div></section>'+configs);
+}
+
 function dashboard(){const rows=state.records;const purch=rows.filter(r=>r.kind==='purchase'),hire=rows.filter(r=>r.kind==='hire');const total=rows.reduce((s,r)=>s+Number(r.total_satang||0),0);const block=(t,n,ico,note)=>'<div class="stat"><div class="stat-top"><span>'+t+'</span><span class="stat-ico">'+ico+'</span></div><strong>'+n+'</strong><small>'+note+'</small></div>';shell('ภาพรวม','งานพัสดุ / ภาพรวม',heading('สวัสดี ยินดีต้อนรับ 👋','ติดตามงานพัสดุทั้งหมดในโรงเรียนได้จากที่เดียว',createAction())+'<div class="stats-grid">'+block('รายการทั้งหมด',rows.length,'▤','รายการที่บันทึกแล้ว')+block('งานจัดซื้อ',purch.length,'◈','ทะเบียนจัดซื้อ')+block('งานจัดจ้าง',hire.length,'⚒','ทะเบียนจัดจ้าง')+block('วงเงินรวม',money(total),'฿','บาท รวมทุกประเภท')+'</div><div class="grid-two"><section class="card"><div class="section-head"><h2>รายการล่าสุด</h2>'+btn('ดูทั้งหมด →','records','mini-btn')+'</div>'+recordTable(rows.slice(0,6))+'</section><section class="card"><h2>ทางลัดงานพัสดุ</h2><div class="action-grid"><button class="action-card" data-action="create"><span class="action-icon">'+i('plus')+'</span>สร้างรายการ</button><button class="action-card" data-action="records"><span class="action-icon">'+i('file')+'</span>ค้นหาเอกสาร</button><button class="action-card" data-action="settings"><span class="action-icon">'+i('settings')+'</span>ผู้ลงนาม</button><button class="action-card" data-action="storage"><span class="action-icon">'+i('cloud')+'</span>การจัดเก็บ</button></div><div class="alert" style="margin:18px 0 0">เอกสารที่ระบบสร้างเป็นแบบร่าง ต้องตรวจสอบกับระเบียบที่มีผลบังคับก่อนใช้งานราชการ</div></section></div>');}
 function records(){const q=(state.filter||'').toLowerCase();const rows=state.records.filter(r=>(r.title+' '+r.vendor_name+' '+r.document_number).toLowerCase().includes(q));shell('ทะเบียนพัสดุ','รายการจัดซื้อจัดจ้าง',heading('ทะเบียนจัดซื้อจัดจ้าง','เลขเอกสารแยกตามโรงเรียน ประเภท และปีงบประมาณ',createAction())+'<section class="card"><div class="filters"><input class="input" id="record-search" placeholder="ค้นหาเรื่อง ผู้ขาย หรือเลขที่..." value="'+e(state.filter)+'">'+btn(i('search')+' ค้นหา','search','secondary')+'</div>'+recordTable(rows)+'</section>');}
 function updatePayablePreview(){
@@ -496,7 +578,7 @@ function ownerSubscriptionsPanel(){
 
 function owner(){if(!state.owner){notify('ไม่มีสิทธิ์เจ้าของแพลตฟอร์ม',true);return;}const schools=state.schools||[],req=state.schoolRequests||[];app.innerHTML='<div class="shell"><aside class="sidebar"><div class="side-brand">'+logo()+'</div><div class="side-menu-label">แพลตฟอร์ม</div><button class="navlink active" data-action="owner">'+i('building')+'โรงเรียนทั้งหมด</button><button class="navlink" data-action="signout">'+i('logout')+'ออกจากระบบ</button><div class="side-footer">SUPER ADMIN · ครูพัสดุ</div></aside><div class="workspace"><header class="topbar"><div><h2>ครูพัสดุ · เจ้าของแพลตฟอร์ม</h2><p>บริหารการเปิดใช้โรงเรียน</p></div>'+accountHeader()+'</header><div class="content">'+msg()+heading('บริหารโรงเรียน','โรงเรียนและคำขอเปิดใช้งานทั่วทั้งแพลตฟอร์ม')+'<div class="stats-grid"><div class="stat"><div class="stat-top">โรงเรียนทั้งหมด</div><strong>'+schools.length+'</strong></div><div class="stat"><div class="stat-top">คำขอรออนุมัติ</div><strong>'+req.length+'</strong></div></div><div class="grid-two"><section class="card"><h2>คำขอเปิดใช้งาน</h2>'+(req.length?req.map(x=>'<div class="row" style="padding:14px 0;border-bottom:1px solid #e4eded"><div><b>'+e(x.school_name)+'</b><br><small class="muted">'+e(x.requester_email)+'</small></div>'+btn('อนุมัติ','approve-school','primary','data-id="'+e(x.request_id)+'"')+'</div>').join(''):'<p class="muted">ยังไม่มีคำขอที่รออนุมัติ</p>')+'</section><form class="card" id="new-school-form"><h2>สร้างโรงเรียนใหม่</h2><div class="field"><label>ชื่อโรงเรียน</label><input name="name" class="input" required></div><div class="field"><label>อีเมลแอดมินโรงเรียน (ต้องสมัครบัญชีแล้ว)</label><input name="email" class="input" type="email" required></div><button type="submit" class="primary">สร้างโรงเรียน</button></form></div><section class="card"><h2>โรงเรียนที่เปิดใช้งาน</h2><div class="table-scroller"><table><thead><tr><th>โรงเรียน</th><th>จังหวัด</th><th>สถานะ</th></tr></thead><tbody>'+schools.map(s=>'<tr><td>'+e(s.name)+'</td><td>'+e(s.province||'-')+'</td><td><span class="tag">'+e(s.status)+'</span></td></tr>').join('')+'</tbody></table></div></section>'+ownerSubscriptionsPanel()+'<p class="footer">บริหารข้อมูลในแต่ละโรงเรียนผ่านสมาชิกโรงเรียน ไม่อ่านเอกสารลูกค้าโดยไม่จำเป็น</p></div></div></div>';}
 function waitAccess(){app.innerHTML='<div class="landing"><div class="land-nav">'+logo()+btn('ออกจากระบบ','signout','secondary')+'</div><div style="max-width:660px;margin:65px auto;padding:25px"><div class="card">'+msg()+'<span class="pill">บัญชีพร้อมแล้ว</span><h1>รอรับสิทธิ์เข้าถึงโรงเรียน</h1><p>อีเมลบัญชี: <b>'+e(state.user.email)+'</b></p><p>หากโรงเรียนของคุณมีผู้ดูแลแล้ว ให้แจ้งอีเมลนี้แก่แอดมินเพื่อเพิ่มเข้าระบบ หรือส่งคำขอเปิดโรงเรียนใหม่ได้ด้านล่าง</p><form id="request-school-form"><div class="field"><label>ชื่อโรงเรียนที่ต้องการเปิดใช้งาน</label><input class="input" name="name" required placeholder="ชื่อโรงเรียน"></div><button type="submit" class="primary">ส่งคำขอเปิดโรงเรียน</button></form><p class="hint">คำขอต้องได้รับอนุมัติจากเจ้าของแพลตฟอร์มก่อนใช้ข้อมูลจริง</p>'+btn('ดูโหมดตัวอย่าง','demo','secondary')+'</div></div></div>';}
-function render(){if(!state.user&&!state.demo){if(state.page==='auth')auth();else if(state.page==='verify-email')verificationPending();else landing();return;}if(state.user&&!state.owner&&!state.school&&!state.demo){waitAccess();return;}if(state.owner&&!state.school&&!state.demo){owner();return;}if(!state.school){state.school=demoSchool;}if(state.page==='records')return records();if(state.page==='create')return form();if(state.page==='detail')return detail();if(state.page==='docmeta')return editDocumentMeta();if(state.page==='preview')return preview();if(state.page==='members')return members();if(state.page==='settings')return settings();if(state.page==='storage')return storage();if(state.page==='owner')return owner();dashboard();}
+function render(){if(!state.user&&!state.demo){if(state.page==='auth')auth();else if(state.page==='verify-email')verificationPending();else landing();return;}if(state.user&&!state.owner&&!state.school&&!state.demo){waitAccess();return;}if(state.owner&&!state.school&&!state.demo){owner();return;}if(!state.school){state.school=demoSchool;}if(state.page==='records')return records();if(state.page==='registry')return officialRegistry();if(state.page==='create')return form();if(state.page==='detail')return detail();if(state.page==='docmeta')return editDocumentMeta();if(state.page==='preview')return preview();if(state.page==='members')return members();if(state.page==='settings')return settings();if(state.page==='storage')return storage();if(state.page==='owner')return owner();dashboard();}
 async function loadUser(){if(!state.session){state.user=null;state.profile=null;state.owner=false;return;}const {data:user}=await db.auth.getUser();state.user=user?.user||null;if(!state.user){state.profile=null;return;}const [admin,memberships,profile]=await Promise.all([db.from('platform_admins').select('user_id').eq('user_id',state.user.id),db.from('memberships').select('school_id,role,schools(*)').eq('user_id',state.user.id).eq('active',true),db.from('profiles').select('full_name').eq('id',state.user.id).maybeSingle()]);if(admin.error)console.warn(admin.error.message);if(memberships.error)console.warn(memberships.error.message);if(profile.error)console.warn(profile.error.message);state.profile=profile.data||{full_name:state.user?.user_metadata?.full_name||''};state.owner=!!admin.data?.length;state.memberships=memberships.data||[];state.school=state.memberships[0]?.schools||null;if(state.owner){await loadOwner();}if(state.school)await Promise.all([loadRecords(),refreshSubscription()]);}
 async function loadOwner(){
   const requests=[
@@ -540,6 +622,49 @@ if(['edit-staff','password-staff','cancel-staff','refresh-staff','toggle-staff',
     const message=await staffRequest('toggle',{user_id:id,active});
     await loadMembers();return notify(message);
   }
+}
+if(action==='registry'||action==='registry-refresh'){
+ if(!state.demo){await Promise.all([loadRecords(),loadOfficialNumbers()]);}
+ state.page='registry';return render();
+}
+if(action==='registry-open'){
+ state.currentRecord=state.records.find(r=>r.id===el.dataset.id);
+ if(!state.currentRecord){await loadRecords();state.currentRecord=state.records.find(r=>r.id===el.dataset.id);}
+ if(!state.currentRecord)return notify('ไม่พบรายการ กรุณาเปิดจากทะเบียนจัดซื้อจัดจ้าง',true);
+ state.page='detail';return render();
+}
+if(action==='registry-issue'){
+ if(!canEditDocumentMeta(state.currentRecord))return notify('ไม่มีสิทธิ์ออกเลข',true);
+ const field=String(el.dataset.field||'');
+ if(state.demo)return notify('โหมดตัวอย่างยังไม่ออกเลขจริง');
+ const {error}=await db.rpc('issue_official_number',{p_record_id:state.currentRecord.id,p_field:field});
+ if(error)return notify(error.message,true);
+ const id=state.currentRecord.id;await Promise.all([loadRecords(),loadOfficialNumbers()]);
+ state.currentRecord=state.records.find(r=>r.id===id);state.page='detail';
+ state.flash='จองเลขเอกสารอัตโนมัติแล้ว ตรวจสอบได้ในทะเบียนคุมเลข';return render();
+}
+if(['registry-use','registry-edit','registry-void'].includes(action)){
+ const n=state.officialNumbers.find(x=>x.id===el.dataset.id);
+ if(!n)return notify('ไม่พบเลขทะเบียน',true);
+ if(action!=='registry-use'&&!isSchoolAdmin())return notify('แก้ไขและยกเลิกได้เฉพาะแอดมินโรงเรียน',true);
+ const act=action==='registry-use'?'use':action==='registry-edit'?'renumber':'void';
+ let next=null,reason='';
+ if(act==='use'){if(!confirm('ยืนยันว่าเอกสารเลข '+registryDisplayNumber(n)+' มีการนำไปใช้งานจริงแล้ว?'))return;}
+ if(act==='renumber'){
+  const value=prompt('แก้เลข '+registryDisplayNumber(n)+' เป็นลำดับใหม่ (ใส่เฉพาะตัวเลข)',String(n.serial_no||''));
+  if(value===null)return;next=Number(value);
+  if(!Number.isInteger(next)||next<1)return notify('เลขใหม่ต้องเป็นจำนวนเต็มบวก',true);
+ }
+ if(act!=='use'){
+  reason=prompt('กรุณาระบุเหตุผลในการ'+(act==='void'?'ยกเลิก':'แก้ไข')+'เลข (อย่างน้อย 5 ตัวอักษร)')||'';
+  if(reason.trim().length<5)return notify('กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร',true);
+  if(!confirm('ยืนยัน'+(act==='void'?'ยกเลิกเลข ':'เปลี่ยนเลข ')+registryDisplayNumber(n)+'? ระบบจะเก็บเลขเดิมไว้ตรวจสอบ'))return;
+ }
+ const {error}=await db.rpc('manage_official_number',{p_registry_id:n.id,p_action:act,p_new_serial:next,p_reason:reason});
+ if(error)return notify('ดำเนินการไม่สำเร็จ: '+error.message,true);
+ await Promise.all([loadOfficialNumbers(),loadRecords()]);
+ if(state.currentRecord)state.currentRecord=state.records.find(r=>r.id===state.currentRecord.id)||state.currentRecord;
+ state.flash='บันทึกสถานะเลขทะเบียนและประวัติแล้ว';state.page='registry';return render();
 }
 if(action==='wizard-next')return moveWizard(1);if(action==='wizard-prev')return moveWizard(-1);if(action==='home'){state.page='landing';state.demo=false;render();return;}if(action==='login'||action==='signup'){
   state.authEmail=String(document.querySelector('#kp-email')?.value||document.querySelector('#kp-forgot-email')?.value||state.authEmail||'').trim();
@@ -683,6 +808,20 @@ if(form.id==='staff-password-form'){
   if(String(f.password||'').length<6)return notify('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',true);
   const message=await staffRequest('password',{user_id:f.user_id,password:f.password});
   state.memberResetId=null;await loadMembers();return notify(message);
+}
+if(form.id==='registry-filter-form'){
+ state.numberFilter=String(f.query||'').trim();state.numberSeries=String(f.series||'all');
+ state.numberStatus=String(f.status||'all');state.numberYear=String(f.year||'all');
+ return officialRegistry();
+}
+if(form.id==='registry-start-form'){
+ if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
+ if(!confirm('ยืนยันตั้งค่าเลขถัดไป? ตรวจสอบเลขจากทะเบียนกระดาษก่อนบันทึก'))return;
+ const {error}=await db.rpc('set_official_number_start',{
+  p_school_id:state.school.id,p_series:f.series,p_year:Number(f.year),p_next:Number(f.next)
+ });
+ if(error)return notify('ตั้งค่าเลขไม่สำเร็จ: '+error.message,true);
+ await loadOfficialNumbers();state.flash='ตั้งค่าเลขเริ่มต้นเรียบร้อย';return officialRegistry();
 }
 if(form.id==='renumber-form'){if(!isAdmin())return notify('ไม่มีสิทธิ์แก้เลข',true);const no=Number(f.number);if(state.demo){if(state.records.some(x=>x!==state.currentRecord&&x.kind===state.currentRecord.kind&&x.fiscal_year===state.currentRecord.fiscal_year&&x.document_number===no))return notify('เลขนี้มีอยู่แล้ว',true);state.currentRecord.document_number=no;state.flash='แก้เลขในโหมดตัวอย่างแล้ว';return render();}const {error}=await db.rpc('change_procurement_number',{p_record_id:state.currentRecord.id,p_new_number:no,p_reason:f.reason});if(error)return notify(error.message,true);await loadRecords();state.currentRecord=state.records.find(x=>x.id===state.currentRecord.id);state.flash='บันทึกการแก้ไขเลขเอกสารแล้ว';return render();}
 if(form.id==='doc-meta-form'){if(!canEditDocumentMeta(state.currentRecord))return notify('ไม่มีสิทธิ์แก้ไขข้อมูลเอกสารนี้',true);const m=docMetaValue(f,state.currentRecord.document_meta||{});const total=Number(state.currentRecord.total_satang||0)/100;if(['withholding_baht','fine_baht','payable_baht'].some(k=>m[k]!==undefined&&!(Number(m[k])>=0&&Number.isFinite(Number(m[k])))))return notify('กรุณากรอกยอดเงินที่ไม่ติดลบ',true);if(Number(m.withholding_baht||0)+Number(m.fine_baht||0)>total||m.payable_baht!==undefined&&Number(m.payable_baht)>total)return notify('ยอดหักหรือยอดจ่ายจริงเกินวงเงินจัดซื้อ/จัดจ้าง กรุณาตรวจสอบ',true);if(state.demo){state.currentRecord.document_meta=m;state.page='detail';return notify('อัปเดตเอกสารสาธิตแล้ว');}const {error}=await db.rpc('set_procurement_document_meta',{p_record_id:state.currentRecord.id,p_meta:m});if(error)throw Error('บันทึกข้อมูลเอกสารไม่สำเร็จ: '+error.message);state.currentRecord.document_meta=m;await loadRecords();state.page='detail';return notify('บันทึกเลขที่หนังสือและข้อมูลเอกสารแล้ว');}
