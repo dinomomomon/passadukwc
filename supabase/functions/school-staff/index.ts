@@ -169,12 +169,21 @@ Deno.serve(async (request: Request): Promise<Response> => {
     if (target.active && target.role === "school_admin" && role !== "school_admin" && await lastAdmin())
       throw new HttpError(400,"ต้องเหลือแอดมินที่ใช้งานได้อย่างน้อย 1 คน");
 
-    // A global login email must not be changed when the account belongs to multiple tenants.
+    // Names, emails and passwords are global identities. A tenant admin may
+    // change only the membership role of a user who belongs to other schools.
     const user = await admin.auth.admin.getUserById(targetId);
     if (user.error || !user.data.user) throw new HttpError(404,"ไม่พบบัญชีที่ต้องการแก้ไข");
-    if (normEmail(user.data.user.email) !== email) {
-      const cross = await admin.from("memberships").select("school_id").eq("user_id",targetId).neq("school_id",schoolId).limit(1);
-      if (cross.error || (cross.data||[]).length) throw new HttpError(403,"บัญชีนี้ใช้งานหลายโรงเรียน จึงไม่สามารถเปลี่ยนอีเมลจากโรงเรียนนี้ได้");
+    const {data: currentProfile, error: profileReadError} = await admin.from("profiles")
+      .select("full_name").eq("id",targetId).maybeSingle();
+    if (profileReadError) throw new HttpError(500,"ตรวจสอบชื่อบัญชีไม่สำเร็จ");
+    const cross = await admin.from("memberships").select("school_id")
+      .eq("user_id",targetId).neq("school_id",schoolId).limit(1);
+    if (cross.error) throw new HttpError(500,"ตรวจสอบบัญชีร่วมไม่สำเร็จ");
+    const emailChanged = normEmail(user.data.user.email) !== email;
+    const nameChanged = fullName(currentProfile?.full_name) !== name;
+    if ((cross.data||[]).length && (emailChanged || nameChanged))
+      throw new HttpError(403,"บัญชีนี้ใช้งานหลายโรงเรียน จึงแก้ไขชื่อหรืออีเมลส่วนกลางไม่ได้ แต่เปลี่ยนบทบาทในโรงเรียนนี้ได้");
+    if (emailChanged) {
       const changeEmail = await admin.auth.admin.updateUserById(targetId,{email,email_confirm:true});
       if (changeEmail.error) throw new HttpError(409,"เปลี่ยนอีเมลไม่สำเร็จ อีเมลใหม่อาจซ้ำกับบัญชีอื่น");
     }
@@ -183,7 +192,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     const changeRole = await admin.from("memberships").update({role})
       .eq("school_id",schoolId).eq("user_id",targetId);
     if (changeRole.error) throw new HttpError(500,"บันทึกบทบาทไม่สำเร็จ");
-    await audit("school_staff_updated",targetId,{role,email,name_changed:true});
+    await audit("school_staff_updated",targetId,{role,email,name_changed});
     return json(200,{success:true,message:"แก้ไขข้อมูลเจ้าหน้าที่เรียบร้อยแล้ว"});
   } catch (err) {
     const status = err instanceof HttpError ? err.status : 500;
