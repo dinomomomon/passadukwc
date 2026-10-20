@@ -310,11 +310,26 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
 .paper-page.official.gov-doc .gov-payment-signature .gov-director-position{font-size:var(--doc-sign-size);text-align:center}
 
 
-/* Payment memo: bring the decision and director's signature nearer the
-   finance review without disturbing the other government forms. */
+/* Payment memo: move just the director's TWO DECISION LINES upward.
+   Merely reducing the surrounding margin left the lines too low because
+   memo-signatures is its own block after the finance-officer signature.
+   A direct relative top offset changes their printed position reliably,
+   without moving the finance signature or changing director identity rows. */
 .paper-page.official.gov-doc.gov-payment .memo-signatures{
- margin-top:2mm!important
+ margin-top:0!important
 }
 .paper-page.official.gov-doc.gov-payment .gov-payment-director{
- margin-top:3mm!important
+ margin-top:0!important
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-decision{
+ position:relative!important;
+ top:-14mm!important;
+ margin:0!important;
+ align-self:start;
+}
+@media print{
+ #print-area .paper-page.official.gov-doc.gov-payment .gov-payment-decision{
+  position:relative!important;
+  top:-14mm!important;
+ }
 }
