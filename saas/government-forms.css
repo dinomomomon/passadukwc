@@ -308,3 +308,13 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
 .paper-page.official.gov-doc .gov-payment-signline .gov-director-rule{width:37mm;max-width:80%}
 .paper-page.official.gov-doc .gov-payment-signature .signature-name{margin-top:1.5mm}
 .paper-page.official.gov-doc .gov-payment-signature .gov-director-position{font-size:var(--doc-sign-size);text-align:center}
+
+
+/* Payment memo: bring the decision and director's signature nearer the
+   finance review without disturbing the other government forms. */
+.paper-page.official.gov-doc.gov-payment .memo-signatures{
+ margin-top:2mm!important
+}
+.paper-page.official.gov-doc.gov-payment .gov-payment-director{
+ margin-top:3mm!important
+}
