@@ -296,7 +296,8 @@ test('payment signature blocks occupy full width and avoid detached decision/ide
  const {readFileSync}=await import('node:fs');
  const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
  assert.match(css,/\.gov-payment \.memo-signatures\{\s*display:block!important/);
- assert.match(css,/\.gov-payment \.gov-payment-director\{\s*display:grid!important;\s*grid-template-columns:36% minmax\(0,1fr\)!important/);
+ assert.match(css,/\.gov-payment \.gov-payment-director\{\s*display:flex!important;\s*flex-direction:column!important/);
+ assert.match(css,/\.gov-payment \.gov-payment-director-sign\{\s*display:block!important;[\s\S]*?margin:7mm 0 0!important/);
  assert.match(css,/\.gov-payment \.gov-payment-decision\{\s*position:static!important;\s*top:auto!important/);
  assert.match(css,/\.gov-payment \.gov-finance-wrap,/);
  assert.match(css,/@media print\{[\s\S]*?\.gov-payment \.gov-payment-decision\{\s*position:static!important;\s*top:auto!important/);
@@ -443,4 +444,27 @@ test('long school names retain their exact original director title without manua
  const html=buildDocuments(sample,schoolLong);
  assert.ok(html.includes('ผู้อำนวยการ'+schoolLong.name+'</div>'));
  assert.doesNotMatch(html,/ผู้อำนวยการ<\/span><span/);
+});
+
+test('original payment approval places 1.ทราบ/2.อนุมัติ first then the director signature underneath on the LEFT',()=>{
+ const html=buildDocuments(sample,school);
+ const payment=html.slice(html.indexOf('gov-payment"'));
+ const d=payment.indexOf('<div class="gov-payment-director">');
+ const x=payment.indexOf('<div class="gov-payment-decision">1. ทราบ<br>2. อนุมัติจ่ายเงิน</div>',d);
+ const sign=payment.indexOf('<div class="gov-payment-director-sign">',d);
+ const line=payment.indexOf('class="gov-payment-signline">ลงชื่อ',sign);
+ const name=payment.indexOf('class="signature-name">',sign);
+ const title=payment.indexOf('class="gov-director-position kp-signature-position kp-director-one-line">',sign);
+ assert.ok(d>=0 && x>d && sign>x && line>sign && name>line && title>name,
+  'Director decision and signature must follow original top-to-bottom order');
+ assert.match(payment.slice(sign,sign+900),/ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
+});
+test('payment approval is stacked at the left; officer signature remains at the right without overlaps',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ const trailing=css.slice(css.indexOf('Payment memo — faithful to the original signed paper form.'));
+ assert.match(trailing,/\.gov-payment \.gov-payment-director\{\s*display:flex!important;\s*flex-direction:column!important;\s*align-items:flex-start!important/);
+ assert.match(trailing,/\.gov-payment \.gov-payment-director-sign\{[\s\S]*?width:58%!important/);
+ assert.match(trailing,/@media print\{[\s\S]*?\.gov-payment \.gov-payment-director-sign\{[\s\S]*?margin-left:0!important/);
+ assert.match(css,/\.gov-payment \.gov-finance-sign\{\s*width:60%/);
 });
