@@ -47,6 +47,7 @@ export function safeTemplateDraft(input){
  const clean={};
  if(input.title!==undefined)clean.title=limit(input.title,400);
  if(input.legal!==undefined)clean.legal=limit(input.legal,400);
+ if(input.decisionText!==undefined)clean.decisionText=limit(input.decisionText,400).replace(/\r\n?/g,'\n');
  const blocks=Array.isArray(input.blocks)?input.blocks:[];
  if(blocks.length>24)throw Error('แม่แบบเพิ่มบล็อกได้ไม่เกิน 24 บล็อกต่อหน้า');
  clean.blocks=blocks.map((b,i)=>({
@@ -89,7 +90,7 @@ export function safeTemplateDraft(input){
  }
  return clean;
 }
-export function emptyTemplate(){return {title:'',legal:'',blocks:[],order:[],styles:{},textEdits:{},signatureOffsets:{}};}
+export function emptyTemplate(){return {title:'',legal:'',decisionText:'',blocks:[],order:[],styles:{},textEdits:{},signatureOffsets:{}};}
 export function templateKeyForPage(section){
  for(const p of TEMPLATE_PAGES)if(section.classList.contains(p.css))return p.key;
  return null;
@@ -143,6 +144,11 @@ export function applyDocumentTemplates(html,layouts,r,s,doc=typeof document!=='u
   const {zone,nodes}=structuralBlocks(section);
   if(!zone)continue;
   for(const [i,n] of nodes.entries()){n.dataset.templateOriginal='d'+i;if(!isProtectedGeneratedBlock(n))applyTextEditsToBlock(n,t.textEdits['d'+i],r,s,doc);styleBlock(n,t.styles['d'+i]);}
+  // Only the approval/consent wording is editable. Signer names and roles stay generated.
+  if(t.decisionText){
+   const decision=section.querySelector('.director-sign .director-action');
+   if(decision)decision.textContent=t.decisionText;
+  }
   applySignatureOffsets(section,t.signatureOffsets);
   // A published blank/master template or heading-only change must not disturb
   // the original legal form hierarchy, signatures or preformatted tables.
@@ -230,6 +236,15 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
     const el=page.querySelector(selector);
     if(el){el.dataset.templateHeader=field;el.contentEditable='plaintext-only';el.draggable=false;el.classList.add('te-inline-edit');}
    }
+   const directorDecision=page.querySelector('.director-sign .director-action');
+   if(directorDecision){
+    directorDecision.dataset.templateHeader='decisionText';
+    directorDecision.contentEditable='plaintext-only';
+    directorDecision.draggable=false;
+    directorDecision.spellcheck=false;
+    directorDecision.classList.add('te-inline-edit');
+    directorDecision.title='คลิกแก้คำสั่งผู้อำนวยการ กด Enter เพื่อขึ้นบรรทัดใหม่';
+   }
    decorateSignatureHandles(page,activeSignature);
    const source=sourcePage();
    const {nodes:originals}=structuralBlocks(source);
@@ -277,6 +292,11 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const signature=draft.signatureOffsets[activeSignature]||{x:0,y:0};
   return '<div class="te-fields">'+
    (activeSignature?'<div class="te-field-title">ย้ายชุดลายเซ็น (ชื่อและตำแหน่งล็อกไว้)</div><label>ซ้าย / ขวา (-15 ถึง 15 มม.)</label><input class="input" type="number" min="-15" max="15" step="1" data-tpl-field="signatureX" value="'+signature.x+'"><label>ขึ้น / ลง (-15 ถึง 15 มม.)</label><input class="input" type="number" min="-15" max="15" step="1" data-tpl-field="signatureY" value="'+signature.y+'"><p class="hint">ลากบล็อกลงนามในหน้า A4 ได้ทั้งชุด โดยชื่อ ตำแหน่ง และวันที่จะอยู่ด้วยกัน</p>':'')+
+   (['request','approval','acceptance'].includes(selected)?
+    '<div class="te-field-title">คำสั่งผู้อำนวยการ</div>'+
+    '<label>ข้อความก่อนลงนาม (กด Enter เพื่อแยกบรรทัด)</label>'+
+    '<textarea class="input" rows="3" maxlength="400" data-tpl-field="decisionText" placeholder="'+esc(selected==='approval'?'เห็นชอบ / ลงนามแล้ว':'เห็นชอบ / อนุมัติ')+'">'+esc(draft.decisionText||'')+'</textarea>'+
+    '<p class="hint">แก้ได้ทั้งในช่องนี้และบนหน้า A4 • เว้นว่างเพื่อใช้แบบกลาง • ชื่อและตำแหน่งผู้อำนวยการยังล็อกจากระบบ</p>':'')+
    '<label>หัวเรื่อง (เว้นว่างเพื่อใช้แม่แบบกลาง)</label><input class="input" data-tpl-field="title" maxlength="400" value="'+esc(draft.title||'')+'" placeholder="'+esc(page.name)+'">'+
    '<label>บรรทัดอ้างกฎหมาย (เว้นว่างเพื่อใช้ต้นฉบับ)</label><textarea class="input" data-tpl-field="legal" rows="2" maxlength="400" placeholder="ใช้ข้อความกฎหมายต้นฉบับ">'+esc(draft.legal||'')+'</textarea>'+
    '<p class="hint">กรณีแก้ถ้อยคำกฎหมาย ต้องตรวจสอบกับระเบียบที่ใช้อยู่ก่อนประกาศใช้</p>'+
@@ -334,7 +354,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const value=el.type==='checkbox'?el.checked:el.value;
   if(field==='ribbonSize'){if(!currentBlock)return;const t=draft.blocks.find(b=>b.id===currentBlock);if(t)t.size=Number(value);else if(currentBlock.startsWith('d'))draft.styles[currentBlock]={...(draft.styles[currentBlock]||{}),size:Number(value)};}
   else if(field==='signatureX'||field==='signatureY'){if(!activeSignature)return;const now=draft.signatureOffsets[activeSignature]||{x:0,y:0};draft.signatureOffsets[activeSignature]=safeSignatureOffset({...now,[field==='signatureX'?'x':'y']:value});}
-  else if(field==='title'||field==='legal')draft[field]=String(value);
+  else if(field==='title'||field==='legal'||field==='decisionText')draft[field]=String(value).replace(/\r\n?/g,'\n').slice(0,400);
   else if(field==='blockText'&&target)target.text=String(value);
   else if(['size','align','bold'].includes(field)){
    if(target)target[field]=field==='size'?Number(value):value;
@@ -431,8 +451,13 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
  }
  function headerInput(el){
   const type=el?.dataset?.templateHeader;
-  if(type!=='title'&&type!=='legal')return;
-  draft[type]=String(el.textContent||'').slice(0,400);
+  if(type!=='title'&&type!=='legal'&&type!=='decisionText')return;
+  draft[type]=String(type==='decisionText'?(el.innerText??el.textContent??''):(el.textContent||''))
+   .replace(/\r\n?/g,'\n').slice(0,400);
+  if(type==='decisionText'){
+   const input=document.querySelector('[data-tpl-field="decisionText"]');
+   if(input)input.value=draft[type];
+  }
   dirty=true;
   const badge=document.querySelector('.te-pane-title .tag');
   if(badge){badge.textContent='ยังไม่บันทึก';badge.classList.add('amber');}
