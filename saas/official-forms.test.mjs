@@ -953,6 +953,7 @@ test('legal headings can be manually line-broken and individually formatted with
  assert.match(js,/header.style.setProperty\('font-size',style.size\+'pt','important'\)/);
  assert.match(js,/if\(t.legalSecond\)/);
  assert.match(js,/data-tpl-field="legalSecond"/);
+ assert.match(js,/<textarea class="input" data-tpl-field="title"/);
  assert.match(js,/data-tpl-field="headingSize"/);
  assert.match(js,/data-action="tpl-copy-master"/);
  assert.match(js,/if\(name==='tpl-copy-master'\)/);
