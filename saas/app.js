@@ -367,10 +367,10 @@ function updateWizardReview(){
  review.innerHTML='<h3>ตรวจสอบก่อนบันทึก</h3><p><b>เรื่อง:</b> '+e(data.title||'ยังไม่ระบุ')+'</p><p><b>ผู้ขาย:</b> '+e(data.vendor_name||'ยังไม่ระบุ')+'</p><p><b>จำนวน:</b> '+state.items.length+' รายการ — <b>วงเงิน:</b> '+sum.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท</p><p class="hint">เมื่อบันทึกแล้ว ยังเพิ่มเลขที่ใบสั่งซื้อ ข้อมูลตรวจรับและการเบิกจ่ายได้ภายหลัง</p>';
 }
 function moveWizard(delta){
- const form=document.getElementById('procurement-form');if(!form)return;
+ const wizardForm=document.getElementById('procurement-form');if(!wizardForm)return;
  const step=Number(state.wizardStep)||1;
  if(delta>0){
-  const section=form.querySelector('[data-wizard-panel="'+step+'"]');
+  const section=wizardForm.querySelector('[data-wizard-panel="'+step+'"]');
   for(const input of section.querySelectorAll('input[required],select[required],textarea[required]')){
    if(!input.checkValidity()){input.reportValidity();return;}
   }
