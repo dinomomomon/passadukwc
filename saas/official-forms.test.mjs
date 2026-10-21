@@ -699,3 +699,25 @@ test('server validates rich literal fragments and signer coordinates before publ
  assert.match(sql,/abs\(\(pair\.value->>'x'\)::numeric\)>15/);
  assert.match(sql,/jsonb_typeof\(subpair\.value\)<>'array'/);
 });
+
+test('the Word ribbon edits originals while computed amount tables remain protected',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const editor=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
+ const ui=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(editor,/function isProtectedGeneratedBlock\(el\)/);
+ assert.match(editor,/\.gov-count,\.gov-money-list/);
+ assert.match(editor,/if\(!isProtectedGeneratedBlock\(n\)\)applyTextEditsToBlock/);
+ assert.match(editor,/if\(!block\|\|isProtectedGeneratedBlock\(original\)\)/);
+ assert.match(editor,/class="te-word-ribbon"/);
+ assert.match(editor,/data-format="bold"/);
+ assert.match(editor,/data-tpl-field="ribbonSize"/);
+ assert.match(editor,/function selectInline\(el\)/);
+ assert.match(ui,/templateEditor\.selectInline\(ev\.target\)/);
+ assert.match(ui,/templateEditor\.lockedNotice\(\)/);
+});
+test('rich editor migration fixes ambiguous text variable and rejects missing signature offsets',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const sql=readFileSync(new URL('../supabase/migrations/20261021_template_inline_word_edit_validator_fix.sql',import.meta.url),'utf8');
+ assert.match(sql,/SELECT entry\.value FROM jsonb_array_elements/);
+ assert.match(sql,/NOT \(pair\.value \? 'x' AND pair\.value \? 'y'\)/);
+});
