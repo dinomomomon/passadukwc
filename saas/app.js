@@ -893,13 +893,61 @@ if(state.demo){const no=1+Math.max(0,...state.records.filter(r=>r.kind===d.kind)
 else{const payload={p_school_id:state.school.id,p_kind:d.kind,p_fiscal_year:Number(d.fiscal_year),p_document_date:d.document_date,p_title:d.title,p_reason:d.reason||'',p_budget_source:d.budget_source,p_vendor_name:d.vendor_name||'',p_department:d.department||'',p_vendor_address:d.vendor_address||'',p_inspector_name:d.inspector_name||'',p_due_date:d.due_date||null,p_items:items};const result=await db.rpc('create_procurement',payload);if(result.error){await refreshSubscription().catch(()=>{});return notify('บันทึกไม่สำเร็จ: '+result.error.message,true);}const {error:metaError}=await db.rpc('set_procurement_document_meta',{p_record_id:result.data,p_meta:docMeta});if(metaError)state.error='สร้างรายการแล้ว แต่บันทึกข้อมูลประกอบเอกสารไม่สำเร็จ: '+metaError.message;await Promise.all([loadRecords(),refreshSubscription()]);rec=state.records.find(r=>r.id===result.data);if(!rec)return notify('บันทึกแล้ว แต่ยังโหลดข้อมูลไม่สำเร็จ กรุณาเปิดทะเบียน',true);}
 state.currentRecord=rec;state.page='detail';state.flash='บันทึกสำเร็จ เลขทะเบียน '+rec.document_number+'/'+rec.fiscal_year;render();return;
 }}
-document.addEventListener('click',async ev=>{const canvasBlock=ev.target.closest?.('#te-print-preview [data-template-drag]');if(canvasBlock&&state.page==='templates'){ev.preventDefault();return templateEditor.action('tpl-block',{dataset:{id:canvasBlock.dataset.templateDrag}});}const el=ev.target.closest('[data-action]');if(!el)return;ev.preventDefault();try{await go(el.dataset.action,el);}catch(ex){notify(ex.message,true);}});
+let teJustDragged=false;
+document.addEventListener('click',async ev=>{
+ if(state.page==='templates'){
+  if(teJustDragged){teJustDragged=false;ev.preventDefault();return;}
+  if(ev.target.closest?.('#te-print-preview .te-system-locked,#te-print-preview .signature-name,#te-print-preview .signature-role,#te-print-preview .kp-signature-position,#te-print-preview .memo-field-agency,#te-print-preview .memo-field-number,#te-print-preview .memo-field-to,#te-print-preview .gov-right-head,#te-print-preview .gov-items')){
+   templateEditor.lockedNotice();ev.preventDefault();return;
+  }
+  if(ev.target.closest?.('#te-print-preview [data-template-text],#te-print-preview [data-template-header]'))return;
+  const signer=ev.target.closest?.('#te-print-preview [data-template-signature]');
+  if(signer){ev.preventDefault();return templateEditor.action('tpl-signature',{dataset:{id:signer.dataset.templateSignature}});}
+  const node=ev.target.closest?.('#te-print-preview [data-template-drag]');
+  if(node){ev.preventDefault();return templateEditor.action('tpl-block',{dataset:{id:node.dataset.templateDrag}});}
+ }
+ const el=ev.target.closest('[data-action]');
+ if(!el)return;ev.preventDefault();
+ try{await go(el.dataset.action,el);}catch(ex){notify(ex.message,true);}
+});
 document.addEventListener('submit',async ev=>{if(!ev.target.id)return;ev.preventDefault();const b=ev.target.querySelector('[type=submit]');if(b)b.disabled=true;try{await handleForm(ev.target);}catch(ex){notify(ex.message,true);}finally{if(b)b.disabled=false;}});
-document.addEventListener('input',ev=>{const el=ev.target;if(el.dataset.tplField)templateEditor.editField(el);if(['doc_withholding_baht','doc_fine_baht','doc_payable_baht'].includes(el.name))updatePayablePreview();if(el.name==='doc_delivery_date'&&el.value){const doc=el.closest('form');for(const targetName of ['doc_acceptance_date','doc_inspection_date']){const target=doc?.querySelector('[name="'+targetName+'"]');if(target&&!target.value)target.value=el.value;}}if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();}}});
+document.addEventListener('input',ev=>{const el=ev.target;if(state.page==='templates'&&el.dataset.templateText){templateEditor.inlineInput(el);return;}if(state.page==='templates'&&el.dataset.templateHeader){templateEditor.headerInput(el);return;}if(el.dataset.tplField)templateEditor.editField(el);if(['doc_withholding_baht','doc_fine_baht','doc_payable_baht'].includes(el.name))updatePayablePreview();if(el.name==='doc_delivery_date'&&el.value){const doc=el.closest('form');for(const targetName of ['doc_acceptance_date','doc_inspection_date']){const target=doc?.querySelector('[name="'+targetName+'"]');if(target&&!target.value)target.value=el.value;}}if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();}}});
 document.addEventListener('change',ev=>{if(ev.target?.dataset?.tplField)templateEditor.editField(ev.target);});
 document.addEventListener('dragstart',ev=>{const t=ev.target.closest?.('[data-template-drag]');if(t&&state.page==='templates')templateEditor.dragStart(t,ev);});
 document.addEventListener('dragover',ev=>{if(state.page==='templates'&&ev.target.closest?.('[data-template-drag]'))ev.preventDefault();});
 document.addEventListener('drop',ev=>{const t=ev.target.closest?.('[data-template-drag]');if(t&&state.page==='templates')templateEditor.drop(t,ev);});
+let tePointer=null;
+document.addEventListener('pointerdown',ev=>{
+ if(state.page!=='templates')return;
+ const signer=ev.target.closest?.('#te-print-preview [data-template-signature]');
+ if(!signer||ev.button!==0)return;
+ ev.preventDefault();
+ const page=signer.closest('.paper-page');
+ const pixelsPerMm=(page?.getBoundingClientRect().width||1)/210;
+ tePointer={id:signer.dataset.templateSignature,x:ev.clientX,y:ev.clientY,pxMm:pixelsPerMm,moved:false};
+ signer.classList.add('te-dragging-signer');
+});
+document.addEventListener('pointermove',ev=>{
+ if(!tePointer)return;
+ const node=document.querySelector('#te-print-preview [data-template-signature="'+tePointer.id+'"]');
+ if(!node)return;
+ const dx=ev.clientX-tePointer.x,dy=ev.clientY-tePointer.y;
+ if(Math.abs(dx)+Math.abs(dy)>4)tePointer.moved=true;
+ if(tePointer.moved){
+  const x=Math.max(-15,Math.min(15,Math.round(dx/tePointer.pxMm)));
+  const y=Math.max(-15,Math.min(15,Math.round(dy/tePointer.pxMm)));
+  node.style.transform='translate('+x+'mm,'+y+'mm)';
+ }
+});
+document.addEventListener('pointerup',ev=>{
+ if(!tePointer)return;
+ const drag=tePointer;tePointer=null;
+ if(!drag.moved)return;
+ const x=Math.max(-15,Math.min(15,Math.round((ev.clientX-drag.x)/drag.pxMm)));
+ const y=Math.max(-15,Math.min(15,Math.round((ev.clientY-drag.y)/drag.pxMm)));
+ teJustDragged=true;
+ templateEditor.moveSignature(drag.id,x,y);
+});
 function bootTimeout(promise,ms,message){
   let timeoutId;
   return Promise.race([
