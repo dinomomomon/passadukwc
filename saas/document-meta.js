@@ -40,6 +40,7 @@ export function docMetaWizardInputs(meta={},step=3,kind='purchase'){
   ['invoice_date','วันที่ออกหลักฐานส่งมอบ','date'],
   ['inspection_date','วันที่ตรวจรับจริง (ถ้าต่างจากวันส่งมอบ)','date'],
   ['inspection_location','สถานที่ตรวจรับ'],
+  ['inspection_expert','ผู้ชำนาญการ / ผู้ทรงคุณวุฒิ (ถ้ามี)'],
  ];
  const paymentFields=[
   ['vat_baht','ภาษีมูลค่าเพิ่มตามหลักฐาน (บาท)','number'],
