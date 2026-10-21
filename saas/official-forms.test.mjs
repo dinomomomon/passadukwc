@@ -721,3 +721,59 @@ test('rich editor migration fixes ambiguous text variable and rejects missing si
  assert.match(sql,/SELECT entry\.value FROM jsonb_array_elements/);
  assert.match(sql,/NOT \(pair\.value \? 'x' AND pair\.value \? 'y'\)/);
 });
+
+test('orange draft save has a unique action style while published template remains separate',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const template=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./template-builder.css',import.meta.url),'utf8');
+ assert.match(template,/💾 บันทึกฉบับร่าง/);
+ assert.match(template,/tpl-save','te-save-draft/);
+ assert.match(template,/tpl-publish','primary/);
+ assert.match(css,/\.te-actions \.te-save-draft/);
+ assert.match(css,/#ff912e/);
+});
+test('every state.flash and state.error save acknowledgement produces one dismissible accessible popup',async()=>{
+ const {installStateNotices}=await import('./notification-popup.js');
+ const state={flash:'',error:''},created=[];
+ const element=tag=>({tagName:tag,attributes:{},children:[],isConnected:false,
+  setAttribute(k,v){this.attributes[k]=v;},
+  addEventListener(k,fn){this[k]=fn;},
+  append(...items){this.children.push(...items);},
+  remove(){this.isConnected=false;}
+ });
+ const doc={body:{appendChild(el){el.isConnected=true;created.push(el);}},createElement:element};
+ const view=installStateNotices(state,doc);
+ state.flash='บันทึกฉบับร่างเรียบร้อย';
+ await Promise.resolve();
+ assert.equal(created.length,1);
+ assert.equal(created[0].className,'kp-popup kp-popup-success');
+ assert.equal(created[0].attributes.role,'status');
+ assert.equal(created[0].children[1].children[1].textContent,'บันทึกฉบับร่างเรียบร้อย');
+ assert.equal(state.flash,'บันทึกฉบับร่างเรียบร้อย');
+ state.flash='';
+ await Promise.resolve();
+ assert.equal(created.length,1);
+ state.error='บันทึกไม่สำเร็จ';
+ await Promise.resolve();
+ assert.equal(created.length,2);
+ assert.equal(created[1].className,'kp-popup kp-popup-error');
+ assert.equal(created[1].attributes.role,'alert');
+ assert.equal(created[0].isConnected,false);
+ created[1].children[2].click();
+ assert.equal(created[1].isConnected,false);
+ view.clear();
+});
+test('popup is shipped to both deployments with no need to edit individual save flows',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const build=readFileSync(new URL('./build.mjs',import.meta.url),'utf8');
+ const page=readFileSync(new URL('./index.html',import.meta.url),'utf8');
+ const popup=readFileSync(new URL('./notification-popup.js',import.meta.url),'utf8');
+ assert.match(app,/import \{installStateNotices\} from '\.\/notification-popup\.js'/);
+ assert.match(app,/installStateNotices\(state\)/);
+ assert.match(build,/notification-popup\.css/);
+ assert.match(page,/notification-popup\.css\?v=/);
+ assert.match(popup,/Object\.defineProperty\(state,key/);
+ assert.match(popup,/queueMicrotask/);
+ assert.match(popup,/doc\.body\.appendChild\(notice\)/);
+});
