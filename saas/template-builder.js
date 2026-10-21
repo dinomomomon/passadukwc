@@ -106,6 +106,7 @@ export function originalBlockLabels(section){
  const {nodes}=structuralBlocks(section);
  return nodes.map((n,i)=>({id:'d'+i,label:(n.textContent||'ตาราง / บล็อก '+(i+1)).replace(/\s+/g,' ').trim().slice(0,90)||'บล็อก '+(i+1)}));
 }
+function isProtectedGeneratedBlock(el){return el.matches('table,.gov-items,.gov-count,.gov-money-list')||!!el.querySelector('.gov-items,.gov-money-list');}
 function styleBlock(el,style){
  if(!style)return;
  if(['left','center','right'].includes(style.align))el.style.setProperty('text-align',style.align,'important');
@@ -141,7 +142,7 @@ export function applyDocumentTemplates(html,layouts,r,s,doc=typeof document!=='u
   }
   const {zone,nodes}=structuralBlocks(section);
   if(!zone)continue;
-  for(const [i,n] of nodes.entries()){n.dataset.templateOriginal='d'+i;applyTextEditsToBlock(n,t.textEdits['d'+i],r,s,doc);styleBlock(n,t.styles['d'+i]);}
+  for(const [i,n] of nodes.entries()){n.dataset.templateOriginal='d'+i;if(!isProtectedGeneratedBlock(n))applyTextEditsToBlock(n,t.textEdits['d'+i],r,s,doc);styleBlock(n,t.styles['d'+i]);}
   applySignatureOffsets(section,t.signatureOffsets);
   // A published blank/master template or heading-only change must not disturb
   // the original legal form hierarchy, signatures or preformatted tables.
@@ -234,7 +235,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
    const {nodes:originals}=structuralBlocks(source);
    for(const [i,original] of originals.entries()){
     const block=page.querySelector('[data-template-original="d'+i+'"]');
-    if(!block)continue;
+    if(!block||isProtectedGeneratedBlock(original)){if(block)block.classList.add('te-generated-locked');continue;}
     const originalsText=currentTextNodes(original,document);
     const editedText=currentTextNodes(block,document);
     for(let j=editedText.length-1;j>=0;j--){
