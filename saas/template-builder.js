@@ -225,6 +225,10 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
     node.classList.add('te-canvas-draggable');
     if(id===currentBlock)node.classList.add('te-canvas-selected');
    }
+   for(const [selector,field] of [['.memo-field-subject .memo-value,.print-title','title'],['.gov-law','legal']]){
+    const el=page.querySelector(selector);
+    if(el){el.dataset.templateHeader=field;el.contentEditable='plaintext-only';el.draggable=false;el.classList.add('te-inline-edit');}
+   }
    decorateSignatureHandles(page,activeSignature);
    const source=sourcePage();
    const {nodes:originals}=structuralBlocks(source);
@@ -399,6 +403,14 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const badge=document.querySelector('.te-pane-title .tag');
   if(badge){badge.textContent='ยังไม่บันทึก';badge.classList.add('amber');}
  }
+ function headerInput(el){
+  const type=el?.dataset?.templateHeader;
+  if(type!=='title'&&type!=='legal')return;
+  draft[type]=String(el.textContent||'').slice(0,400);
+  dirty=true;
+  const badge=document.querySelector('.te-pane-title .tag');
+  if(badge){badge.textContent='ยังไม่บันทึก';badge.classList.add('amber');}
+ }
  function refreshEditorText(el){
   if(!el?.dataset?.templateText)return;
   inlineInput(el);
@@ -412,5 +424,5 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
  let dragging='';
  function dragStart(el,ev){dragging=el.dataset.templateDrag||'';if(ev.dataTransfer){ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',dragging);}}
  function drop(el,ev){ev.preventDefault();const from=dragging,to=el.dataset.templateDrag;dragging='';if(!from||!to||from===to)return;const order=blockSeq(),i=order.indexOf(from),j=order.indexOf(to);if(i<0||j<0)return;order.splice(i,1);order.splice(j,0,from);draft.order=order;dirty=true;view();}
- return {open,load,view,action,editField,dragStart,drop,refreshPreview,inlineInput,lockedNotice,refreshEditorText,moveSignature};
+ return {open,load,view,action,editField,dragStart,drop,refreshPreview,inlineInput,lockedNotice,refreshEditorText,moveSignature,headerInput};
 }
