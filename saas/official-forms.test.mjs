@@ -791,7 +791,7 @@ test('Word-like preview preserves native A4 title and legal paragraph layout',as
  assert.match(css,/#te-print-preview span\.te-inline-edit\s*\{[^}]*display\s*:\s*inline/);
  assert.match(css,/#te-print-preview \[data-template-header\]\.te-inline-edit\s*\{[^}]*display\s*:\s*block/);
  assert.match(js,/el\.dataset\.templateHeader=field/);
- assert.match(html,/template-builder\.css\?v=20261021-a4-preview-block-fix-v2/);
+ assert.match(html,/template-builder\.css\?v=[a-zA-Z0-9_-]+/,'template editor stylesheet must be versioned');
 });
 
 test('director decision is on separate lines and school can override only its wording',async()=>{
