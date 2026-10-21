@@ -778,3 +778,17 @@ test('popup is shipped to both deployments with no need to edit individual save 
  assert.match(popup,/queueMicrotask/);
  assert.match(popup,/doc\.body\.appendChild\(notice\)/);
 });
+
+test('Word-like preview preserves native A4 title and legal paragraph layout',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('./template-builder.css',import.meta.url),'utf8');
+ const js=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
+ const generic=css.match(/#te-print-preview \\.te-inline-edit\\s*\\{([^}]*)\\}/)?.[1]||'';
+ assert.ok(generic,'Word editing CSS must be present');
+ assert.doesNotMatch(generic,/display\\s*:\\s*inline/,'editor must not force A4 heading or paragraph inline');
+ assert.match(css,/#te-print-preview span\\.te-inline-edit\\s*\\{[^}]*display\\s*:\\s*inline/);
+ assert.match(css,/#te-print-preview \\[data-template-header\\]\\.te-inline-edit\\s*\\{[^}]*display\\s*:\\s*block/);
+ assert.match(js,/el\\.dataset\\.templateHeader=field/);
+ assert.match(html,/template-builder\\.css\\?v=20261021-a4-preview-block-fix-v2/);
+});
