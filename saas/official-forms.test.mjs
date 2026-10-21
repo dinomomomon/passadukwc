@@ -949,7 +949,7 @@ test('legal headings can be manually line-broken and individually formatted with
  const js=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
  const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
  const editor=readFileSync(new URL('./template-builder.css',import.meta.url),'utf8');
- assert.match(js,/selector:'.print-title/);
+ assert.match(js,/title:'.print-title/);
  assert.match(js,/header.style.setProperty\('font-size',style.size\+'pt','important'\)/);
  assert.match(js,/if\(t.legalSecond\)/);
  assert.match(js,/data-tpl-field="legalSecond"/);
