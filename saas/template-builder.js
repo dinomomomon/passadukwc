@@ -3,6 +3,7 @@
  * remain the source of truth for dynamic values, legal text and signatures.
  * User edits are typed JSON patches: no arbitrary user HTML or JavaScript.
  */
+import {currentTextNodes,tokenizeOriginalText,applyTextEditsToBlock,applySignatureOffsets,decorateSignatureHandles,safeSignatureOffset} from './template-rich-editor.js';
 export const TEMPLATE_PAGES=[
  {key:'request',name:'รายงานขอซื้อ / ขอจ้าง',css:'gov-request'},
  {key:'annex',name:'รายละเอียดพัสดุ / งานจ้างแนบท้าย',css:'gov-annex'},
@@ -68,9 +69,27 @@ export function safeTemplateDraft(input){
    bold:Boolean(style?.bold)
   };
  }
+ const entries=input.textEdits&&typeof input.textEdits==='object'&&!Array.isArray(input.textEdits)?input.textEdits:{};
+ clean.textEdits={};
+ for(const [id,items] of Object.entries(entries).slice(0,60)){
+  if(!/^d[0-9]{1,2}$/.test(id)||!items||typeof items!=='object'||Array.isArray(items))continue;
+  const saved={};
+  for(const [index,fragments] of Object.entries(items).slice(0,80)){
+   if(!/^(0|[1-9]\d{0,2})$/.test(index)||!Array.isArray(fragments)||fragments.length>30)continue;
+   if(fragments.some(f=>typeof f!=='string'||f.length>4000))continue;
+   saved[index]=fragments;
+  }
+  clean.textEdits[id]=saved;
+ }
+ const offsets=input.signatureOffsets&&typeof input.signatureOffsets==='object'&&!Array.isArray(input.signatureOffsets)?input.signatureOffsets:{};
+ clean.signatureOffsets={};
+ for(const [id,offset] of Object.entries(offsets).slice(0,12)){
+  if(!/^(staff[01]|director|finance|inspector|requisition[0-3])$/.test(id))continue;
+  clean.signatureOffsets[id]=safeSignatureOffset(offset);
+ }
  return clean;
 }
-export function emptyTemplate(){return {title:'',legal:'',blocks:[],order:[],styles:{}};}
+export function emptyTemplate(){return {title:'',legal:'',blocks:[],order:[],styles:{},textEdits:{},signatureOffsets:{}};}
 export function templateKeyForPage(section){
  for(const p of TEMPLATE_PAGES)if(section.classList.contains(p.css))return p.key;
  return null;
@@ -122,7 +141,8 @@ export function applyDocumentTemplates(html,layouts,r,s,doc=typeof document!=='u
   }
   const {zone,nodes}=structuralBlocks(section);
   if(!zone)continue;
-  for(const [i,n] of nodes.entries()){n.dataset.templateOriginal='d'+i;styleBlock(n,t.styles['d'+i]);}
+  for(const [i,n] of nodes.entries()){n.dataset.templateOriginal='d'+i;applyTextEditsToBlock(n,t.textEdits['d'+i],r,s,doc);styleBlock(n,t.styles['d'+i]);}
+  applySignatureOffsets(section,t.signatureOffsets);
   // A published blank/master template or heading-only change must not disturb
   // the original legal form hierarchy, signatures or preformatted tables.
   if(!t.order.length&&!t.blocks.length)continue;
@@ -158,7 +178,8 @@ export function activeTemplateLayouts(rows,versionRows={},record=null){
 export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,notify}){
  let selected='request',draft=emptyTemplate(),revision=0,currentBlock='',dirty=false,history=[];
  const row=()=>state.schoolTemplates?.[selected];
- function assignDraft(){draft=safeTemplateDraft(row()?.draft||emptyTemplate());revision=row()?.draft_revision||0;currentBlock='';dirty=false;}
+ let activeSignature='',inlineAlert='';
+ function assignDraft(){draft=safeTemplateDraft(row()?.draft||emptyTemplate());revision=row()?.draft_revision||0;currentBlock='';activeSignature='';inlineAlert='';dirty=false;}
  async function load(){
   if(state.demo){state.schoolTemplates={};return;}
   if(!state.school?.id)return;
@@ -204,6 +225,37 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
     node.classList.add('te-canvas-draggable');
     if(id===currentBlock)node.classList.add('te-canvas-selected');
    }
+   decorateSignatureHandles(page,activeSignature);
+   const source=sourcePage();
+   const {nodes:originals}=structuralBlocks(source);
+   for(const [i,original] of originals.entries()){
+    const block=page.querySelector('[data-template-original="d'+i+'"]');
+    if(!block)continue;
+    const originalsText=currentTextNodes(original,document);
+    const editedText=currentTextNodes(block,document);
+    for(let j=editedText.length-1;j>=0;j--){
+     const liveNode=editedText[j],originalNode=originalsText[j];
+     if(!originalNode||!liveNode||!liveNode.parentNode)continue;
+     const parts=tokenizeOriginalText(originalNode.textContent,r,state.school);
+     const custom=draft.textEdits?.['d'+i]?.[String(j)];
+     const patch=Array.isArray(custom)&&custom.length===parts.filter(p=>p.kind==='text').length?custom:null;
+     const fragment=document.createDocumentFragment();let ix=0;
+     for(const part of parts){
+      const span=document.createElement('span');
+      if(part.kind==='locked'){
+       span.className='te-system-locked';span.dataset.systemKey=part.key;
+       span.title='ข้อมูลนี้ดึงจากระบบอัตโนมัติ ไม่สามารถแก้ข้อความนี้ได้';
+       span.contentEditable='false';span.textContent=part.value;
+      }else{
+       span.className='te-inline-edit';span.dataset.templateText='d'+i+':'+j+':'+ix;
+       span.contentEditable='plaintext-only';span.spellcheck=false;
+       span.textContent=patch?patch[ix]:part.value;ix++;
+      }
+      fragment.appendChild(span);
+     }
+     liveNode.parentNode.replaceChild(fragment,liveNode);
+    }
+   }
   }
   return page?.outerHTML||'<p>เอกสารประเภทนี้ไม่อยู่ในรายการจัดซื้อ/จัดจ้างที่เลือก โปรดเลือกรายการตัวอย่างที่เกี่ยวข้อง</p>';
  }
@@ -217,7 +269,9 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const page=TEMPLATE_PAGES.find(p=>p.key===selected);
   const cur=draft.blocks.find(b=>b.id===currentBlock);
   const sty=draft.styles[currentBlock]||{align:'left',size:16,bold:false};
+  const signature=draft.signatureOffsets[activeSignature]||{x:0,y:0};
   return '<div class="te-fields">'+
+   (activeSignature?'<div class="te-field-title">ย้ายชุดลายเซ็น (ชื่อและตำแหน่งล็อกไว้)</div><label>ซ้าย / ขวา (-15 ถึง 15 มม.)</label><input class="input" type="number" min="-15" max="15" step="1" data-tpl-field="signatureX" value="'+signature.x+'"><label>ขึ้น / ลง (-15 ถึง 15 มม.)</label><input class="input" type="number" min="-15" max="15" step="1" data-tpl-field="signatureY" value="'+signature.y+'"><p class="hint">ลากบล็อกลงนามในหน้า A4 ได้ทั้งชุด โดยชื่อ ตำแหน่ง และวันที่จะอยู่ด้วยกัน</p>':'')+
    '<label>หัวเรื่อง (เว้นว่างเพื่อใช้แม่แบบกลาง)</label><input class="input" data-tpl-field="title" maxlength="400" value="'+esc(draft.title||'')+'" placeholder="'+esc(page.name)+'">'+
    '<label>บรรทัดอ้างกฎหมาย (เว้นว่างเพื่อใช้ต้นฉบับ)</label><textarea class="input" data-tpl-field="legal" rows="2" maxlength="400" placeholder="ใช้ข้อความกฎหมายต้นฉบับ">'+esc(draft.legal||'')+'</textarea>'+
    '<p class="hint">กรณีแก้ถ้อยคำกฎหมาย ต้องตรวจสอบกับระเบียบที่ใช้อยู่ก่อนประกาศใช้</p>'+
@@ -236,8 +290,9 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const page=TEMPLATE_PAGES.find(p=>p.key===selected);
   const seq=blockSeq();const draftStatus=dirty?'<span class="tag amber">ยังไม่บันทึก</span>':'<span class="tag">บันทึกแล้ว</span>';
   const src='<div class="te-builder"><aside class="te-pane">'+
+   (inlineAlert?'<div class="te-lock-alert" role="status">'+esc(inlineAlert)+'</div>':'')+
    '<div class="te-pane-title"><h2>บล็อกเอกสาร</h2>'+draftStatus+'</div>'+
-   '<p class="hint">ลากเพื่อสลับลำดับบล็อก หรือใช้ปุ่มลูกศร ต้นฉบับราชการยังคงอยู่ครบ</p>'+
+   '<p class="hint">คลิกข้อความบน A4 เพื่อพิมพ์แก้คำทั่วไปได้ทันที • ข้อความสีฟ้าคือข้อมูลล็อกจากระบบ • ลากชุดผู้ลงนามเพื่อขยับตำแหน่ง</p>'+
    '<ol class="te-block-list">'+seq.map((id,i)=>'<li class="te-block '+(id===currentBlock?'te-selected':'')+'" draggable="true" data-template-drag="'+esc(id)+'">'+
     '<button class="te-block-open" data-action="tpl-block" data-id="'+esc(id)+'"><span class="te-drag-handle">⠿</span>'+esc(blockName(id))+'</button>'+
     '<span class="te-block-btns">'+btn('↑','tpl-up','mini-btn','data-id="'+esc(id)+'"')+btn('↓','tpl-down','mini-btn','data-id="'+esc(id)+'"')+'</span></li>').join('')+'</ol>'+
@@ -261,7 +316,8 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const field=el.dataset.tplField;if(!field)return;
   const target=draft.blocks.find(b=>b.id===currentBlock),sty=draft.styles[currentBlock]||(draft.styles[currentBlock]={align:'left',size:16,bold:false});
   const value=el.type==='checkbox'?el.checked:el.value;
-  if(field==='title'||field==='legal')draft[field]=String(value);
+  if(field==='signatureX'||field==='signatureY'){if(!activeSignature)return;const now=draft.signatureOffsets[activeSignature]||{x:0,y:0};draft.signatureOffsets[activeSignature]=safeSignatureOffset({...now,[field==='signatureX'?'x':'y']:value});}
+  else if(field==='title'||field==='legal')draft[field]=String(value);
   else if(field==='blockText'&&target)target.text=String(value);
   else if(['size','align','bold'].includes(field)){
    if(target)target[field]=field==='size'?Number(value):value;
@@ -291,7 +347,8 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
    if(dirty&&!confirm('มีการแก้ไขที่ยังไม่บันทึก ต้องการเปลี่ยนหน้าโดยทิ้งการแก้ไขหรือไม่?'))return;
    selected=el.dataset.key;history=[];assignDraft();view();return;
   }
-  if(name==='tpl-block'){currentBlock=el.dataset.id;view();return;}
+  if(name==='tpl-block'){currentBlock=el.dataset.id;activeSignature='';view();return;}
+  if(name==='tpl-signature'){activeSignature=el.dataset.id;currentBlock='';view();return;}
   if(name==='tpl-add'){
    if(draft.blocks.length>=24)throw Error('เพิ่มได้สูงสุด 24 บล็อก');
    const type=document.querySelector('#tpl-new-type')?.value||'paragraph';
@@ -319,8 +376,35 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
    draft=emptyTemplate();currentBlock='';dirty=true;view();return;
   }
  }
+ function lockedNotice(){
+  inlineAlert='ชื่อบุคคล ตำแหน่ง เลขเอกสาร วันที่ และยอดเงินส่วนนี้ดึงจากฐานข้อมูล จึงแก้บนแม่แบบไม่ได้ กรุณาแก้ที่ข้อมูลโรงเรียนหรือรายการจัดซื้อแทน';
+  const el=document.querySelector('.te-lock-alert');if(el)el.textContent=inlineAlert;
+  else {const panel=document.querySelector('.te-pane');panel?.insertAdjacentHTML('afterbegin','<div class="te-lock-alert" role="status">'+templateEsc(inlineAlert)+'</div>');}
+ }
+ function inlineInput(el){
+  const bits=String(el.dataset.templateText||'').split(':');
+  if(bits.length!==3)return;
+  const [id,index,fragmentIndex]=bits;
+  const page=sourcePage(),source=structuralBlocks(page).nodes[Number(id.slice(1))];
+  if(!source)return;
+  const texts=currentTextNodes(source,document),base=texts[Number(index)];
+  if(!base)return;
+  const initial=tokenizeOriginalText(base.textContent,editorRecord(),state.school).filter(p=>p.kind==='text').map(p=>p.value);
+  if(!draft.textEdits[id])draft.textEdits[id]={};
+  const array=draft.textEdits[id][index]||initial;
+  if(Number(fragmentIndex)>=array.length)return;
+  array[Number(fragmentIndex)]=String(el.textContent||'').replace(/\u200b/g,'').slice(0,4000);
+  draft.textEdits[id][index]=array;
+  dirty=true;
+  const badge=document.querySelector('.te-pane-title .tag');
+  if(badge){badge.textContent='ยังไม่บันทึก';badge.classList.add('amber');}
+ }
+ function refreshEditorText(el){
+  if(!el?.dataset?.templateText)return;
+  inlineInput(el);
+ }
  let dragging='';
  function dragStart(el,ev){dragging=el.dataset.templateDrag||'';if(ev.dataTransfer){ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',dragging);}}
  function drop(el,ev){ev.preventDefault();const from=dragging,to=el.dataset.templateDrag;dragging='';if(!from||!to||from===to)return;const order=blockSeq(),i=order.indexOf(from),j=order.indexOf(to);if(i<0||j<0)return;order.splice(i,1);order.splice(j,0,from);draft.order=order;dirty=true;view();}
- return {open,load,view,action,editField,dragStart,drop,refreshPreview};
+ return {open,load,view,action,editField,dragStart,drop,refreshPreview,inlineInput,lockedNotice,refreshEditorText};
 }
