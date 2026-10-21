@@ -897,7 +897,7 @@ let teJustDragged=false;
 document.addEventListener('click',async ev=>{
  if(state.page==='templates'){
   if(teJustDragged){teJustDragged=false;ev.preventDefault();return;}
-  if(ev.target.closest?.('#te-print-preview .te-system-locked,#te-print-preview .signature-name,#te-print-preview .signature-role,#te-print-preview .kp-signature-position,#te-print-preview .memo-field-agency,#te-print-preview .memo-field-number,#te-print-preview .memo-field-to,#te-print-preview .gov-right-head,#te-print-preview .gov-items')){
+  if(ev.target.closest?.('#te-print-preview .te-system-locked,#te-print-preview .signature-name,#te-print-preview .signature-role,#te-print-preview .kp-signature-position,#te-print-preview .memo-field-agency,#te-print-preview .memo-field-number,#te-print-preview .memo-field-to,#te-print-preview .gov-right-head,#te-print-preview .gov-items,#te-print-preview .gov-money-list,#te-print-preview .gov-count,#te-print-preview .te-generated-locked')){
    templateEditor.lockedNotice();ev.preventDefault();return;
   }
   if(ev.target.closest?.('#te-print-preview [data-template-text],#te-print-preview [data-template-header]'))return;
