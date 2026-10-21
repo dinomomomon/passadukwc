@@ -138,7 +138,7 @@ test('unusually long requisition lines can be repartitioned with full signatures
 test('adaptive layout retries smaller batches only with completed page groups',async()=>{
  const {readFileSync}=await import('node:fs');
  const code=readFileSync(new URL('./app.js',import.meta.url),'utf8');
- assert.match(code,/for\(const count of \[9,7,5,3,2,1\]\)/);
+ assert.match(code,/for\(const count of \[10,9,8,7,6,5,4,3,2,1\]\)/);
  assert.match(code,/__items_per_page:count/);
  assert.match(code,/complete-a4-pages/);
 });
@@ -587,7 +587,7 @@ test('template changes reject arbitrary HTML/CSS properties and sanitize typed J
    align:'center',size:18,bold:true,html:'<script>alert(1)</script>'}],
   order:['d0','xfirst'],styles:{d0:{align:'right',size:16,bold:true},bad:{align:'center'}}
  });
- assert.deepEqual(Object.keys(row).sort(),['blocks','legal','order','signatureOffsets','styles','textEdits','title']);
+ assert.deepEqual(Object.keys(row).sort(),['blocks','decisionText','legal','order','signatureOffsets','styles','textEdits','title']);
  assert.ok(!JSON.stringify(row).includes('script'));
  assert.deepEqual(Object.keys(row.styles),['d0']);
  assert.equal(row.blocks[0].text,'{{vendor_name}}');
@@ -813,4 +813,38 @@ test('director decision is on separate lines and school can override only its wo
  assert.match(css,/\[data-template-header="decisionText"\]\.te-inline-edit/);
  assert.match(gov,/\.director-action\{white-space:pre-line\}/);
  assert.match(app,/data-template-header="decisionText"/);
+});
+
+test('annex and requisition have at most ten line items per complete signed A4 page',()=>{
+ const rows=Array.from({length:25},(_,i)=>({name:'พัสดุ '+(i+1),qty:1,unit:'ชุด',price_satang:100}));
+ const doc=buildDocuments({...sample,items:rows,total_satang:2500},school);
+ const annex=[...doc.matchAll(/<section class="paper-page official gov-doc gov-annex">([\s\S]*?)<\/section>/g)].map(m=>m[1]);
+ const forms=[...doc.matchAll(/<section class="paper-page official gov-doc gov-requisition">([\s\S]*?)<\/section>/g)].map(m=>m[1]);
+ for(const pages of [annex,forms]){
+  assert.equal(pages.length,3,'25 items must become 10 + 10 + 5, with intact headers and signatures');
+  assert.deepEqual(pages.map(p=>(p.match(/class="gov-data-row"/g)||[]).length),[10,10,5]);
+  pages.forEach((p,i)=>{
+   assert.match(p,/class="print-title"/,'every continuation repeats the original heading');
+   assert.match(p,/class="gov-law"/,'every continuation repeats its legal reference');
+   assert.match(p,/class="official-table/,'every continuation has its complete table');
+   assert.match(p,new RegExp('หน้าที่ '+(i+1)+'/3'));
+  });
+ }
+ annex.forEach(p=>assert.match(p,/class="gov-annex-sign"/));
+ forms.forEach(p=>assert.match(p,/class="gov-requisition-signatures"/));
+ assert.equal((doc.match(/class="gov-summary-start"/g)||[]).length,1,'annex totals only on final sheet');
+ assert.match(annex[0],/>10<\/td>/);
+ assert.match(annex[1],/>11<\/td>/);
+ assert.match(forms[2],/>25<\/td>/);
+});
+test('fixed form item rows retain vertical columns without horizontal lines',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const print=readFileSync(new URL('./print.js',import.meta.url),'utf8');
+ assert.match(css,/\.gov-items tbody > tr\.gov-data-row > td\{\s*border-top:0!important;\s*border-bottom:0!important/);
+ assert.match(css,/\.gov-items tbody > tr\.gov-data-row:last-child > td\{\s*border-bottom:1px solid #222!important/);
+ assert.match(print,/OFFICIAL_ITEMS_PER_PAGE=10/);
+ assert.match(app,/if\(fixedItemForm\)\{[\s\S]*?delete sheet\.dataset\.fitMargin;[\s\S]*?delete sheet\.dataset\.density;[\s\S]*?sheet\.style\.removeProperty\('--gov-zoom'\);/);
+ assert.match(app,/if\(doesFit\(\)\)return true;[\s\S]*?return false; \/\/ Caller retries with fewer items/);
 });
