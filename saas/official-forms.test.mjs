@@ -565,3 +565,75 @@ test('dashboard replaces storage shortcut with document-number register instead 
  assert.match(app,/if\(action==='registry'\|\|action==='registry-refresh'\)/);
  assert.doesNotMatch(app,/<button class="action-card" data-action="storage">/);
 });
+
+
+test('six template pages each have an independently editable school version',async()=>{
+ const {TEMPLATE_PAGES}=await import('./template-builder.js');
+ assert.deepEqual(TEMPLATE_PAGES.map(p=>p.key),['request','annex','approval','acceptance','payment','requisition']);
+});
+test('template extra blocks bind live record data but never evaluate arbitrary variable names',async()=>{
+ const {expandTemplateText,templateBindings,templateEsc}=await import('./template-builder.js');
+ const txt=expandTemplateText('{{school_name}} : {{vendor_name}} {{total_amount}} {{unknown}}',sample,school);
+ assert.match(txt,/โรงเรียนกาวิละวิทยาลัย/);
+ assert.match(txt,new RegExp(sample.vendor_name));
+ assert.match(txt,/{{unknown}}/);
+ assert.equal(templateEsc('<script>alert(1)</script>'),'&lt;script&gt;alert(1)&lt;/script&gt;');
+ assert.equal(templateBindings(sample,school).items_count,String(sample.items.length));
+});
+test('template changes reject arbitrary HTML/CSS properties and sanitize typed JSON blocks',async()=>{
+ const {safeTemplateDraft,emptyTemplate}=await import('./template-builder.js');
+ const row=safeTemplateDraft({
+  title:'หัวข้อพิเศษ',legal:'',blocks:[{id:'xfirst',type:'paragraph',text:'{{vendor_name}}',
+   align:'center',size:18,bold:true,html:'<script>alert(1)</script>'}],
+  order:['d0','xfirst'],styles:{d0:{align:'right',size:16,bold:true},bad:{align:'center'}}
+ });
+ assert.deepEqual(Object.keys(row).sort(),['blocks','legal','order','styles','title']);
+ assert.ok(!JSON.stringify(row).includes('script'));
+ assert.deepEqual(Object.keys(row.styles),['d0']);
+ assert.equal(row.blocks[0].text,'{{vendor_name}}');
+ assert.deepEqual(emptyTemplate().blocks,[]);
+ assert.throws(()=>safeTemplateDraft({blocks:Array.from({length:25},()=>({text:'a'}))}),/24/);
+});
+test('published layouts apply only to draft records; approved records retain pinned editions',async()=>{
+ const {activeTemplateLayouts}=await import('./template-builder.js');
+ const schoolRows={request:{published:{title:'ฉบับใหม่'},published_version:3}};
+ const history={'request:1':{layout:{title:'ฉบับเก่า'}}};
+ assert.equal(activeTemplateLayouts(schoolRows,history,{state:'draft'}).request.title,'ฉบับใหม่');
+ assert.equal(activeTemplateLayouts(schoolRows,history,{state:'approved',document_template_versions:{request:1}}).request.title,'ฉบับเก่า');
+ assert.equal(activeTemplateLayouts(schoolRows,history,{state:'approved',document_template_versions:{}}).request,undefined);
+});
+test('save/publish RPC, school-scoped RLS and immutable template version history are included',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const sql=readFileSync(new URL('../supabase/migrations/20261021_school_document_template_builder.sql',import.meta.url),'utf8');
+ const strict=readFileSync(new URL('../supabase/migrations/20261021_template_builder_style_validation.sql',import.meta.url),'utf8');
+ assert.match(sql,/CREATE POLICY school_template_read[\s\S]*?is_school_member\(school_id\)/);
+ assert.match(sql,/CREATE POLICY school_template_history_read[\s\S]*?is_school_member\(school_id\)/);
+ assert.match(sql,/public\.save_school_document_template/);
+ assert.match(sql,/public\.publish_school_document_template/);
+ assert.match(sql,/public\.is_school_admin\(p_school_id\)/);
+ assert.match(sql,/CREATE TRIGGER before_procurement_pin_template/);
+ assert.match(strict,/t\.k NOT IN \('title','legal','blocks','order','styles'\)/);
+});
+test('admin-only template menu works without replacing official print masters',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(app,/items\.push\(\['templates','แม่แบบเอกสาร'/);
+ assert.match(app,/if\(action==='templates'\)\{if\(!isSchoolAdmin\(\)\)/);
+ assert.match(app,/school_document_template_versions/);
+ assert.match(app,/applyDocumentTemplates\(buildDocuments\(/);
+ assert.match(app,/liveTemplateLayouts\(state\.currentRecord\)/);
+ assert.match(app,/templateEditor\.dragStart/);
+ assert.match(app,/templateEditor\.drop/);
+});
+test('A4 template editor supports block dragging, independent page previews, saving and publishing',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const code=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
+ assert.match(code,/async function save\(\)/);
+ assert.match(code,/async function publish\(\)/);
+ assert.match(code,/function drop\(el,ev\)/);
+ assert.match(code,/function view\(\)/);
+ assert.match(code,/save_school_document_template/);
+ assert.match(code,/publish_school_document_template/);
+ assert.match(code,/class="te-preview-scroll"/);
+ assert.match(code,/class="te-block "/);
+});
