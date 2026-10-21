@@ -770,3 +770,6 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
   overflow-wrap:normal!important;
  }
 }
+
+/* Text-only school overrides of director consent/approval retain deliberate line breaks. */
+.paper-page.official.gov-doc .director-action{white-space:pre-line}
