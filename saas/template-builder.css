@@ -76,6 +76,12 @@
  display:block;
  white-space:normal;
 }
+/* Editable director decision supports Enter while preserving print-like line spacing. */
+#te-print-preview [data-template-header="decisionText"].te-inline-edit{
+ display:block;
+ white-space:pre-line;
+ min-height:2em;
+}
 #te-print-preview .te-inline-edit:hover{background:rgba(48,129,229,.085);outline-color:#277ce4}
 #te-print-preview .te-inline-edit:focus{background:#f2f8ff;outline:1.5px solid #146df0!important;box-shadow:0 0 0 3px rgba(37,111,240,.09)}
 #te-print-preview .te-system-locked{
