@@ -158,3 +158,20 @@
  .te-heading-controls{grid-template-columns:1fr}
  .te-heading-controls>label{grid-column:1/-1}
 }
+
+
+/* Editing the official master text is opt-in; never overwrite legal references silently. */
+.te-fields .te-copy-master{
+ display:inline-flex;
+ align-items:center;
+ align-self:flex-start;
+ padding:6px 10px;
+ font-size:11px;
+ color:#1554a3;
+ background:#edf5ff;
+ border:1px solid #c8defb;
+ border-radius:8px;
+ white-space:normal;
+ text-align:left;
+}
+.te-fields .te-copy-master:hover{background:#dcecff}
