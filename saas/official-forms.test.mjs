@@ -647,3 +647,55 @@ test('empty and heading-only school templates never reorder legally protected ma
  assert.match(source,/gov-requisition-signatures/);
  assert.match(source,/gov-inspection-bottom/);
 });
+
+test('Word editor protects per-record names, amount and dates while permitting static text',async()=>{
+ const {tokenizeOriginalText,applyTextFragments,protectedValues,thaiSystemDate}=await import('./template-rich-editor.js');
+ const input='เพื่อจัดซื้อจาก '+sample.vendor_name+' เป็นเงิน 200.00 บาท มีความจำเป็นตามแผนของโรงเรียน';
+ const parts=tokenizeOriginalText(input,sample,school);
+ assert.equal(parts.filter(p=>p.kind==='locked').some(p=>p.value===sample.vendor_name),true);
+ assert.equal(parts.filter(p=>p.kind==='locked').some(p=>p.value==='200.00'),true);
+ const edited=parts.filter(p=>p.kind==='text').map(x=>x.value.replace('เพื่อจัดซื้อ','เพื่อดำเนินการจัดซื้อ'));
+ const result=applyTextFragments(input,edited,sample,school);
+ assert.match(result,/เพื่อดำเนินการจัดซื้อ/);
+ assert.match(result,new RegExp(sample.vendor_name));
+ assert.match(result,/200\.00/);
+ assert.equal(thaiSystemDate('2026-10-21'),'21 ตุลาคม 2569');
+ assert.equal(protectedValues(sample,school).some(x=>x[0]==='director_name'),true);
+});
+test('Word editor stores literal fragments only and ignores incompatible stale data',async()=>{
+ const {applyTextFragments,safeSignatureOffset}=await import('./template-rich-editor.js');
+ const base='บริษัท ทดสอบ 200.00 บาท';
+ assert.equal(applyTextFragments(base,['ผิดจำนวนส่วน','เกิน'],sample,school),base);
+ assert.deepEqual(safeSignatureOffset({x:70,y:-80}),{x:15,y:-15});
+ assert.deepEqual(safeSignatureOffset({x:4,y:2}),{x:4,y:2});
+});
+test('inline Word-like edits and bounded atomic signer positions are sanitized for each school',async()=>{
+ const {safeTemplateDraft}=await import('./template-builder.js');
+ const d=safeTemplateDraft({textEdits:{d0:{0:['ปรับข้อความ'],1:['หัวหน้า','งาน']},hacked:{0:['foo']}},
+  signatureOffsets:{director:{x:11,y:-13},inspector:{x:400,y:-400},evil:{x:3,y:3}},blocks:[]});
+ assert.deepEqual(d.textEdits.d0['0'],['ปรับข้อความ']);
+ assert.equal(d.textEdits.hacked,undefined);
+ assert.deepEqual(d.signatureOffsets.inspector,{x:15,y:-15});
+ assert.equal(d.signatureOffsets.evil,undefined);
+});
+test('production bundles the A4 editor stylesheet and direct inline editing is accessible',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const build=readFileSync(new URL('./build.mjs',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const tmpl=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
+ assert.match(build,/template-builder\.css/);
+ assert.match(app,/templateEditor\.inlineInput\(el\)/);
+ assert.match(app,/templateEditor\.lockedNotice\(\)/);
+ assert.match(app,/templateEditor\.moveSignature\(drag\.id,x,y\)/);
+ assert.match(tmpl,/data-template-header/);
+ assert.match(tmpl,/data-template-text/);
+ assert.match(tmpl,/te-system-locked/);
+});
+test('server validates rich literal fragments and signer coordinates before publishing',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const sql=readFileSync(new URL('../supabase/migrations/20261021_template_inline_word_edit.sql',import.meta.url),'utf8');
+ assert.match(sql,/textEdits/);
+ assert.match(sql,/signatureOffsets/);
+ assert.match(sql,/abs\(\(pair\.value->>'x'\)::numeric\)>15/);
+ assert.match(sql,/jsonb_typeof\(subpair\.value\)<>'array'/);
+});
