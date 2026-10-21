@@ -89,3 +89,12 @@
  }
  #print-area .te-signature-handle{outline:0!important;background:transparent!important}
 }
+
+/* Accessible Word-style formatting ribbon above the editable A4 sheet */
+.te-word-ribbon{display:flex;align-items:center;flex-wrap:wrap;gap:8px;background:#f5f9ff;border:1px solid #ccdef5;border-radius:10px;padding:10px;margin:0 0 13px}
+.te-word-ribbon strong{font-size:12px;color:#133e77;margin-right:5px}
+.te-word-ribbon .te-ribbon-btn{padding:5px 12px;border:1px solid #adc9e9;background:#fff;color:#153e74;font-family:Sarabun,sans-serif;font-size:16px;font-weight:700;border-radius:6px;min-height:31px;cursor:pointer}
+.te-word-ribbon .te-ribbon-btn:hover{background:#dcecff}
+.te-word-ribbon label{display:flex;gap:6px;align-items:center;font-size:12px}
+.te-word-ribbon select{padding:4px;font-size:12px;min-width:73px}
+.te-word-ribbon small{width:100%;font-size:11px;color:#6884a0}
