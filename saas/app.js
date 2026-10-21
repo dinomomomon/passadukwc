@@ -434,12 +434,13 @@ async function printOfficialDocuments(){
   if(!box)return false;
   const original=filler?Math.max(0,parseFloat(filler.style.height)||0):0;
   const heights=filler?[original,...[72,56,40,25,8,0].filter(n=>n<original)]:[0];
+  const fixedItemForm=sheet.classList.contains('gov-annex')||sheet.classList.contains('gov-requisition');
   const margins=['normal','tight','minimum'];
   const densities=['comfortable','balanced','fitted','compact','minimum','extra'];
   const zooms=[1,.96,.92,.88,.84,.8,.75];
   const doesFit=()=>{
-   fitDirectorPosition(sheet);
-   fitOfficialTableHeaders(sheet);
+   // No discretionary header/font resizing for the fixed annex/requisition forms.
+   if(!fixedItemForm){fitDirectorPosition(sheet);fitOfficialTableHeaders(sheet);}
    const paper=sheet.getBoundingClientRect(),content=box.getBoundingClientRect();
    const style=getComputedStyle(sheet);
    const bottom=paper.bottom-(parseFloat(style.paddingBottom)||0)-8;
@@ -447,6 +448,19 @@ async function printOfficialDocuments(){
    const last=[...box.querySelectorAll('.signature-card,.gov-requisition-signatures,.gov-inspection-bottom,.gov-finance-sign,.memo-signatures')];
    return content.top>=top-3&&content.bottom<=bottom&&last.every(el=>el.getBoundingClientRect().bottom<=bottom);
   };
+  if(fixedItemForm){
+   // Protect the school's original A4 format: no change to font size,
+   // margins, line spacing or page zoom. Only empty filler space may shrink.
+   delete sheet.dataset.fitMargin;
+   delete sheet.dataset.density;
+   delete sheet.dataset.signDensity;
+   sheet.style.removeProperty('--gov-zoom');
+   for(const height of heights){
+    if(filler)filler.style.height=height+'mm';
+    if(doesFit())return true;
+   }
+   return false; // Caller retries with fewer items and a complete repeated form.
+  }
   for(const height of heights){
    if(filler)filler.style.height=height+'mm';
    for(const margin of margins){
@@ -477,7 +491,7 @@ async function printOfficialDocuments(){
   // Long item descriptions can consume a different number of A4 rows.
   // Rebuild COMPLETE forms at progressively smaller page sizes. Every
   // continuation retains the original heading, legal citation and signers.
-  for(const count of [9,7,5,3,2,1]){
+  for(const count of [10,9,8,7,6,5,4,3,2,1]){
    root.innerHTML=applyDocumentTemplates(buildDocuments({...state.currentRecord,__items_per_page:count},state.school),liveTemplateLayouts(state.currentRecord),state.currentRecord,state.school);
    failures=[];
    for(const page of [...root.querySelectorAll('.paper-page.official.gov-doc')]){
