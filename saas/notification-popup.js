@@ -27,7 +27,7 @@ export function installStateNotices(state,doc=typeof document!=='undefined'?docu
   const details=doc.createElement('span');
   details.className='kp-popup-details';
   const title=doc.createElement('strong');
-  title.textContent=kind==='error'?'ดำเนินการไม่สำเร็จ':'ดำเนินการสำเร็จ';
+  title.textContent=kind==='error'?'ดำเนินการไม่สำเร็จ':(/บันทึก|แก้ไข|อัปเดต|ปรับข้อมูล|ตั้งค่าเลข|สร้างรายการ|สร้างโรงเรียน/.test(String(message))?'บันทึกสำเร็จ':'ดำเนินการสำเร็จ');
   const body=doc.createElement('span');
   body.className='kp-popup-message';
   body.textContent=String(message).slice(0,1200);
