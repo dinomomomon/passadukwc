@@ -576,7 +576,7 @@ test('template extra blocks bind live record data but never evaluate arbitrary v
  const txt=expandTemplateText('{{school_name}} : {{vendor_name}} {{total_amount}} {{unknown}}',sample,school);
  assert.match(txt,/โรงเรียนกาวิละวิทยาลัย/);
  assert.match(txt,new RegExp(sample.vendor_name));
- assert.match(txt,/{{unknown}}/);
+ assert.doesNotMatch(txt,/{{unknown}}/);
  assert.equal(templateEsc('<script>alert(1)</script>'),'&lt;script&gt;alert(1)&lt;/script&gt;');
  assert.equal(templateBindings(sample,school).items_count,String(sample.items.length));
 });
@@ -635,5 +635,5 @@ test('A4 template editor supports block dragging, independent page previews, sav
  assert.match(code,/save_school_document_template/);
  assert.match(code,/publish_school_document_template/);
  assert.match(code,/class="te-preview-scroll"/);
- assert.match(code,/class="te-block "/);
+ assert.match(code,/class="te-block '/);
 });
