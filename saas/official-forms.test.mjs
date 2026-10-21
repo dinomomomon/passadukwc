@@ -793,3 +793,24 @@ test('Word-like preview preserves native A4 title and legal paragraph layout',as
  assert.match(js,/el\.dataset\.templateHeader=field/);
  assert.match(html,/template-builder\.css\?v=20261021-a4-preview-block-fix-v2/);
 });
+
+test('director decision is on separate lines and school can override only its wording',async()=>{
+ const {safeTemplateDraft,emptyTemplate}=await import('./template-builder.js');
+ const {readFileSync}=await import('node:fs');
+ const page=buildDocuments(sample,school);
+ assert.match(page,/<div class="director-action">เห็นชอบ<br>อนุมัติ<\/div>/);
+ assert.equal(safeTemplateDraft({decisionText:'เห็นชอบ\nอนุมัติ'}).decisionText,'เห็นชอบ\nอนุมัติ');
+ assert.equal(emptyTemplate().decisionText,'');
+ assert.equal(safeTemplateDraft({decisionText:'<img src=x onerror=alert(1)>'}).decisionText,'<img src=x onerror=alert(1)>');
+ const source=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./template-builder.css',import.meta.url),'utf8');
+ const gov=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(source,/decision\.textContent=t\.decisionText/,'must use safe textContent rather than HTML');
+ assert.match(source,/directorDecision\.dataset\.templateHeader='decisionText'/);
+ assert.match(source,/data-tpl-field="decisionText"/);
+ assert.match(source,/type==='decisionText'\?/);
+ assert.match(css,/\[data-template-header="decisionText"\]\.te-inline-edit/);
+ assert.match(gov,/\.director-action\{white-space:pre-line\}/);
+ assert.match(app,/data-template-header="decisionText"/);
+});
