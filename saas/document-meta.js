@@ -26,6 +26,49 @@ export function docMetaInputs(meta={},options={}){
  }).join('');
  return main+sections+'<p id="registry-help" class="hint">เลขที่เอกสารออกอัตโนมัติและแก้ผ่านเมนูทะเบียนคุมเลขเท่านั้น เพื่อป้องกันเลขซ้ำ</p><p class="hint">ใช้ พว. เฉพาะรายงานขอซื้อ/ขอจ้าง เอกสารฉบับอื่นใช้เลขหลังคำว่า ที่ เท่านั้น ยอดเงินรวมและกิจกรรม/โครงการเชื่อมจากข้อมูลหลัก ส่วนยอดเบิกจ่ายคำนวณอัตโนมัติเมื่อไม่กรอกยอดสุทธิเอง</p>';
 }
+/**
+ * Optional evidence panels in the 4-step procurement wizard.
+ * All controls reuse the same doc_* keys and validator used by
+ * "ข้อมูลเอกสารราชการ" after saving, so no second source of truth.
+ * Missing legal/actual evidence is NEVER made up or auto-dated.
+ */
+export function docMetaWizardInputs(meta={},step=3,kind='purchase'){
+ const orderFields=[['order_number','เลขที่ใบสั่งซื้อ / ใบสั่งจ้าง'],['order_date','วันที่ออกใบสั่งซื้อ / ใบสั่งจ้าง','date']];
+ const deliveryFields=[
+  ['delivery_date','วันที่ส่งมอบจริง','date'],
+  ['invoice_number','เลขที่ใบส่งของ / ใบเสร็จ / หลักฐานส่งงาน'],
+  ['invoice_date','วันที่ออกหลักฐานส่งมอบ','date'],
+  ['inspection_date','วันที่ตรวจรับจริง (ถ้าต่างจากวันส่งมอบ)','date'],
+  ['inspection_location','สถานที่ตรวจรับ'],
+ ];
+ const paymentFields=[
+  ['vat_baht','ภาษีมูลค่าเพิ่มตามหลักฐาน (บาท)','number'],
+  ['withholding_baht','ภาษีหัก ณ ที่จ่าย (บาท)','number'],
+  ['fine_baht','ค่าปรับ (บาท)','number'],
+  ['budget_total_baht','งบประมาณที่มี (บาท)','number'],
+  ['budget_paid_baht','จ่ายไปแล้ว (บาท)','number']
+ ];
+ const section=(title,hint,fields,id)=>{
+  const hasValues=fields.some(([key])=>String(meta?.[key]??meta?.['doc_'+key]??'').trim()!=='');
+  return '<details class="kp-wizard-evidence" data-evidence-group="'+id+'" '+(hasValues?'open':'')+'>'+
+   '<summary>'+e(title)+' <span>กรอกเมื่อมีข้อมูลจริง</span></summary>'+
+   '<p class="hint">'+e(hint)+'</p>'+
+   '<div class="form-grid">'+fields.map(f=>fieldHtml(f,meta)).join('')+'</div></details>';
+ };
+ if(Number(step)===3){
+  return '<div class="kp-evidence-panel">'+section('ข้อมูลใบสั่ง'+(kind==='hire'?'จ้าง':'ซื้อ')+' (ถ้าออกแล้ว)',
+   'เลขที่ใบสั่งและวันที่ต้องตรงกับเอกสารจริง ไม่ใช่เลขรายงานขอซื้อ/ขอจ้าง หากยังไม่ออกใบสั่ง ให้เว้นว่างไว้แล้วมาแก้ไขในเมนูข้อมูลเอกสารได้ภายหลัง',orderFields,'order')+'</div>';
+ }
+ if(Number(step)===4){
+  return '<div class="kp-evidence-panel"><h3>ข้อมูลสำหรับเติมเอกสารตรวจรับและเบิกจ่าย</h3>'+
+   '<p class="hint">ยังไม่มีหลักฐานจริงสามารถเว้นว่างทั้งหมดได้ ระบบจะไม่สมมติวันส่งมอบหรือเลขที่ใบส่งของ กรอกเพิ่มเติมภายหลังได้ที่ “ข้อมูลเอกสาร / ตรวจรับ / เบิกจ่าย”</p>'+
+   section('ข้อมูลส่งมอบและตรวจรับ (เมื่อส่งมอบจริง)',
+    'กรอกวันส่งมอบตามเหตุการณ์จริง ไม่ใช่กำหนดส่งมอบ วันตรวจรับใช้วันส่งมอบเป็นค่าเริ่มต้นหากไม่ระบุวันอื่น โปรดตรวจสอบว่าตรวจรับจริงวันใด เลขใบตรวจรับออกจากทะเบียนกลางหลังบันทึกการส่งมอบ',deliveryFields,'delivery')+
+   section('ข้อมูลการเงินประกอบการเบิกจ่าย (ถ้ามี)',
+    'กรอกจำนวนเงินตามหลักฐานที่ตรวจสอบแล้ว ยอดเบิกจ่ายสุทธิจะคำนวณจากวงเงินรวม หักภาษีและค่าปรับ หากไม่มีข้อมูลจริงอย่าเพิ่งกรอกตัวเลขสมมติ',paymentFields,'finance')+'</div>';
+ }
+ return '';
+}
 /* Merge with the saved metadata. Do not accidentally delete previously
    recorded evidence or legacy fields that have no visible input anymore.
    Clearing a visible field intentionally removes only that particular key. */
