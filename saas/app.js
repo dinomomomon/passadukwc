@@ -922,6 +922,8 @@ document.addEventListener('drop',ev=>{const t=ev.target.closest?.('[data-templat
 let tePointer=null;
 document.addEventListener('pointerdown',ev=>{
  if(state.page!=='templates')return;
+ // Clicking to edit the director's decision must not initiate signature dragging.
+ if(ev.target.closest?.('#te-print-preview [data-template-header="decisionText"]'))return;
  const signer=ev.target.closest?.('#te-print-preview [data-template-signature]');
  if(!signer||ev.button!==0)return;
  ev.preventDefault();
