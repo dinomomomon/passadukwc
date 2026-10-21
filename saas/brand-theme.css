@@ -620,3 +620,107 @@ table td {
   .school-logo, .school-identity, .brand-mark, .loading-brand-logo { display:none !important; }
   /* School logos are intentionally UI-only; A4 print templates remain unchanged. */
 }
+
+
+/* KP ITEM EDITOR COLUMN LABELS — purchasing/hiring wizard only.
+   Affects entry controls, never the official printed A4 tables. */
+#procurement-form .kp-item-entry-table { margin: 14px 0 12px; }
+#procurement-form .kp-item-entry-head,
+#procurement-form .kp-item-entry {
+  display:grid;
+  grid-template-columns:minmax(0,2.3fr) minmax(72px,.63fr) minmax(90px,.73fr) minmax(115px,.88fr) 36px;
+  column-gap:9px;
+  align-items:center;
+}
+#procurement-form .kp-item-entry-head {
+  margin-bottom:7px;
+  padding:9px 11px;
+  border:1px solid #d6e6fc;
+  background:#edf5ff;
+  border-radius:10px;
+  color:#204e8d;
+  font-size:12px;
+  line-height:1.45;
+  font-weight:800;
+}
+#procurement-form .kp-item-entry-head span:last-child { text-align:center; }
+#procurement-form .kp-item-entry {
+  margin:0 0 9px;
+  padding:8px 11px;
+  border:1px solid #e1ebfa;
+  background:#fff;
+  border-radius:12px;
+  min-width:0;
+}
+#procurement-form .kp-item-entry .kp-item-cell { min-width:0; }
+#procurement-form .kp-item-entry .kp-item-cell > label {
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+#procurement-form .kp-item-entry .kp-item-name-wrap { display:flex;align-items:center;gap:8px;min-width:0; }
+#procurement-form .kp-item-entry .kp-item-index {
+  display:grid;
+  place-items:center;
+  width:23px;height:23px;
+  flex:0 0 23px;
+  background:#e8f2ff;
+  color:#1e65c6;
+  border-radius:7px;
+  font:800 12px "Sarabun",sans-serif;
+}
+#procurement-form .kp-item-entry .input {
+  min-width:0;
+  width:100%;
+  padding:10px 9px;
+  font-size:13px;
+}
+#procurement-form .kp-item-entry .kp-item-remove {
+  padding:0;
+  width:32px;height:32px;
+  justify-content:center;
+  border-radius:9px;
+}
+@media (max-width:950px) {
+  #procurement-form .kp-item-entry-head { display:none; }
+  #procurement-form .kp-item-entry {
+    position:relative;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:11px;
+    padding:14px;
+    align-items:end;
+    margin-bottom:12px;
+  }
+  #procurement-form .kp-item-entry .kp-item-cell > label {
+    position:static;
+    display:block;
+    width:auto;height:auto;
+    padding:0;margin:0 0 5px;
+    overflow:visible;
+    clip:auto;
+    white-space:normal;
+    color:#285589;
+    font-size:12px;
+    line-height:1.5;
+    font-weight:800;
+  }
+  #procurement-form .kp-item-entry .kp-item-cell-name,
+  #procurement-form .kp-item-entry .kp-item-cell-price { grid-column:1/-1; }
+  #procurement-form .kp-item-entry .kp-item-cell-name { padding-right:37px; }
+  #procurement-form .kp-item-entry .kp-item-remove {
+    position:absolute;
+    right:14px;top:14px;
+  }
+  #procurement-form .kp-item-entry .input { padding:11px 10px;font-size:14px; }
+}
+@media (max-width:420px) {
+  #procurement-form .kp-item-entry {grid-template-columns:1fr;}
+  #procurement-form .kp-item-entry .kp-item-cell-name,
+  #procurement-form .kp-item-entry .kp-item-cell-price {grid-column:1;}
+}
