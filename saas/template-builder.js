@@ -89,9 +89,9 @@ export function originalBlockLabels(section){
 }
 function styleBlock(el,style){
  if(!style)return;
- if(['left','center','right'].includes(style.align))el.style.textAlign=style.align;
- if([12,14,16,18,20,22,24].includes(Number(style.size)))el.style.fontSize=Number(style.size)+'pt';
- if(style.bold)el.style.fontWeight='700';
+ if(['left','center','right'].includes(style.align))el.style.setProperty('text-align',style.align,'important');
+ if([12,14,16,18,20,22,24].includes(Number(style.size)))el.style.setProperty('font-size',Number(style.size)+'pt','important');
+ if(style.bold)el.style.setProperty('font-weight','700','important');
 }
 export function createTemplateBlockNode(block,r,s,doc){
  const el=doc.createElement('div');el.className='te-extra-block te-extra-'+block.type;
@@ -122,7 +122,7 @@ export function applyDocumentTemplates(html,layouts,r,s,doc=typeof document!=='u
   }
   const {zone,nodes}=structuralBlocks(section);
   if(!zone)continue;
-  for(const [i,n] of nodes.entries())styleBlock(n,t.styles['d'+i]);
+  for(const [i,n] of nodes.entries()){n.dataset.templateOriginal='d'+i;styleBlock(n,t.styles['d'+i]);}
   // Reorder only within the editable content zone. Legal headers, tables'
   // own rows, signature cards and page headings are never disassembled.
   const custom=pageNumber===0?t.blocks.map(b=>createTemplateBlockNode(b,r,s,doc)):[];
@@ -193,6 +193,15 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const r=editorRecord();const html=buildDocuments(r,state.school);
   const host=document.createElement('div');host.innerHTML=applyDocumentTemplates(html,{[selected]:draft},r,state.school);
   const page=[...host.querySelectorAll('section.paper-page.gov-doc')].find(el=>templateKeyForPage(el)===selected);
+  if(page){
+   for(const node of page.querySelectorAll('[data-template-original],[data-template-block]')){
+    const id=node.dataset.templateOriginal||node.dataset.templateBlock;
+    node.dataset.templateDrag=id;
+    node.draggable=true;
+    node.classList.add('te-canvas-draggable');
+    if(id===currentBlock)node.classList.add('te-canvas-selected');
+   }
+  }
   return page?.outerHTML||'<p>เอกสารประเภทนี้ไม่อยู่ในรายการจัดซื้อ/จัดจ้างที่เลือก โปรดเลือกรายการตัวอย่างที่เกี่ยวข้อง</p>';
  }
  const esc=templateEsc;
