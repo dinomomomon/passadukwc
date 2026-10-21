@@ -123,6 +123,9 @@ export function applyDocumentTemplates(html,layouts,r,s,doc=typeof document!=='u
   const {zone,nodes}=structuralBlocks(section);
   if(!zone)continue;
   for(const [i,n] of nodes.entries()){n.dataset.templateOriginal='d'+i;styleBlock(n,t.styles['d'+i]);}
+  // A published blank/master template or heading-only change must not disturb
+  // the original legal form hierarchy, signatures or preformatted tables.
+  if(!t.order.length&&!t.blocks.length)continue;
   // Reorder only within the editable content zone. Legal headers, tables'
   // own rows, signature cards and page headings are never disassembled.
   const custom=pageNumber===0?t.blocks.map(b=>createTemplateBlockNode(b,r,s,doc)):[];
