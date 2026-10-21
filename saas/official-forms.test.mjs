@@ -809,7 +809,7 @@ test('director decision is on separate lines and school can override only its wo
  assert.match(source,/decision\.textContent=t\.decisionText/,'must use safe textContent rather than HTML');
  assert.match(source,/directorDecision\.dataset\.templateHeader='decisionText'/);
  assert.match(source,/data-tpl-field="decisionText"/);
- assert.match(source,/type==='decisionText'\?/);
+ assert.match(source,/draft\[type\]=String\(el\.innerText\?\?el\.textContent/);
  assert.match(css,/\[data-template-header="decisionText"\]\.te-inline-edit/);
  assert.match(gov,/\.director-action\{white-space:pre-line\}/);
  assert.match(app,/data-template-header="decisionText"/);
