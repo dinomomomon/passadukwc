@@ -403,8 +403,14 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   if(!el?.dataset?.templateText)return;
   inlineInput(el);
  }
+ function moveSignature(id,x,y){
+  if(!/^(staff[01]|director|finance|inspector|requisition[0-3])$/.test(id))return;
+  const now=draft.signatureOffsets[id]||{x:0,y:0};
+  draft.signatureOffsets[id]=safeSignatureOffset({x:now.x+x,y:now.y+y});
+  activeSignature=id;currentBlock='';dirty=true;view();
+ }
  let dragging='';
  function dragStart(el,ev){dragging=el.dataset.templateDrag||'';if(ev.dataTransfer){ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',dragging);}}
  function drop(el,ev){ev.preventDefault();const from=dragging,to=el.dataset.templateDrag;dragging='';if(!from||!to||from===to)return;const order=blockSeq(),i=order.indexOf(from),j=order.indexOf(to);if(i<0||j<0)return;order.splice(i,1);order.splice(j,0,from);draft.order=order;dirty=true;view();}
- return {open,load,view,action,editField,dragStart,drop,refreshPreview,inlineInput,lockedNotice,refreshEditorText};
+ return {open,load,view,action,editField,dragStart,drop,refreshPreview,inlineInput,lockedNotice,refreshEditorText,moveSignature};
 }
