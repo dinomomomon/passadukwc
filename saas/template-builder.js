@@ -320,7 +320,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const version='เวอร์ชันใช้งาน '+(row()?.published_version||'แม่แบบกลาง')+' · ฉบับร่างแก้ไขครั้งที่ '+revision;
   shell('แม่แบบเอกสาร','ออกแบบเอกสารเฉพาะโรงเรียน',heading('จัดการแม่แบบเอกสาร','เลือกแต่ละหน้า ลากจัดบล็อก แล้วบันทึกฉบับร่างก่อนประกาศใช้')+
    '<section class="card te-header"><div class="te-tabs">'+TEMPLATE_PAGES.map(p=>btn(p.name,'tpl-page',p.key===selected?'primary':'secondary','data-key="'+p.key+'"')).join('')+'</div>'+
-   '<div class="te-actions"><small>'+esc(version)+'</small>'+btn('บันทึกฉบับร่าง','tpl-save','secondary')+btn('ประกาศใช้แม่แบบนี้','tpl-publish','primary')+
+   '<div class="te-actions"><small>'+esc(version)+'</small>'+btn('💾 บันทึกฉบับร่าง','tpl-save','te-save-draft','title="บันทึกการแก้ไขเป็นฉบับร่าง (ยังไม่ประกาศใช้)"')+btn('ประกาศใช้แม่แบบนี้','tpl-publish','primary')+
    btn('ประวัติ / คืนเวอร์ชัน','tpl-history','secondary')+btn('คืนค่าแบบกลาง','tpl-reset','secondary')+'</div></section>'+
    src+(history.length?'<section class="card te-history"><h2>ประวัติแม่แบบที่ประกาศใช้</h2>'+
     history.map(h=>'<div class="row"><span>เวอร์ชัน '+h.version+' · '+esc(h.published_at?.slice(0,10)||'')+'</span>'+
@@ -346,14 +346,14 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
  const move=(id,delta)=>{const seq=blockSeq(),i=seq.indexOf(id),j=i+delta;if(i<0||j<0||j>=seq.length)return;[seq[i],seq[j]]=[seq[j],seq[i]];draft.order=seq;dirty=true;view();};
  async function save(){
   draft=safeTemplateDraft(draft);
-  if(state.demo)return notify('โหมดสาธิต: ทดลองออกแบบได้ แต่ไม่บันทึกขึ้นระบบ');
+  if(state.demo)return notify('โหมดสาธิต: ทดลองออกแบบได้ แต่ยังไม่ได้บันทึกจริง',true);
   const {data,error}=await db.rpc('save_school_document_template',{p_school_id:state.school.id,p_template_key:selected,p_layout:draft,p_expected_revision:revision});
   if(error)throw Error('บันทึกแม่แบบไม่สำเร็จ: '+error.message);
   revision=Number(data);dirty=false;await load();notify('บันทึกฉบับร่างแล้ว (ยังไม่ประกาศใช้)');state.page='templates';view();
  }
  async function publish(){
   if(dirty)throw Error('กรุณาบันทึกฉบับร่างก่อนประกาศใช้');
-  if(state.demo)return notify('โหมดสาธิตยังไม่เปิดให้ประกาศใช้');
+  if(state.demo)return notify('โหมดสาธิตยังไม่เปิดให้ประกาศใช้',true);
   if(!confirm('ยืนยันประกาศใช้แม่แบบ "'+TEMPLATE_PAGES.find(p=>p.key===selected).name+'"? เจ้าหน้าที่ของโรงเรียนจะพิมพ์เอกสารตามรูปแบบใหม่นับจากนี้'))return;
   const {data,error}=await db.rpc('publish_school_document_template',{p_school_id:state.school.id,p_template_key:selected,p_expected_revision:revision});
   if(error)throw Error('ประกาศใช้แม่แบบไม่สำเร็จ: '+error.message);
