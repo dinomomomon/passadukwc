@@ -61,11 +61,20 @@
    System-dependent names, roles, dates and totals cannot be typed over. */
 #te-print-preview .te-inline-edit{
  cursor:text!important;
- display:inline;
  border-radius:2px;
  outline:1px dotted rgba(18,104,215,.2);
  outline-offset:1px;
+}
+/* Edit text fragments inline without collapsing A4 structural blocks.
+   In particular h2.print-title and p.gov-law must remain block-level
+   and centered exactly as in the printed PDF. */
+#te-print-preview span.te-inline-edit{
+ display:inline;
  white-space:pre-wrap;
+}
+#te-print-preview [data-template-header].te-inline-edit{
+ display:block;
+ white-space:normal;
 }
 #te-print-preview .te-inline-edit:hover{background:rgba(48,129,229,.085);outline-color:#277ce4}
 #te-print-preview .te-inline-edit:focus{background:#f2f8ff;outline:1.5px solid #146df0!important;box-shadow:0 0 0 3px rgba(37,111,240,.09)}
