@@ -876,3 +876,50 @@ test('wizard next works without attempting to call its HTML form element as a fu
  assert.equal(state.wizardStep,3,'user can move from main information through item entry');
  assert.equal(renderCount,2,'renderer is called once after each valid step transition');
 });
+
+
+test('wizard evidence inputs are optional and reuse saved metadata keys across purchase and hire',async()=>{
+ const {docMetaWizardInputs,docMetaValue}=await import('./document-meta.js');
+ for(const kind of ['purchase','hire']){
+  const step3=docMetaWizardInputs({},3,kind);
+  const step4=docMetaWizardInputs({},4,kind);
+  for(const name of ['order_number','order_date'])assert.match(step3,new RegExp('name="doc_'+name+'"'));
+  for(const name of ['delivery_date','invoice_number','invoice_date','inspection_date','inspection_location',
+   'vat_baht','withholding_baht','fine_baht','budget_total_baht','budget_paid_baht']){
+   assert.match(step4,new RegExp('name="doc_'+name+'"'));
+  }
+  assert.match(step3,/data-evidence-group="order"/);
+  assert.match(step4,/data-evidence-group="delivery"/);
+  assert.match(step4,/data-evidence-group="finance"/);
+  assert.doesNotMatch(step4,/name="doc_acceptance_number"/,'receipt numbers must remain assigned by registry');
+  for(const text of [step3,step4])assert.doesNotMatch(text,/<input[^>]+(?:doc_order_date|doc_delivery_date|doc_inspection_date)[^>]+value="2026-/,'no invented dates');
+ }
+ const metadata=docMetaValue({
+  doc_order_number:'จ. 9/2569',doc_order_date:'2026-10-22',
+  doc_delivery_date:'2026-11-08',doc_invoice_number:'INV-18',
+  doc_invoice_date:'2026-11-08',doc_inspection_date:'2026-11-09',
+  doc_inspection_location:'โรงเรียนกาวิละวิทยาลัย',doc_withholding_baht:'49.99',
+  doc_budget_total_baht:'20000',doc_budget_paid_baht:'10000'
+ });
+ assert.equal(metadata.delivery_date,'2026-11-08');
+ assert.equal(metadata.inspection_date,'2026-11-09');
+ assert.equal(metadata.invoice_number,'INV-18');
+ assert.equal(metadata.order_number,'จ. 9/2569');
+ const filled=docMetaWizardInputs(Object.fromEntries(Object.entries(metadata).map(([k,v])=>['doc_'+k,v])),4,'hire');
+ assert.match(filled,/data-evidence-group="delivery" open/);
+ const html=buildDocuments({...sample,kind:'hire',vendor_name:'ร้านรับจ้างทดสอบ',
+   total_satang:499900,document_meta:metadata,due_date:'2026-11-08'},school);
+ assert.match(html,/จ\. 9\/2569/);
+ assert.match(html,/INV-18/);
+ assert.match(html,/8 พฤศจิกายน 2569/);
+ assert.match(html,/9 พฤศจิกายน 2569/);
+ assert.doesNotMatch(html,/ซึ่งครบกำหนดส่งมอบเมื่อวันที่ 9 พฤศจิกายน 2569/);
+});
+test('procurement stage 3 and stage 4 reuse metadata collection for actual later evidence',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(app,/docMetaWizardInputs\(meta,3,d\.kind\|\|'purchase'\)/);
+ assert.match(app,/docMetaWizardInputs\(meta,4,d\.kind\|\|'purchase'\)/);
+ assert.match(app,/const docMeta=docMetaValue\(d,editing\?original\?\.document_meta\|\|\{\}:\{\}\)/);
+ assert.match(app,/p_meta:docMeta/);
+});
