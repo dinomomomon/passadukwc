@@ -56,3 +56,36 @@
 #te-print-preview .te-canvas-draggable:hover{outline-color:#277adf;background:rgba(40,119,222,.045)}
 #te-print-preview .te-canvas-draggable.te-canvas-selected{outline:2px solid #287de4;outline-offset:2px;background:rgba(40,119,222,.07)}
 @media print{.te-builder,.te-pane,.te-header,.te-right{display:none!important}.te-extra-block{break-inside:avoid!important}}
+
+/* Word-like direct editing surface. Only literal fragments are editable.
+   System-dependent names, roles, dates and totals cannot be typed over. */
+#te-print-preview .te-inline-edit{
+ cursor:text!important;
+ display:inline;
+ border-radius:2px;
+ outline:1px dotted rgba(18,104,215,.2);
+ outline-offset:1px;
+ white-space:pre-wrap;
+}
+#te-print-preview .te-inline-edit:hover{background:rgba(48,129,229,.085);outline-color:#277ce4}
+#te-print-preview .te-inline-edit:focus{background:#f2f8ff;outline:1.5px solid #146df0!important;box-shadow:0 0 0 3px rgba(37,111,240,.09)}
+#te-print-preview .te-system-locked{
+ cursor:not-allowed;display:inline;color:#195ca2;
+ border-bottom:1px dashed #377eca;background:rgba(40,129,224,.055);
+}
+#te-print-preview .te-system-locked:hover{background:#d9eaff}
+.te-lock-alert{background:#fff2dd;border:1px solid #f5cb7a;padding:10px 12px;font-size:12px;font-weight:600;color:#784305;border-radius:9px;line-height:1.7}
+#te-print-preview .te-signature-handle{cursor:move;outline:1px dashed transparent;outline-offset:2px}
+#te-print-preview .te-signature-handle:hover{outline-color:#2673d2;background:rgba(64,119,211,.04)}
+#te-print-preview .te-signature-handle.te-dragging-signer{outline:2px dashed #155dc3;background:rgba(31,109,230,.09)}
+#te-print-preview .te-signature-handle .signature-name,
+#te-print-preview .te-signature-handle .signature-role,
+#te-print-preview .te-signature-handle .kp-signature-position{cursor:not-allowed}
+#te-print-preview .te-inline-edit{user-select:text;-webkit-user-select:text}
+#te-print-preview .te-signature-handle{user-select:none;-webkit-user-select:none}
+@media print{
+ #print-area .te-inline-edit,#print-area .te-system-locked{
+  outline:0!important;border-bottom:0!important;background:transparent!important;color:inherit!important;
+ }
+ #print-area .te-signature-handle{outline:0!important;background:transparent!important}
+}
