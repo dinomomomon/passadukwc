@@ -637,3 +637,13 @@ test('A4 template editor supports block dragging, independent page previews, sav
  assert.match(code,/class="te-preview-scroll"/);
  assert.match(code,/class="te-block '/);
 });
+
+test('empty and heading-only school templates never reorder legally protected master blocks',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const source=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
+ assert.match(source,/if\(!t\.order\.length&&!t\.blocks\.length\)continue/);
+ assert.match(source,/function structuralBlocks\(section\)/);
+ assert.match(source,/memo-signatures/);
+ assert.match(source,/gov-requisition-signatures/);
+ assert.match(source,/gov-inspection-bottom/);
+});
