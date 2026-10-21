@@ -724,3 +724,36 @@ table td {
   #procurement-form .kp-item-entry .kp-item-cell-name,
   #procurement-form .kp-item-entry .kp-item-cell-price {grid-column:1;}
 }
+
+
+/* Optional evidence capture in procurement wizard, not the printed A4 layout. */
+#procurement-form .kp-evidence-panel {margin-top:16px;border-top:1px solid #e6edfa;padding-top:15px;}
+#procurement-form .kp-evidence-panel > h3 {font-size:15px;color:#164a91;margin:4px 0 8px;font-weight:800;}
+#procurement-form .kp-evidence-panel > .hint {margin-bottom:12px;line-height:1.65;}
+#procurement-form .kp-wizard-evidence {
+ border:1px solid #dbe6f7;
+ background:#fafcff;
+ border-radius:13px;
+ margin:10px 0;
+ padding:0 14px;
+}
+#procurement-form .kp-wizard-evidence[open] {background:#fff;}
+#procurement-form .kp-wizard-evidence > summary {
+ cursor:pointer;
+ color:#1652a0;
+ font-weight:800;
+ font-size:14px;
+ padding:14px 4px;
+}
+#procurement-form .kp-wizard-evidence > summary span {
+ font-weight:500;
+ font-size:11px;
+ color:#6c809b;
+ padding-left:8px;
+}
+#procurement-form .kp-wizard-evidence .hint {margin:0 0 15px;line-height:1.7;}
+#procurement-form .kp-wizard-evidence .form-grid {padding-bottom:4px;}
+@media(max-width:600px) {
+ #procurement-form .kp-wizard-evidence {padding:0 10px;}
+ #procurement-form .kp-wizard-evidence > summary span {display:block;padding:5px 0 0;}
+}
