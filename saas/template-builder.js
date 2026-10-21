@@ -76,7 +76,7 @@ export function templateKeyForPage(section){
  return null;
 }
 function structuralBlocks(section){
- const zone=section.querySelector('.memo-content')||section.querySelector('.doc-sheet-body');
+ const zone=section?.querySelector('.memo-content')||section?.querySelector('.doc-sheet-body');
  if(!zone)return {zone:null,nodes:[]};
  const nodes=[...zone.children].filter(el=>
   !el.matches('.memo-top,.memo-field,.memo-line,.print-title,.gov-law,.gov-right-head,.memo-signatures,.gov-requisition-signatures,.gov-inspection-bottom,.director-sign')&&
@@ -131,10 +131,13 @@ export function applyDocumentTemplates(html,layouts,r,s,doc=typeof document!=='u
   const sequence=[...new Set(t.order)].filter(id=>originals.has(id)||extras.has(id));
   for(const id of [...originals.keys(),...extras.keys()])if(!sequence.includes(id))sequence.push(id);
   if(!sequence.length)continue;
+  const marker=doc.createComment('template-block-position');
   const anchor=nodes[0]||[...zone.children].find(n=>n.matches('.gov-requisition-signatures,.gov-inspection-bottom'))||null;
+  zone.insertBefore(marker,anchor);
   const fragment=doc.createDocumentFragment();
   for(const id of sequence)fragment.appendChild(originals.get(id)||extras.get(id));
-  zone.insertBefore(fragment,anchor);
+  zone.insertBefore(fragment,marker);
+  marker.remove();
  }
  return host.innerHTML;
 }
@@ -180,13 +183,14 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   total_satang:50000,items:[{name:'ของที่ระลึก',qty:1,unit:'ชุด',price_satang:50000}],
   state:'draft',signers:{},document_meta:{}
  };
+ function editorRecord(){const r=snapshot();return selected==='requisition'&&r.kind==='hire'?{...r,kind:'purchase'}:r;}
  function sourcePage(){
-  const html=buildDocuments(snapshot(),state.school);
+  const html=buildDocuments(editorRecord(),state.school);
   const host=document.createElement('div');host.innerHTML=html;
   return [...host.querySelectorAll('section.paper-page.gov-doc')].find(el=>templateKeyForPage(el)===selected);
  }
  function pagePreviewHtml(){
-  const r=snapshot();const html=buildDocuments(r,state.school);
+  const r=editorRecord();const html=buildDocuments(r,state.school);
   const host=document.createElement('div');host.innerHTML=applyDocumentTemplates(html,{[selected]:draft},r,state.school);
   const page=[...host.querySelectorAll('section.paper-page.gov-doc')].find(el=>templateKeyForPage(el)===selected);
   return page?.outerHTML||'<p>เอกสารประเภทนี้ไม่อยู่ในรายการจัดซื้อ/จัดจ้างที่เลือก โปรดเลือกรายการตัวอย่างที่เกี่ยวข้อง</p>';
