@@ -587,7 +587,7 @@ test('template changes reject arbitrary HTML/CSS properties and sanitize typed J
    align:'center',size:18,bold:true,html:'<script>alert(1)</script>'}],
   order:['d0','xfirst'],styles:{d0:{align:'right',size:16,bold:true},bad:{align:'center'}}
  });
- assert.deepEqual(Object.keys(row).sort(),['blocks','decisionText','legal','order','signatureOffsets','styles','textEdits','title']);
+ assert.deepEqual(Object.keys(row).sort(),['blocks','decisionText','headingStyles','legal','legalSecond','order','signatureOffsets','styles','textEdits','title']);
  assert.ok(!JSON.stringify(row).includes('script'));
  assert.deepEqual(Object.keys(row.styles),['d0']);
  assert.equal(row.blocks[0].text,'{{vendor_name}}');
@@ -922,4 +922,55 @@ test('procurement stage 3 and stage 4 reuse metadata collection for actual later
  assert.match(app,/docMetaWizardInputs\(meta,4,d\.kind\|\|'purchase'\)/);
  assert.match(app,/const docMeta=docMetaValue\(d,editing\?original\?\.document_meta\|\|\{\}:\{\}\)/);
  assert.match(app,/p_meta:docMeta/);
+});
+
+
+test('legal headings can be manually line-broken and individually formatted without affecting dynamic fields',async()=>{
+ const {safeTemplateDraft,emptyTemplate,applyDocumentTemplates}=await import('./template-builder.js');
+ const {readFileSync}=await import('node:fs');
+ const chosen=safeTemplateDraft({
+  title:'รายละเอียดของพัสดุที่จะซื้อ\nแนบท้ายรายงานขอซื้อ',
+  legal:'ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้าง\nพ.ศ. 2560',
+  legalSecond:'ข้อ 22 วรรคหนึ่ง (2)\nและข้อ 22 วรรคสอง',
+  headingStyles:{
+   title:{size:18,align:'center',bold:true},
+   legal:{size:14,align:'center',bold:false},
+   legalSecond:{size:14,align:'center',bold:false},
+   unsafe:{size:100,html:'<script>'}
+  },
+  blocks:[],order:[],styles:{},textEdits:{},signatureOffsets:{}
+ });
+ assert.deepEqual(Object.keys(chosen.headingStyles).sort(),['legal','legalSecond','title']);
+ assert.equal(chosen.headingStyles.title.size,18);
+ assert.equal(chosen.headingStyles.legal.bold,false);
+ assert.equal(chosen.legalSecond,'ข้อ 22 วรรคหนึ่ง (2)\nและข้อ 22 วรรคสอง');
+ assert.equal(emptyTemplate().legalSecond,'');
+ assert.equal(typeof emptyTemplate().headingStyles,'object');
+ const js=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ const editor=readFileSync(new URL('./template-builder.css',import.meta.url),'utf8');
+ assert.match(js,/selector:'.print-title/);
+ assert.match(js,/header.style.setProperty\('font-size',style.size\+'pt','important'\)/);
+ assert.match(js,/if\(t.legalSecond\)/);
+ assert.match(js,/data-tpl-field="legalSecond"/);
+ assert.match(js,/data-tpl-field="headingSize"/);
+ assert.match(js,/data-heading-part="/);
+ assert.match(js,/el.innerText\?\?el.textContent/);
+ assert.match(css,/Official heading layout contract/);
+ assert.match(css,/white-space:pre-line/);
+ assert.match(css,/text-wrap:balance/);
+ assert.match(editor,/\.te-heading-controls/);
+ assert.doesNotMatch(JSON.stringify(chosen),/<script>/);
+});
+test('A4 legal texts are escaped and static government references remain untouched',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const html=buildDocuments(sample,school);
+ assert.match(html,/class="gov-law"/);
+ assert.match(html,/class="gov-law gov-law-second"/);
+ assert.match(html,/ข้อ 175/);
+ const js=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
+ assert.match(js,/if\(t.legal\)/);
+ assert.match(js,/if\(t.legalSecond\)/);
+ assert.match(js,/title.textContent=expandTemplateText/);
+ assert.match(js,/legalSecond.textContent=expandTemplateText/);
 });
