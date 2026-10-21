@@ -848,3 +848,31 @@ test('fixed form item rows retain vertical columns without horizontal lines',asy
  assert.match(app,/if\(fixedItemForm\)\{[\s\S]*?delete sheet\.dataset\.fitMargin;[\s\S]*?delete sheet\.dataset\.density;[\s\S]*?sheet\.style\.removeProperty\('--gov-zoom'\);/);
  assert.match(app,/if\(doesFit\(\)\)return true;[\s\S]*?return false; \/\/ Caller retries with fewer items/);
 });
+
+
+test('wizard next works without attempting to call its HTML form element as a function',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const {runInNewContext}=await import('node:vm');
+ const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const begin=source.indexOf('function moveWizard(delta){');
+ const end=source.indexOf('\nfunction updateTotal()',begin);
+ assert.ok(begin>=0&&end>begin,'wizard navigation function must exist');
+ const handler=source.slice(begin,end);
+ assert.match(handler,/const wizardForm=document\.getElementById\('procurement-form'\)/);
+ assert.doesNotMatch(handler,/const form\s*=/,'form() renderer must not be shadowed by a DOM element');
+ let renderCount=0;
+ const element={
+  querySelector(){return {querySelectorAll(){return[];}};},
+  scrollIntoView(){}
+ };
+ const state={wizardStep:1,items:[{name:'จ้างทำป้าย',qty:'1',unit:'ป้าย',price:'4999'}]};
+ const env={
+  state,document:{getElementById(){return element;}},
+  collectDraft(){},
+  form(){renderCount++;},
+  notify(message){throw new Error(message);}
+ };
+ runInNewContext(handler+'\nmoveWizard(1);moveWizard(1);',env);
+ assert.equal(state.wizardStep,3,'user can move from main information through item entry');
+ assert.equal(renderCount,2,'renderer is called once after each valid step transition');
+});
