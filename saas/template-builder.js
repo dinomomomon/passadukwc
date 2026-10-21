@@ -47,7 +47,7 @@ export function safeTemplateDraft(input){
  const clean={};
  if(input.title!==undefined)clean.title=limit(input.title,400);
  if(input.legal!==undefined)clean.legal=limit(input.legal,400);
- if(input.decisionText!==undefined)clean.decisionText=limit(input.decisionText,400).replace(/\r\n?/g,'\n');
+ clean.decisionText=limit(input.decisionText,400).replace(/\r\n?/g,'\n');
  const blocks=Array.isArray(input.blocks)?input.blocks:[];
  if(blocks.length>24)throw Error('แม่แบบเพิ่มบล็อกได้ไม่เกิน 24 บล็อกต่อหน้า');
  clean.blocks=blocks.map((b,i)=>({
