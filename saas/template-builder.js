@@ -47,7 +47,7 @@ export function safeTemplateDraft(input){
  const clean={};
  if(input.title!==undefined)clean.title=limit(input.title,400).replace(/\r\n?/g,'\n');
  if(input.legal!==undefined)clean.legal=limit(input.legal,400).replace(/\r\n?/g,'\n');
- if(input.legalSecond!==undefined)clean.legalSecond=limit(input.legalSecond,400).replace(/\r\n?/g,'\n');
+ clean.legalSecond=limit(input.legalSecond,400).replace(/\r\n?/g,'\n');
  clean.decisionText=limit(input.decisionText,400).replace(/\r\n?/g,'\n');
  // Independent heading typography is tightly whitelisted so layout overrides
  // cannot inject CSS/HTML or affect document numbers, signers or other fields.
