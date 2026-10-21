@@ -98,3 +98,16 @@
 .te-word-ribbon label{display:flex;gap:6px;align-items:center;font-size:12px}
 .te-word-ribbon select{padding:4px;font-size:12px;min-width:73px}
 .te-word-ribbon small{width:100%;font-size:11px;color:#6884a0}
+
+/* Draft Save is the primary in-editor action, separate from publishing. */
+.te-actions .te-save-draft{
+ background:linear-gradient(135deg,#ff912e 0%,#f47708 55%,#dc5b02 100%);
+ color:#fff;border:1px solid #da6409;border-radius:10px;
+ padding:10px 16px;font-size:13px;font-weight:800;min-height:40px;
+ box-shadow:0 8px 20px rgba(221,101,10,.23);
+ display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ transition:transform .16s,box-shadow .16s,filter .16s;
+}
+.te-actions .te-save-draft:hover{filter:brightness(1.05);transform:translateY(-1px);box-shadow:0 10px 24px rgba(221,101,10,.3)}
+.te-actions .te-save-draft:active{transform:translateY(0)}
+.te-actions .te-save-draft:focus-visible{outline:3px solid #ffc28b;outline-offset:2px}
