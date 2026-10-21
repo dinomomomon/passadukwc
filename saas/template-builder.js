@@ -281,7 +281,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
    '<p class="hint">กรณีแก้ถ้อยคำกฎหมาย ต้องตรวจสอบกับระเบียบที่ใช้อยู่ก่อนประกาศใช้</p>'+
    '<div class="te-field-title">บล็อกที่เลือก</div>'+
    (currentBlock?(currentBlock.startsWith('x')?'<label>ข้อความ (ใช้ตัวแปรได้ เช่น {{school_name}})</label><textarea class="input te-block-textarea" rows="5" maxlength="4000" data-tpl-field="blockText">'+esc(cur?.text||'')+'</textarea>':
-   '<p class="hint">บล็อกต้นฉบับนี้ดึงข้อมูลรายการอัตโนมัติ จึงแก้ข้อความโดยตรงไม่ได้ แต่ลากเปลี่ยนลำดับและจัดรูปแบบได้ เพื่อป้องกันข้อมูลผู้ขาย ยอดเงิน และลายเซ็นสูญหาย</p>')+
+   '<p class="hint">คลิกข้อความทั่วไปบนกระดาษ A4 แล้วพิมพ์แก้ไขได้โดยตรง ส่วนข้อความสีฟ้าเป็นข้อมูลอัตโนมัติ เช่น ชื่อผู้ขาย ชื่อเจ้าหน้าที่ วันที่ และจำนวนเงิน จึงล็อกไว้ คุณสามารถจัดแนว ขนาดตัวอักษร หรือย้ายบล็อกได้</p>')+
    '<div class="te-style-controls"><label>ขนาดตัวอักษร <select class="select" data-tpl-field="size">'+[12,14,16,18,20,22,24].map(x=>'<option value="'+x+'" '+(Number(cur?.size||sty.size||16)===x?'selected':'')+'>'+x+' pt</option>').join('')+'</select></label>'+
    '<label>จัดแนว <select class="select" data-tpl-field="align">'+[['left','ซ้าย'],['center','กลาง'],['right','ขวา']].map(([x,label])=>'<option value="'+x+'" '+((cur?.align||sty.align)===x?'selected':'')+'>'+label+'</option>').join('')+'</select></label>'+
    '<label><input type="checkbox" data-tpl-field="bold" '+((cur?.bold||sty.bold)?'checked':'')+'> ตัวหนา</label></div>'+
@@ -293,6 +293,17 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
  function view(){
   const page=TEMPLATE_PAGES.find(p=>p.key===selected);
   const seq=blockSeq();const draftStatus=dirty?'<span class="tag amber">ยังไม่บันทึก</span>':'<span class="tag">บันทึกแล้ว</span>';
+  const activeStyle=currentBlock.startsWith('x')?draft.blocks.find(b=>b.id===currentBlock)||{}:draft.styles[currentBlock]||{};
+  const ribbon='<div class="te-word-ribbon" aria-label="เครื่องมือจัดรูปแบบเหมือน Word">'+
+   '<strong>เครื่องมือจัดข้อความ</strong>'+
+   btn('B','tpl-format','te-ribbon-btn','data-format="bold" title="ตัวหนาทั้งบล็อก"')+
+   btn('≡','tpl-format','te-ribbon-btn','data-format="left" title="ชิดซ้าย"')+
+   btn('☰','tpl-format','te-ribbon-btn','data-format="center" title="กึ่งกลาง"')+
+   btn('≣','tpl-format','te-ribbon-btn','data-format="right" title="ชิดขวา"')+
+   '<label>ขนาด <select class="select" data-tpl-field="ribbonSize">'+
+    [12,14,16,18,20,22,24].map(n=>'<option value="'+n+'" '+(Number(activeStyle.size||16)===n?'selected':'')+'>'+n+' pt</option>').join('')+
+   '</select></label>'+
+   '<small>คลิกข้อความแล้วแก้ไขบนหน้าเอกสารได้เลย • เลือกบล็อกเพื่อจัดรูปแบบ • ชื่อและตัวเลขที่ผูกระบบจะแก้ไม่ได้</small></div>';
   const src='<div class="te-builder"><aside class="te-pane">'+
    (inlineAlert?'<div class="te-lock-alert" role="status">'+esc(inlineAlert)+'</div>':'')+
    '<div class="te-pane-title"><h2>บล็อกเอกสาร</h2>'+draftStatus+'</div>'+
@@ -303,7 +314,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
    '<label>เพิ่มองค์ประกอบ</label><div class="te-newblock"><select class="select" id="tpl-new-type"><option value="paragraph">ข้อความ</option><option value="heading">หัวข้อ</option><option value="note">หมายเหตุ</option><option value="divider">เส้นคั่น</option></select>'+
    btn('เพิ่มบล็อก','tpl-add','primary')+'</div>'+fields()+'</aside>'+
    '<section class="te-right"><div class="te-preview-caption"><strong>ตัวอย่าง A4 — '+esc(page.name)+'</strong><span>ข้อมูลจากรายการตัวอย่าง · แสดงผลแม่แบบฉบับร่าง</span></div>'+
-   '<div class="te-preview-scroll"><div id="te-print-preview">'+pagePreviewHtml()+'</div></div>'+
+   ribbon+'<div class="te-preview-scroll"><div id="te-print-preview">'+pagePreviewHtml()+'</div></div>'+
    '<div class="alert">แม่แบบนี้ใช้เฉพาะโรงเรียนของคุณ เมื่อบันทึกจะยังไม่กระทบการพิมพ์ จนกด “ประกาศใช้”</div></section></div>';
   const version='เวอร์ชันใช้งาน '+(row()?.published_version||'แม่แบบกลาง')+' · ฉบับร่างแก้ไขครั้งที่ '+revision;
   shell('แม่แบบเอกสาร','ออกแบบเอกสารเฉพาะโรงเรียน',heading('จัดการแม่แบบเอกสาร','เลือกแต่ละหน้า ลากจัดบล็อก แล้วบันทึกฉบับร่างก่อนประกาศใช้')+
@@ -320,7 +331,8 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const field=el.dataset.tplField;if(!field)return;
   const target=draft.blocks.find(b=>b.id===currentBlock),sty=draft.styles[currentBlock]||(draft.styles[currentBlock]={align:'left',size:16,bold:false});
   const value=el.type==='checkbox'?el.checked:el.value;
-  if(field==='signatureX'||field==='signatureY'){if(!activeSignature)return;const now=draft.signatureOffsets[activeSignature]||{x:0,y:0};draft.signatureOffsets[activeSignature]=safeSignatureOffset({...now,[field==='signatureX'?'x':'y']:value});}
+  if(field==='ribbonSize'){if(!currentBlock)return;const t=draft.blocks.find(b=>b.id===currentBlock);if(t)t.size=Number(value);else if(currentBlock.startsWith('d'))draft.styles[currentBlock]={...(draft.styles[currentBlock]||{}),size:Number(value)};}
+  else if(field==='signatureX'||field==='signatureY'){if(!activeSignature)return;const now=draft.signatureOffsets[activeSignature]||{x:0,y:0};draft.signatureOffsets[activeSignature]=safeSignatureOffset({...now,[field==='signatureX'?'x':'y']:value});}
   else if(field==='title'||field==='legal')draft[field]=String(value);
   else if(field==='blockText'&&target)target.text=String(value);
   else if(['size','align','bold'].includes(field)){
@@ -350,6 +362,15 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   if(name==='tpl-page'){
    if(dirty&&!confirm('มีการแก้ไขที่ยังไม่บันทึก ต้องการเปลี่ยนหน้าโดยทิ้งการแก้ไขหรือไม่?'))return;
    selected=el.dataset.key;history=[];assignDraft();view();return;
+  }
+  if(name==='tpl-format'){
+   if(!currentBlock){lockedNotice();return;}
+   const prop=String(el.dataset.format||'');
+   const custom=draft.blocks.find(b=>b.id===currentBlock);
+   const style=custom||draft.styles[currentBlock]||(draft.styles[currentBlock]={align:'left',size:16,bold:false});
+   if(prop==='bold')style.bold=!style.bold;
+   else if(['left','center','right'].includes(prop))style.align=prop;
+   dirty=true;view();return;
   }
   if(name==='tpl-block'){currentBlock=el.dataset.id;activeSignature='';view();return;}
   if(name==='tpl-signature'){activeSignature=el.dataset.id;currentBlock='';view();return;}
@@ -403,6 +424,10 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const badge=document.querySelector('.te-pane-title .tag');
   if(badge){badge.textContent='ยังไม่บันทึก';badge.classList.add('amber');}
  }
+ function selectInline(el){
+  const id=String(el?.dataset?.templateText||'').split(':')[0];
+  if(/^d\d{1,2}$/.test(id))currentBlock=id;
+ }
  function headerInput(el){
   const type=el?.dataset?.templateHeader;
   if(type!=='title'&&type!=='legal')return;
@@ -424,5 +449,5 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
  let dragging='';
  function dragStart(el,ev){dragging=el.dataset.templateDrag||'';if(ev.dataTransfer){ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',dragging);}}
  function drop(el,ev){ev.preventDefault();const from=dragging,to=el.dataset.templateDrag;dragging='';if(!from||!to||from===to)return;const order=blockSeq(),i=order.indexOf(from),j=order.indexOf(to);if(i<0||j<0)return;order.splice(i,1);order.splice(j,0,from);draft.order=order;dirty=true;view();}
- return {open,load,view,action,editField,dragStart,drop,refreshPreview,inlineInput,lockedNotice,refreshEditorText,moveSignature,headerInput};
+ return {open,load,view,action,editField,dragStart,drop,refreshPreview,inlineInput,lockedNotice,refreshEditorText,moveSignature,headerInput,selectInline};
 }
