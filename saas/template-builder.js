@@ -45,9 +45,22 @@ export function safeTemplateDraft(input){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('รูปแบบแม่แบบไม่ถูกต้อง');
  const limit=(t,max)=>String(t??'').slice(0,max);
  const clean={};
- if(input.title!==undefined)clean.title=limit(input.title,400);
- if(input.legal!==undefined)clean.legal=limit(input.legal,400);
+ if(input.title!==undefined)clean.title=limit(input.title,400).replace(/\r\n?/g,'\n');
+ if(input.legal!==undefined)clean.legal=limit(input.legal,400).replace(/\r\n?/g,'\n');
+ if(input.legalSecond!==undefined)clean.legalSecond=limit(input.legalSecond,400).replace(/\r\n?/g,'\n');
  clean.decisionText=limit(input.decisionText,400).replace(/\r\n?/g,'\n');
+ // Independent heading typography is tightly whitelisted so layout overrides
+ // cannot inject CSS/HTML or affect document numbers, signers or other fields.
+ clean.headingStyles={};
+ const headStyles=input.headingStyles&&typeof input.headingStyles==='object'&&!Array.isArray(input.headingStyles)?input.headingStyles:{};
+ for(const part of ['title','legal','legalSecond']){
+  const v=headStyles[part];if(!v||typeof v!=='object'||Array.isArray(v))continue;
+  const style={};
+  if([12,14,16,18,20,22,24].includes(Number(v.size)))style.size=Number(v.size);
+  if(['left','center','right'].includes(v.align))style.align=v.align;
+  if(typeof v.bold==='boolean')style.bold=v.bold;
+  if(Object.keys(style).length)clean.headingStyles[part]=style;
+ }
  const blocks=Array.isArray(input.blocks)?input.blocks:[];
  if(blocks.length>24)throw Error('แม่แบบเพิ่มบล็อกได้ไม่เกิน 24 บล็อกต่อหน้า');
  clean.blocks=blocks.map((b,i)=>({
@@ -90,7 +103,7 @@ export function safeTemplateDraft(input){
  }
  return clean;
 }
-export function emptyTemplate(){return {title:'',legal:'',decisionText:'',blocks:[],order:[],styles:{},textEdits:{},signatureOffsets:{}};}
+export function emptyTemplate(){return {title:'',legal:'',legalSecond:'',decisionText:'',headingStyles:{},blocks:[],order:[],styles:{},textEdits:{},signatureOffsets:{}};}
 export function templateKeyForPage(section){
  for(const p of TEMPLATE_PAGES)if(section.classList.contains(p.css))return p.key;
  return null;
@@ -138,8 +151,23 @@ export function applyDocumentTemplates(html,layouts,r,s,doc=typeof document!=='u
    if(title)title.textContent=expandTemplateText(t.title,r,s);
   }
   if(t.legal){
-   const legal=section.querySelector('.gov-law');
+   const legal=section.querySelector('.gov-law:not(.gov-law-second)');
    if(legal)legal.textContent=expandTemplateText(t.legal,r,s);
+  }
+  if(t.legalSecond){
+   const legalSecond=section.querySelector('.gov-law-second');
+   if(legalSecond)legalSecond.textContent=expandTemplateText(t.legalSecond,r,s);
+  }
+  // Apply the same saved heading format to editor A4 and real PDF output.
+  for(const [key,selector] of Object.entries({
+   title:'.print-title,.memo-field-subject .memo-value',
+   legal:'.gov-law:not(.gov-law-second)',legalSecond:'.gov-law-second'
+  })){
+   const header=section.querySelector(selector),style=t.headingStyles[key];
+   if(!header||!style)continue;
+   if(style.size)header.style.setProperty('font-size',style.size+'pt','important');
+   if(style.align)header.style.setProperty('text-align',style.align,'important');
+   if(typeof style.bold==='boolean')header.style.setProperty('font-weight',style.bold?'700':'400','important');
   }
   const {zone,nodes}=structuralBlocks(section);
   if(!zone)continue;
@@ -232,7 +260,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
     node.classList.add('te-canvas-draggable');
     if(id===currentBlock)node.classList.add('te-canvas-selected');
    }
-   for(const [selector,field] of [['.memo-field-subject .memo-value,.print-title','title'],['.gov-law','legal']]){
+   for(const [selector,field] of [['.memo-field-subject .memo-value,.print-title','title'],['.gov-law:not(.gov-law-second)','legal'],['.gov-law-second','legalSecond']]){
     const el=page.querySelector(selector);
     if(el){el.dataset.templateHeader=field;el.contentEditable='plaintext-only';el.draggable=false;el.classList.add('te-inline-edit');}
    }
@@ -298,7 +326,20 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
     '<textarea class="input" rows="3" maxlength="400" data-tpl-field="decisionText" placeholder="'+esc(selected==='approval'?'เห็นชอบ / ลงนามแล้ว':'เห็นชอบ / อนุมัติ')+'">'+esc(draft.decisionText||'')+'</textarea>'+
     '<p class="hint">แก้ได้ทั้งในช่องนี้และบนหน้า A4 • เว้นว่างเพื่อใช้แบบกลาง • ชื่อและตำแหน่งผู้อำนวยการยังล็อกจากระบบ</p>':'')+
    '<label>หัวเรื่อง (เว้นว่างเพื่อใช้แม่แบบกลาง)</label><input class="input" data-tpl-field="title" maxlength="400" value="'+esc(draft.title||'')+'" placeholder="'+esc(page.name)+'">'+
-   '<label>บรรทัดอ้างกฎหมาย (เว้นว่างเพื่อใช้ต้นฉบับ)</label><textarea class="input" data-tpl-field="legal" rows="2" maxlength="400" placeholder="ใช้ข้อความกฎหมายต้นฉบับ">'+esc(draft.legal||'')+'</textarea>'+
+   '<label>บรรทัดอ้างกฎหมาย (เว้นว่างเพื่อใช้ต้นฉบับ)</label><textarea class="input" data-tpl-field="legal" rows="3" maxlength="400" placeholder="ใช้ข้อความกฎหมายต้นฉบับ · กด Enter เพื่อขึ้นบรรทัดใหม่">'+esc(draft.legal||'')+'</textarea>'+
+   (selected==='annex'?'<label>บรรทัดอ้างกฎหมายบรรทัดที่ 2 (ข้อ 22)</label><textarea class="input" data-tpl-field="legalSecond" rows="2" maxlength="400" placeholder="เว้นว่างเพื่อใช้ข้อความต้นฉบับ">'+esc(draft.legalSecond||'')+'</textarea>':'')+
+   '<p class="hint">กด Enter ในช่องอ้างกฎหมายเพื่อกำหนดจุดขึ้นบรรทัดใหม่เอง บรรทัดและขนาดที่บันทึกจะเหมือนกันทั้งหน้า A4 และ PDF</p>'+
+   ['title','legal',...(selected==='annex'?['legalSecond']:[])].map(part=>{
+    const current=draft.headingStyles?.[part]||{};
+    const name={title:'ขนาดหัวเรื่อง',legal:'ขนาดข้อความอ้างกฎหมาย',legalSecond:'ขนาดบรรทัดข้อ 22'}[part];
+    const size='<label>'+name+' <select class="select" data-tpl-field="headingSize" data-heading-part="'+part+'">'+
+     ['',[12,14,16,18,20,22,24]].flat().map(n=>'<option value="'+n+'" '+(String(current.size||'')===String(n)?'selected':'')+'>'+(n?n+' pt':'ใช้ขนาดต้นฉบับ')+'</option>').join('')+'</select></label>';
+    const align='<label>จัดแนว '+name+' <select class="select" data-tpl-field="headingAlign" data-heading-part="'+part+'">'+
+     [['','ตามต้นฉบับ'],['left','ชิดซ้าย'],['center','กึ่งกลาง'],['right','ชิดขวา']].map(([v,label])=>'<option value="'+v+'" '+((current.align||'')===v?'selected':'')+'>'+label+'</option>').join('')+'</select></label>';
+    const bold='<label>น้ำหนักตัวอักษร <select class="select" data-tpl-field="headingBold" data-heading-part="'+part+'">'+
+     [['','ตามต้นฉบับ'],['true','ตัวหนา'],['false','ตัวปกติ']].map(([v,label])=>'<option value="'+v+'" '+(typeof current.bold==='boolean'?String(current.bold)===v:v==='')+'>'+label+'</option>').join('')+'</select></label>';
+    return '<div class="te-heading-controls"><b>'+name+'</b>'+size+align+bold+'</div>';
+   }).join('')+
    '<p class="hint">กรณีแก้ถ้อยคำกฎหมาย ต้องตรวจสอบกับระเบียบที่ใช้อยู่ก่อนประกาศใช้</p>'+
    '<div class="te-field-title">บล็อกที่เลือก</div>'+
    (currentBlock?(currentBlock.startsWith('x')?'<label>ข้อความ (ใช้ตัวแปรได้ เช่น {{school_name}})</label><textarea class="input te-block-textarea" rows="5" maxlength="4000" data-tpl-field="blockText">'+esc(cur?.text||'')+'</textarea>':
@@ -354,7 +395,20 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const value=el.type==='checkbox'?el.checked:el.value;
   if(field==='ribbonSize'){if(!currentBlock)return;const t=draft.blocks.find(b=>b.id===currentBlock);if(t)t.size=Number(value);else if(currentBlock.startsWith('d'))draft.styles[currentBlock]={...(draft.styles[currentBlock]||{}),size:Number(value)};}
   else if(field==='signatureX'||field==='signatureY'){if(!activeSignature)return;const now=draft.signatureOffsets[activeSignature]||{x:0,y:0};draft.signatureOffsets[activeSignature]=safeSignatureOffset({...now,[field==='signatureX'?'x':'y']:value});}
-  else if(field==='title'||field==='legal'||field==='decisionText')draft[field]=String(value).replace(/\r\n?/g,'\n').slice(0,400);
+  else if(field==='title'||field==='legal'||field==='legalSecond'||field==='decisionText')draft[field]=String(value).replace(/\r\n?/g,'\n').slice(0,400);
+  else if(['headingSize','headingAlign','headingBold'].includes(field)){
+   const part=el.dataset.headingPart;
+   if(!['title','legal','legalSecond'].includes(part))return;
+   draft.headingStyles=draft.headingStyles||{};
+   const style={...(draft.headingStyles[part]||{})};
+   const property={headingSize:'size',headingAlign:'align',headingBold:'bold'}[field];
+   if(value==='')delete style[property];
+   else if(field==='headingSize'&&[12,14,16,18,20,22,24].includes(Number(value)))style.size=Number(value);
+   else if(field==='headingAlign'&&['left','center','right'].includes(value))style.align=value;
+   else if(field==='headingBold')style.bold=value==='true';
+   if(Object.keys(style).length)draft.headingStyles[part]=style;
+   else delete draft.headingStyles[part];
+  }
   else if(field==='blockText'&&target)target.text=String(value);
   else if(['size','align','bold'].includes(field)){
    if(target)target[field]=field==='size'?Number(value):value;
@@ -451,11 +505,12 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
  }
  function headerInput(el){
   const type=el?.dataset?.templateHeader;
-  if(type!=='title'&&type!=='legal'&&type!=='decisionText')return;
-  draft[type]=String(type==='decisionText'?(el.innerText??el.textContent??''):(el.textContent||''))
+  if(type!=='title'&&type!=='legal'&&type!=='legalSecond'&&type!=='decisionText')return;
+  // innerText retains Enter-created line breaks; textContent would erase them.
+  draft[type]=String(el.innerText??el.textContent??'')
    .replace(/\r\n?/g,'\n').slice(0,400);
-  if(type==='decisionText'){
-   const input=document.querySelector('[data-tpl-field="decisionText"]');
+  {
+   const input=document.querySelector('[data-tpl-field="'+type+'"]');
    if(input)input.value=draft[type];
   }
   dirty=true;
