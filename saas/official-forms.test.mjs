@@ -587,7 +587,7 @@ test('template changes reject arbitrary HTML/CSS properties and sanitize typed J
    align:'center',size:18,bold:true,html:'<script>alert(1)</script>'}],
   order:['d0','xfirst'],styles:{d0:{align:'right',size:16,bold:true},bad:{align:'center'}}
  });
- assert.deepEqual(Object.keys(row).sort(),['blocks','legal','order','styles','title']);
+ assert.deepEqual(Object.keys(row).sort(),['blocks','legal','order','signatureOffsets','styles','textEdits','title']);
  assert.ok(!JSON.stringify(row).includes('script'));
  assert.deepEqual(Object.keys(row.styles),['d0']);
  assert.equal(row.blocks[0].text,'{{vendor_name}}');
@@ -665,7 +665,7 @@ test('Word editor protects per-record names, amount and dates while permitting s
 test('Word editor stores literal fragments only and ignores incompatible stale data',async()=>{
  const {applyTextFragments,safeSignatureOffset}=await import('./template-rich-editor.js');
  const base='บริษัท ทดสอบ 200.00 บาท';
- assert.equal(applyTextFragments(base,['ผิดจำนวนส่วน','เกิน'],sample,school),base);
+ assert.equal(applyTextFragments(base,['จำนวนเกิน'],sample,school),base);
  assert.deepEqual(safeSignatureOffset({x:70,y:-80}),{x:15,y:-15});
  assert.deepEqual(safeSignatureOffset({x:4,y:2}),{x:4,y:2});
 });
@@ -687,8 +687,8 @@ test('production bundles the A4 editor stylesheet and direct inline editing is a
  assert.match(app,/templateEditor\.inlineInput\(el\)/);
  assert.match(app,/templateEditor\.lockedNotice\(\)/);
  assert.match(app,/templateEditor\.moveSignature\(drag\.id,x,y\)/);
- assert.match(tmpl,/data-template-header/);
- assert.match(tmpl,/data-template-text/);
+ assert.match(tmpl,/dataset\.templateHeader/);
+ assert.match(tmpl,/dataset\.templateText/);
  assert.match(tmpl,/te-system-locked/);
 });
 test('server validates rich literal fragments and signer coordinates before publishing',async()=>{
