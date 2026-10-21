@@ -28,6 +28,7 @@ import {SUPABASE_URL,SUPABASE_KEY} from './config.js';
 import {buildDocuments,escapeHtml as e,normalizeMemoPrefix} from './print.js';
 import {docMetaInputs,docMetaValue} from './document-meta.js';
 import {createTemplateEditor,activeTemplateLayouts,applyDocumentTemplates} from './template-builder.js';
+import {installStateNotices} from './notification-popup.js';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 const app=document.getElementById('app');
 const bootStage=phase=>{try{window.__kruBootStage=phase;document.documentElement.dataset.kruBoot=phase;sessionStorage.setItem('kru_boot_stage',phase);}catch{}};
@@ -40,6 +41,7 @@ const demoRecords=[
  mkDemo('demo-3','purchase',2,'ซื้ออุปกรณ์การเรียน','ร้านศึกษาภัณฑ์',1250,'2026-10-18',[{name:'อุปกรณ์การเรียน',qty:5,unit:'ชุด',price_satang:25000}])
 ];
 const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:'',memberEditingId:null,memberResetId:null,officialNumbers:[],numberFilter:'',numberSeries:'all',numberStatus:'all',numberYear:'all',schoolTemplates:{},templateVersions:{}};
+installStateNotices(state);
 const money=n=>(Number(n||0)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const dateThai=d=>d?new Date(d+'T12:00:00+07:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
 const dateToday=()=>new Date(Date.now()+7*3600000).toISOString().slice(0,10);
