@@ -773,3 +773,16 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
 
 /* Text-only school overrides of director consent/approval retain deliberate line breaks. */
 .paper-page.official.gov-doc .director-action{white-space:pre-line}
+
+/* Fixed-form annex and requisition tables: retain the vertical ruled columns,
+   heading rule, outside border and financial summary rules, but NEVER insert
+   one horizontal rule per procurement/requisition item. Applies to both A4
+   editor preview and Chrome print/PDF output. */
+.paper-page.official.gov-doc .gov-items tbody > tr.gov-data-row > td{
+ border-top:0!important;
+ border-bottom:0!important;
+}
+/* If the table ends on a data row, preserve its outer bottom border. */
+.paper-page.official.gov-doc .gov-items tbody > tr.gov-data-row:last-child > td{
+ border-bottom:1px solid #222!important;
+}
