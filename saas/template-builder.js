@@ -325,9 +325,9 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
     '<label>ข้อความก่อนลงนาม (กด Enter เพื่อแยกบรรทัด)</label>'+
     '<textarea class="input" rows="3" maxlength="400" data-tpl-field="decisionText" placeholder="'+esc(selected==='approval'?'เห็นชอบ / ลงนามแล้ว':'เห็นชอบ / อนุมัติ')+'">'+esc(draft.decisionText||'')+'</textarea>'+
     '<p class="hint">แก้ได้ทั้งในช่องนี้และบนหน้า A4 • เว้นว่างเพื่อใช้แบบกลาง • ชื่อและตำแหน่งผู้อำนวยการยังล็อกจากระบบ</p>':'')+
-   '<label>หัวเรื่อง (เว้นว่างเพื่อใช้แม่แบบกลาง)</label><input class="input" data-tpl-field="title" maxlength="400" value="'+esc(draft.title||'')+'" placeholder="'+esc(page.name)+'">'+
-   '<label>บรรทัดอ้างกฎหมาย (เว้นว่างเพื่อใช้ต้นฉบับ)</label><textarea class="input" data-tpl-field="legal" rows="3" maxlength="400" placeholder="ใช้ข้อความกฎหมายต้นฉบับ · กด Enter เพื่อขึ้นบรรทัดใหม่">'+esc(draft.legal||'')+'</textarea>'+
-   (selected==='annex'?'<label>บรรทัดอ้างกฎหมายบรรทัดที่ 2 (ข้อ 22)</label><textarea class="input" data-tpl-field="legalSecond" rows="2" maxlength="400" placeholder="เว้นว่างเพื่อใช้ข้อความต้นฉบับ">'+esc(draft.legalSecond||'')+'</textarea>':'')+
+   '<label>หัวเรื่อง (เว้นว่างเพื่อใช้แม่แบบกลาง)</label><button type="button" class="mini-btn te-copy-master" data-action="tpl-copy-master" data-field="title">นำหัวเรื่องต้นฉบับมาแก้</button><input class="input" data-tpl-field="title" maxlength="400" value="'+esc(draft.title||'')+'" placeholder="'+esc(page.name)+'">'+
+   '<label>บรรทัดอ้างกฎหมาย (เว้นว่างเพื่อใช้ต้นฉบับ)</label><button type="button" class="mini-btn te-copy-master" data-action="tpl-copy-master" data-field="legal">นำข้อความกฎหมายต้นฉบับมาแก้</button><textarea class="input" data-tpl-field="legal" rows="3" maxlength="400" placeholder="ใช้ข้อความกฎหมายต้นฉบับ · กด Enter เพื่อขึ้นบรรทัดใหม่">'+esc(draft.legal||'')+'</textarea>'+
+   (selected==='annex'?'<label>บรรทัดอ้างกฎหมายบรรทัดที่ 2 (ข้อ 22)</label><button type="button" class="mini-btn te-copy-master" data-action="tpl-copy-master" data-field="legalSecond">นำบรรทัดข้อ 22 ต้นฉบับมาแก้</button><textarea class="input" data-tpl-field="legalSecond" rows="2" maxlength="400" placeholder="เว้นว่างเพื่อใช้ข้อความต้นฉบับ">'+esc(draft.legalSecond||'')+'</textarea>':'')+
    '<p class="hint">กด Enter ในช่องอ้างกฎหมายเพื่อกำหนดจุดขึ้นบรรทัดใหม่เอง บรรทัดและขนาดที่บันทึกจะเหมือนกันทั้งหน้า A4 และ PDF</p>'+
    ['title','legal',...(selected==='annex'?['legalSecond']:[])].map(part=>{
     const current=draft.headingStyles?.[part]||{};
@@ -462,6 +462,17 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
    if(!currentBlock.startsWith('x'))return notify('โปรดเลือกบล็อกข้อความเพิ่มเติมก่อนแทรกตัวแปร',true);
    const block=draft.blocks.find(b=>b.id===currentBlock);if(!block)return;
    block.text+='{{'+el.dataset.token+'}}';dirty=true;view();return;
+  }
+  if(name==='tpl-copy-master'){
+   const field=String(el?.dataset?.field||'');
+   const selector={title:'.print-title,.memo-field-subject .memo-value',
+    legal:'.gov-law:not(.gov-law-second)',legalSecond:'.gov-law-second'}[field];
+   if(!selector)return;
+   if(draft[field]&&!confirm('ต้องการนำข้อความต้นฉบับกลับมาแทนข้อความที่แก้ไขไว้ในช่องนี้หรือไม่?'))return;
+   const original=sourcePage()?.querySelector(selector);
+   if(!original)return notify('ไม่พบข้อความต้นฉบับในเอกสารหน้านี้',true);
+   draft[field]=String(original.innerText??original.textContent??'').slice(0,400);
+   dirty=true;view();return;
   }
   if(name==='tpl-save')return save();
   if(name==='tpl-publish')return publish();
