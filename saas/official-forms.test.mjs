@@ -747,6 +747,7 @@ test('every state.flash and state.error save acknowledgement produces one dismis
  await Promise.resolve();
  assert.equal(created.length,1);
  assert.equal(created[0].className,'kp-popup kp-popup-success');
+ assert.equal(created[0].children[1].children[0].textContent,'บันทึกสำเร็จ');
  assert.equal(created[0].attributes.role,'status');
  assert.equal(created[0].children[1].children[1].textContent,'บันทึกฉบับร่างเรียบร้อย');
  assert.equal(state.flash,'บันทึกฉบับร่างเรียบร้อย');
