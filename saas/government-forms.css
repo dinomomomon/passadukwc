@@ -861,9 +861,9 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
 }
 
 
-/* Only the finance payment memo leaves its "ที่" for the finance unit.
-   This is a real ruled blank in browser preview, template editor and printed A4. */
-.paper-page.official.gov-doc.gov-payment .memo-field-number .kp-payment-number-writein{
+/* Only the finance payment memo leaves its printed date blank for handwriting.
+   Its official number remains assigned and displayed normally, including legacy records. */
+.paper-page.official.gov-doc.gov-payment .memo-field-number .kp-payment-date-writein{
  display:inline-block!important;
  align-self:baseline!important;
  justify-self:start!important;
@@ -879,7 +879,7 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
  color:transparent!important;
 }
 @media print{
- .paper-page.official.gov-doc.gov-payment .memo-field-number .kp-payment-number-writein{
+ .paper-page.official.gov-doc.gov-payment .memo-field-number .kp-payment-date-writein{
   border-bottom:1px dotted #222!important;
  }
 }
