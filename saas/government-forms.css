@@ -859,3 +859,27 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
   display:inline-block!important;white-space:nowrap!important;
  }
 }
+
+
+/* Only the finance payment memo leaves its "ที่" for the finance unit.
+   This is a real ruled blank in browser preview, template editor and printed A4. */
+.paper-page.official.gov-doc.gov-payment .memo-field-number .kp-payment-number-writein{
+ display:inline-block!important;
+ align-self:baseline!important;
+ justify-self:start!important;
+ width:36mm!important;
+ max-width:100%!important;
+ min-width:0!important;
+ height:1em!important;
+ border:0!important;
+ border-bottom:1px dotted #333!important;
+ padding:0!important;
+ margin:0!important;
+ background:transparent!important;
+ color:transparent!important;
+}
+@media print{
+ .paper-page.official.gov-doc.gov-payment .memo-field-number .kp-payment-number-writein{
+  border-bottom:1px dotted #222!important;
+ }
+}
