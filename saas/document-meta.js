@@ -29,7 +29,7 @@ export function docMetaInputs(meta={},options={}){
  const mode=typeof options==='string'?options:(options.mode||'all');
  const kind=typeof options==='string'?'purchase':(options.kind||'purchase');
  if(mode==='create')return '<div class="form-grid">'+primaryDocumentFields.filter(f=>f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta)).join('')+(kind==='purchase'?fieldHtml(['requisition_number','ใบเบิกพัสดุ เลขที่ (กรอกได้ เช่น จ. 218/2569)'],meta):'')+'</div><p class="hint">รหัส พว. หรือ พค. เลือกจากประเภทการจัดซื้อในขั้นที่ 1 ส่วนรายงานผลและเบิกจ่ายใช้คำว่า ที่ ตามด้วยเลขที่เท่านั้น</p>'; 
- const main='<section class="doc-meta-section"><h3>เลขที่หนังสือแต่ละฉบับ และตำแหน่งผู้ตรวจรับ</h3><div class="form-grid">'+primaryDocumentFields.map(f=>fieldHtml(f,meta)).join('')+'</div></section>';
+ const main='<section class="doc-meta-section"><h3>เลขที่หนังสือแต่ละฉบับ และตำแหน่งผู้ตรวจรับ</h3><div class="form-grid">'+primaryDocumentFields.filter(f=>kind==='purchase'||f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta)).join('')+'</div></section>';
  const sections=documentInfoGroups.filter(g=>kind==='purchase'||g.id!=='requisition').map(g=>{
   const extra=g.advanced?.length?'<details class="doc-meta-advanced"><summary>กรณีพิเศษ / ข้อมูลเพิ่มเติม</summary><div class="form-grid">'+g.advanced.map(f=>fieldHtml(f,meta)).join('')+'</div></details>':'';
   return '<details class="doc-meta-section" '+(g.id==='order'?'open':'')+'><summary>'+e(g.title)+'</summary><p class="hint">'+e(g.description)+'</p><div class="form-grid">'+g.fields.map(f=>fieldHtml(f,meta)).join('')+'</div>'+extra+'</details>';
