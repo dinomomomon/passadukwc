@@ -53,7 +53,7 @@ test('faq is a native keyboard-accessible expandable disclosure with grounded re
  const html=publicPageHtml('faq');
  assert.equal((html.match(/<details class="kp-pub-faq-item"/g)||[]).length,11);
  assert.match(html,/<summary>/);
- for(const q of ['ลดภาระงาน','เลขเอกสารอัตโนมัติ','แม่แบบเอกสาร','สิทธิ์ผู้ใช้งาน','ต้องติดตั้งโปรแกรมหรือไม่','ใช้ฟรีได้ตลอดไปหรือไม่']){
+ for(const q of ['ลดภาระงาน','เลขเอกสารอัตโนมัติ','แม่แบบเอกสาร','สิทธิ์ผู้ใช้งาน','ต้องติดตั้งโปรแกรมหรือไม่','ใช้งานฟรีได้ตลอดไปหรือไม่']){
   assert.ok(html.includes(q),'Missing FAQ '+q);
  }
  assert.match(html,/ไม่ได้แทนการตรวจรับ การอนุมัติ หรือการลงนามจริง/);
