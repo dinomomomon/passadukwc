@@ -71,14 +71,14 @@ function sign(name,role,date=false,position='',dateValue=''){return signatureBlo
 function directorSign(r,s,actions,dateValue=''){return '<div class="director-sign"><div class="director-action">'+actions+'</div>'+
  signatureBlock(director(r,s),'',true,{kind:'director',schoolName:s.name||'โรงเรียน',dateValue})+'</div>';}
 function signRow(r,s,dateValue=''){return '<div class="sign-grid">'+sign(officer(r,s),'เจ้าหน้าที่',true,'',dateValue)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true,'',dateValue)+'</div>';}
-function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const numberKey=cls==='gov-approval'?'approval_memo_number':'memo_number';const prefix=m.memo_prefix||s.memo_prefix;const no=numberKey==='memo_number'?renderMemoReference(prefix,m[numberKey]):(normalizeMemoNumber(m[numberKey],prefix)||'........../........');
- // Finance supplies the book number after its own approval process. Never print
- // a previously reserved payment memo number (including legacy records).
- const headingNumber=cls==='gov-payment'?'<span class="memo-value kp-payment-number-writein" aria-label="เว้นช่องให้ฝ่ายการเงินเขียนเลขที่หนังสือด้วยตนเอง"></span>':'<span class="memo-value">'+e(no)+'</span>';
+function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const numberKey=cls==='gov-approval'?'approval_memo_number':cls==='gov-payment'?'payment_memo_number':'memo_number';const prefix=m.memo_prefix||s.memo_prefix;const no=numberKey==='memo_number'?renderMemoReference(prefix,m[numberKey]):(normalizeMemoNumber(m[numberKey],prefix)||'........../........');
+ // Only the payment memo's printed date is left for the finance unit.
+ // Its assigned official number remains automatic, including for old records.
+ const headingDate=cls==='gov-payment'?'<span class="memo-value kp-payment-date-writein" aria-label="เว้นวันที่ให้ฝ่ายการเงินเขียนเอง"></span>':'<span class="memo-value">'+thaiDate(r.document_date)+'</span>';
  return '<section class="paper-page official gov-doc memo-page '+cls+'"><div class="doc-sheet-body">'+
  '<div class="memo-top"><img class="garuda-emblem" src="/garuda-memo.svg" alt="ตราครุฑ"><h1>บันทึกข้อความ</h1></div>'+
  '<div class="memo-field memo-field-agency"><strong>ส่วนราชการ</strong><span class="memo-value">'+department(s)+'</span></div>'+
- '<div class="memo-field memo-field-number"><strong>ที่</strong>'+headingNumber+'<strong class="date-label">วันที่</strong><span class="memo-value">'+thaiDate(r.document_date)+'</span></div>'+
+ '<div class="memo-field memo-field-number"><strong>ที่</strong><span class="memo-value">'+e(no)+'</span><strong class="date-label">วันที่</strong>'+headingDate+'</div>'+
  '<div class="memo-field memo-field-subject"><strong>เรื่อง</strong><span class="memo-value">'+e(title)+'</span></div>'+
  '<div class="memo-line"></div><div class="memo-field memo-field-to"><strong>เรียน</strong><span class="memo-value">ผู้อำนวยการ'+e(s.name||'โรงเรียน')+'</span></div>'+
  '<div class="memo-content">'+body+'</div><div class="memo-signatures">'+signatureHtml+'</div></div></section>';}
