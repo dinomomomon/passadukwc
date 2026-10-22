@@ -28,7 +28,7 @@ test('school admin guide has five private subtopics and twenty accessible illust
 test('real admin forms and numbering are described accurately without inventing controls',()=>{
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  const editor=readFileSync(new URL('./template-builder.js',import.meta.url),'utf8');
- const entire=adminGuideTopics.map(t=>t.steps.map(s=>s.heading+' '+s.desc+' '+s.fields.map(f=>f.join(' ')).join(' ')).join(' ')).join('\n');
+ const entire=adminGuideTopics.map(t=>t.steps.map(s=>s.heading+' '+s.desc+' '+s.button+' '+s.fields.map(f=>f.join(' ')).join(' ')).join(' ')).join('\n');
  for(const exact of ['บันทึกข้อมูลโรงเรียน','ชื่อผู้ลงนาม','ผู้อำนวยการสถานศึกษา',
  'ทะเบียนคุมเลขเอกสาร','บันทึกเลขถัดไป','ดูเลขของปีนี้',
  'บันทึกฉบับร่าง','ประกาศใช้แม่แบบนี้','เพิ่มเจ้าหน้าที่โรงเรียน',
