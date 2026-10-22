@@ -1050,3 +1050,17 @@ test('deleting drafts preserves audit and all numbers; school-scoped server RPC 
  assert.match(sql,/REVOKE ALL ON FUNCTION public\.delete_procurement_draft/);
  assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.delete_procurement_draft/);
 });
+
+
+test('purchase and hire wizard allow amounts above 5000 baht without arbitrary ceiling',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const js=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('../supabase/migrations/20261022_remove_5000_baht_cap.sql',import.meta.url),'utf8');
+ assert.doesNotMatch(js,/total<=5000|total>500000|วงเงินรวมไม่เกิน 5,000|ไม่เกิน 5,000 บาท/);
+ assert.match(js,/Number\.isSafeInteger\(Math\.round\(total\)\)/);
+ assert.match(js,/Number\.isSafeInteger\(Math\.round\(total\*100\)\)/);
+ assert.match(sql,/CHECK\(total_satang>0\)/);
+ assert.match(sql,/replace\(def,'if amt<1 or amt>500000 then','if amt<1 then'\)/);
+ assert.match(sql,/replace\(def,'price<1 OR price>500000','price<1'\)/);
+ assert.match(sql,/replace\(def,'amount<1 OR amount>500000','amount<1'\)/);
+});
