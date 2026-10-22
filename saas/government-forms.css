@@ -838,3 +838,24 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
  .kp-number-setup-actions .input,.kp-number-setup-actions button{width:100%;flex:1 1 100%}
  .kp-registry-year>*{width:100%!important;flex:1 1 100%}
 }
+
+
+/* Preprinted document date under signatures: used ONLY for request,
+   annex and approval forms. Actual acceptance/payment signatures remain blank. */
+.paper-page.official.gov-doc .signature-date .kp-signature-date-value{
+ display:inline-block!important;
+ width:auto!important;
+ min-width:28mm!important;
+ max-width:none!important;
+ height:auto!important;
+ border-bottom:none!important;
+ white-space:nowrap!important;
+ text-align:center!important;
+ font:inherit!important;
+ color:#111!important;
+}
+@media print{
+ .paper-page.official.gov-doc .signature-date .kp-signature-date-value{
+  display:inline-block!important;white-space:nowrap!important;
+ }
+}
