@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node --check app.js && node --check print.js && node --check document-meta.js && node --test ./official-forms.test.mjs && node build.mjs",
+    "build": "node --check app.js && node --check print.js && node --check document-meta.js && node --test ./official-forms.test.mjs ./marketing-pages.test.mjs && node build.mjs",
     "deploy:cloudflare": "wrangler deploy"
   },
   "dependencies": {
