@@ -1021,7 +1021,7 @@ test('draft actions display delete next to open and edit, and detail offers edit
  assert.match(js,/canEditMainRecord\(r\)\?btn\('แก้ไขรายการ','edit-record','secondary'\)/);
  assert.match(js,/function openDeleteRecordDialog\(rec\)/);
  assert.match(js,/id="kp-delete-record-dialog"/);
- assert.match(js,/data-action="confirm-delete-record"/);
+ assert.match(js,/btn\('ยืนยันลบรายการ','confirm-delete-record'/);
  assert.match(js,/if\(action==='cancel-delete-record'\)/);
  assert.match(css,/\.kp-delete-dialog::backdrop/);
  assert.match(css,/\.kp-danger-button/);
