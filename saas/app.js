@@ -262,7 +262,7 @@ const registryStatusLabel={reserved:'จองเลข',used:'ใช้แล�
 function registryDisplayNumber(row){
  if(!row)return '';
  const suffix=row.serial_no?row.serial_no+'/'+row.year_be:row.original_text||'เลขเดิมผิดรูปแบบ';
- if(row.series==='request')return (normalizeMemoPrefix(state.school?.memo_prefix||'พว.')||'พว.')+' '+suffix;
+ if(row.series==='request')return (normalizeMemoPrefix(row.procurements?.document_meta?.memo_prefix||state.school?.memo_prefix||'พว.')||'พว.')+' '+suffix;
  if(row.series==='acceptance')return 'ร. '+suffix;
  if(row.series==='requisition')return 'จ. '+suffix;
  return suffix;
@@ -272,7 +272,7 @@ async function loadOfficialNumbers(){
  if(!state.school)return;
  const all=[];let offset=0;const size=500;
  for(;;){
-  const {data,error}=await db.from('official_number_registry').select('*,procurements(title,vendor_name,kind)')
+  const {data,error}=await db.from('official_number_registry').select('*,procurements(title,vendor_name,kind,document_meta)')
    .eq('school_id',state.school.id).order('created_at',{ascending:false})
    .order('id',{ascending:false}).range(offset,offset+size-1);
   if(error)throw Error('โหลดทะเบียนคุมเลขไม่สำเร็จ: '+error.message);
@@ -410,10 +410,20 @@ function form(){
  const labels=['ข้อมูลหลัก','รายการพัสดุ','ผู้ขายและผู้ตรวจรับ','เลขหนังสือ / ตรวจสอบ'];
  const steps='<nav class="kp-wizard-nav" aria-label="ขั้นตอนกรอกข้อมูล">'+labels.map((label,i)=>'<span class="kp-wizard-step '+(step===i+1?'is-active':step>i+1?'is-done':'')+'" data-wizard-indicator="'+(i+1)+'">'+(i+1)+'. '+e(label)+'</span>').join('')+'</nav>';
  const panel=(number,title,inner)=>'<section class="card kp-wizard-panel" data-wizard-panel="'+number+'" style="'+(step===number?'':'display:none')+'"><h2>'+title+'</h2>'+inner+'</section>';
- const basic=panel(1,'ขั้นที่ 1 — ข้อมูลการจัดหา','<div class="form-grid"><div class="field"><label>ประเภทการจัดหา</label>'+(editing?'<input type="hidden" name="kind" value="'+e(d.kind)+'">':'')+'<select class="select" name="kind" '+(editing?'disabled':'')+'><option value="purchase" '+(d.kind!=='hire'?'selected':'')+'>จัดซื้อ</option><option value="hire" '+(d.kind==='hire'?'selected':'')+'>จัดจ้าง</option></select></div>'+input('วันที่เอกสาร','document_date',d.document_date||dateToday(),'date','required')+input('ปีงบประมาณ (พ.ศ.)','fiscal_year',d.fiscal_year||fiscalYear(),'number',editing?'required readonly':'required min="2500" max="2700"')+input('กลุ่มงาน/ฝ่ายที่ขอ','department',d.department||'')+'</div>'+input('เรื่องที่จัดซื้อ/จัดจ้าง','title',d.title||'','text','required maxlength="500" placeholder="เช่น ซื้อวัสดุสำนักงาน"')+area('เหตุผลและความจำเป็น','reason',d.reason||'')+input('แผนงาน/โครงการ/แหล่งเงิน','budget_source',d.budget_source||'','text','required'));
+ const chosenRequestPrefix=normalizeMemoPrefix(d.doc_memo_prefix||state.school?.memo_prefix||'พว.')||'พว.';
+ const requestPrefixChoices=['พว.','พค.'];
+ if(!requestPrefixChoices.includes(chosenRequestPrefix))requestPrefixChoices.push(chosenRequestPrefix);
+ const procurementTypeField=d.kind==='hire'?
+  '<input type="hidden" name="doc_memo_prefix" value="'+e(chosenRequestPrefix)+'">':
+  '<div class="field kp-procurement-class-field"><label for="kp-purchase-category">หมวดของที่จะจัดซื้อ (กำหนดรหัสรายงาน)</label>'+
+   '<select class="select" id="kp-purchase-category" name="doc_memo_prefix">'+
+   requestPrefixChoices.map(prefix=>'<option value="'+e(prefix)+'" '+(prefix===chosenRequestPrefix?'selected':'')+'>'+
+    e(prefix==='พว.'?'วัสดุ — พว.':prefix==='พค.'?'ครุภัณฑ์ — พค.':prefix+' — รหัสเดิมของโรงเรียน')+'</option>').join('')+
+   '</select><p class="hint">เลือกตามประเภทพัสดุและงบประมาณที่ตรวจสอบแล้ว ไม่ใช้ราคาตัดสินหมวดอัตโนมัติ เลขลำดับจะยังใช้ทะเบียนคำขอร่วมกัน</p></div>';
+ const basic=panel(1,'ขั้นที่ 1 — ข้อมูลการจัดหา','<div class="form-grid"><div class="field"><label>ประเภทการจัดหา</label>'+(editing?'<input type="hidden" name="kind" value="'+e(d.kind)+'">':'')+'<select class="select" name="kind" '+(editing?'disabled':'')+'><option value="purchase" '+(d.kind!=='hire'?'selected':'')+'>จัดซื้อ</option><option value="hire" '+(d.kind==='hire'?'selected':'')+'>จัดจ้าง</option></select></div>'+procurementTypeField+input('วันที่เอกสาร','document_date',d.document_date||dateToday(),'date','required')+input('ปีงบประมาณ (พ.ศ.)','fiscal_year',d.fiscal_year||fiscalYear(),'number',editing?'required readonly':'required min="2500" max="2700"')+input('กลุ่มงาน/ฝ่ายที่ขอ','department',d.department||'')+'</div>'+input('เรื่องที่จัดซื้อ/จัดจ้าง','title',d.title||'','text','required maxlength="500" placeholder="เช่น ซื้อวัสดุสำนักงาน"')+area('เหตุผลและความจำเป็น','reason',d.reason||'')+input('แผนงาน/โครงการ/แหล่งเงิน','budget_source',d.budget_source||'','text','required'));
  const entries=panel(2,'ขั้นที่ 2 — รายการพัสดุ / งานจ้าง','<p class="muted">ระบุรายละเอียด จำนวน หน่วยนับ และราคาต่อหน่วยของแต่ละรายการ ระบบคำนวณวงเงินรวมให้อัตโนมัติ</p>'+'<div class="kp-item-entry-table">'+itemHeading+items+'</div>'+btn('+ เพิ่มรายการ','add-item','secondary')+'<div class="total-row"><span>วงเงินรวมสุทธิ</span><strong id="live-total">0.00 บาท</strong></div>');
  const vendor=panel(3,'ขั้นที่ 3 — ผู้ขายและผู้ตรวจรับ','<div class="form-grid">'+input('ชื่อร้านค้า/ผู้รับจ้าง','vendor_name',d.vendor_name||'')+input('กำหนดส่งมอบ (ถ้าทราบ)','due_date',d.due_date||'','date')+'</div>'+input('ชื่อผู้ตรวจรับ (เว้นว่างไว้ได้)','inspector_name',d.inspector_name||'')+'<div class="alert success-alert">เจ้าหน้าที่พัสดุ: '+e(state.school.officer_name||'ยังไม่ตั้งค่า')+' · หัวหน้าเจ้าหน้าที่: '+e(state.school.head_name||'ยังไม่ตั้งค่า')+' · ผู้อำนวยการ: '+e(state.school.director_name||'ยังไม่ตั้งค่า')+'</div><p class="hint">ข้อมูลผู้ลงนามดึงจากโรงเรียน ชื่อในเอกสารไม่ถือเป็นการอนุมัติหรือการลงนามจริง</p>'+docMetaWizardInputs(meta,3,d.kind||'purchase'));
- const docs=panel(4,'ขั้นที่ 4 — เลขที่หนังสือและตรวจสอบ','<p class="hint">รหัส พว. ใช้เฉพาะรายงานขอซื้อ/ขอจ้าง ส่วนรายงานผลการพิจารณาและบันทึกเบิกจ่ายใช้เพียงคำว่า ที่ ตามด้วยเลขที่ ไม่ต้องใส่ พว.</p>'+docMetaInputs(meta,{mode:'create',kind:d.kind||'purchase'})+docMetaWizardInputs(meta,4,d.kind||'purchase')+'<div id="wizard-review" class="kp-wizard-review"></div>');
+ const docs=panel(4,'ขั้นที่ 4 — เลขที่หนังสือและตรวจสอบ','<p class="hint">รหัสที่หัวรายงานขอซื้อใช้ พว. สำหรับวัสดุ หรือ พค. สำหรับครุภัณฑ์ ตามที่เลือกในขั้นที่ 1; รายงานผลการพิจารณาและบันทึกเบิกจ่ายใช้เฉพาะเลขที่โดยไม่มี พว./พค.</p>'+docMetaInputs(meta,{mode:'create',kind:d.kind||'purchase'})+docMetaWizardInputs(meta,4,d.kind||'purchase')+'<div id="wizard-review" class="kp-wizard-review"></div>');
  const footer='<div class="card kp-wizard-footer"><span class="kp-wizard-progress">ขั้น '+step+' จาก 4</span><div class="row">'+(step>1?btn('← ย้อนกลับ','wizard-prev','secondary'):btn('ยกเลิก',editing?'cancel-edit':'dashboard','secondary'))+(step<4?btn('ถัดไป →','wizard-next','primary'):'<button class="primary" type="submit">'+(editing?'บันทึกการแก้ไข':'บันทึกและออกเลขทะเบียน →')+'</button>')+'</div></div>';
  shell(editing?'แก้ไขรายการ':'สร้างรายการใหม่','งานพัสดุ / บันทึกรายการ',
   heading(editing?'แก้ไขรายการฉบับร่าง':'สร้างรายการจัดซื้อจัดจ้าง','กรอกทีละขั้นได้ ย้อนกลับได้ และไม่ต้องกรอกข้อมูลซ้ำ')+
@@ -1071,7 +1081,15 @@ document.addEventListener('click',async ev=>{
 document.addEventListener('submit',async ev=>{if(!ev.target.id)return;ev.preventDefault();const b=ev.target.querySelector('[type=submit]');if(b)b.disabled=true;try{await handleForm(ev.target);}catch(ex){notify(ex.message,true);}finally{if(b)b.disabled=false;}});
 document.addEventListener('focusin',ev=>{if(state.page==='templates'&&ev.target?.dataset?.templateText)templateEditor.selectInline(ev.target);});
 document.addEventListener('input',ev=>{const el=ev.target;if(el?.id==='kp-public-search'){filterPublicContent(el.value);return;}if(state.page==='templates'&&el.dataset.templateText){templateEditor.inlineInput(el);return;}if(state.page==='templates'&&el.dataset.templateHeader){templateEditor.headerInput(el);return;}if(el.dataset.tplField)templateEditor.editField(el);if(['doc_withholding_baht','doc_fine_baht','doc_payable_baht'].includes(el.name))updatePayablePreview();if(el.name==='doc_delivery_date'&&el.value){const doc=el.closest('form');for(const targetName of ['doc_acceptance_date','doc_inspection_date']){const target=doc?.querySelector('[name="'+targetName+'"]');if(target&&!target.value)target.value=el.value;}}if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();}}});
-document.addEventListener('change',ev=>{if(ev.target?.dataset?.tplField)templateEditor.editField(ev.target);});
+document.addEventListener('change',ev=>{
+ if(ev.target?.dataset?.tplField)templateEditor.editField(ev.target);
+ if(ev.target?.name==='kind'&&state.page==='create'){
+  collectDraft();const current=state.draft.kind;
+  if(current==='hire')state.draft.doc_memo_prefix=normalizeMemoPrefix(state.school?.memo_prefix||'พว.')||'พว.';
+  else if(current==='purchase'&&!['พว.','พค.'].includes(normalizeMemoPrefix(state.draft.doc_memo_prefix)))state.draft.doc_memo_prefix='พว.';
+  form();
+ }
+});
 document.addEventListener('dragstart',ev=>{if(ev.target.closest?.('#te-print-preview [data-template-text],#te-print-preview [data-template-header]'))return;const t=ev.target.closest?.('[data-template-drag]');if(t&&state.page==='templates')templateEditor.dragStart(t,ev);});
 document.addEventListener('dragover',ev=>{if(state.page==='templates'&&ev.target.closest?.('[data-template-drag]'))ev.preventDefault();});
 document.addEventListener('drop',ev=>{const t=ev.target.closest?.('[data-template-drag]');if(t&&state.page==='templates')templateEditor.drop(t,ev);});
