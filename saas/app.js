@@ -253,6 +253,13 @@ async function loadOfficialNumbers(){
  }
  state.officialNumbers=all;
 }
+async function loadOfficialNumberStarts(){
+ if(state.demo||!isSchoolAdmin()||!state.school?.id){state.numberStarts=[];return;}
+ const year=Number(state.numberSetupYear)||(new Date().getFullYear()+543);
+ const {data,error}=await db.rpc('get_official_number_starts',{p_school_id:state.school.id,p_year:year});
+ if(error)throw Error('โหลดเลขถัดไปไม่สำเร็จ: '+error.message);
+ state.numberStarts=data||[];
+}
 function officialRegistry(){
  const all=state.officialNumbers||[],q=String(state.numberFilter||'').toLowerCase();
  const recordsById=new Map(state.records.map(r=>[r.id,r]));
@@ -288,11 +295,37 @@ function officialRegistry(){
  '<select class="select" name="year">'+options([['all','ทุกปี'],...years.map(y=>[y,y])],state.numberYear)+'</select>'+
  '<select class="select" name="status">'+options([['all','ทุกสถานะ'],...Object.entries(registryStatusLabel)],state.numberStatus)+'</select>'+
  '<button class="secondary" type="submit">ค้นหา</button></form>';
- const configs=isSchoolAdmin()?'<details class="card kp-registry-admin"><summary>ตั้งค่าเลขเริ่มต้นของทะเบียน (แอดมินโรงเรียน)</summary><p class="hint">ใช้เมื่อมีเลขจากทะเบียนกระดาษที่ออกไปแล้ว เลขเริ่มใหม่ต้องสูงกว่าที่เคยใช้ทั้งหมด</p><form id="registry-start-form" class="kp-registry-filters">'+
- '<select class="select" name="series">'+options(Object.entries(registrySeriesLabels).filter(([v])=>!v.startsWith('procurement_')),'request')+'</select>'+
- '<input class="input" type="number" name="year" min="2500" max="2700" value="'+(new Date().getFullYear()+543)+'" required aria-label="ปี พ.ศ.">'+
- '<input class="input" type="number" name="next" min="1" max="9999999" placeholder="เลขถัดไป" required aria-label="เลขถัดไป">'+
- '<button class="primary" type="submit">ตั้งค่าเลขถัดไป</button></form></details>':'';
+ const setupYear=Number(state.numberSetupYear)||(new Date().getFullYear()+543);
+ const setup=(state.numberStarts||[]).reduce((obj,x)=>(obj[x.series]=x,obj),{});
+ const setupSeries=['request','general','acceptance','requisition'];
+ const setupNotes={
+  request:'เลข พว. สำหรับรายงานขอซื้อและขอจ้าง ใช้ลำดับเดียวกัน',
+  general:'ทะเบียนร่วมของรายงานผลการพิจารณาฯ และบันทึกเบิกจ่าย ออกตามลำดับจริง ไม่แยกเลขตามแบบฟอร์ม',
+  acceptance:'เลข ร. ของใบตรวจรับพัสดุและงานจ้าง',
+  requisition:'เลข จ. ของใบเบิกพัสดุ เฉพาะรายการจัดซื้อ'
+ };
+ const configs=isSchoolAdmin()?'<details class="card kp-registry-admin" open>'+
+  '<summary>กำหนดเลขถัดไปอัตโนมัติ (แอดมินโรงเรียน)</summary>'+
+  '<p class="hint">ตั้งเลขเริ่มต้นแยกตามโรงเรียน / ปี พ.ศ. / ประเภททะเบียนได้ทีละประเภท ระบบจะนับเลขต่อเนื่อง ไม่ย้อนกลับไปใช้เลขที่เคยจองหรือยกเลิก</p>'+
+  '<form id="registry-setup-year-form" class="kp-registry-year"><label for="registry-setup-year">ปี พ.ศ. ที่ต้องการตั้งเลข</label>'+
+  '<input id="registry-setup-year" class="input" type="number" min="2500" max="2700" name="year" value="'+setupYear+'" required>'+
+  '<button class="secondary" type="submit">ดูเลขของปีนี้</button></form>'+
+  '<div class="kp-number-setup-grid">'+setupSeries.map(series=>{
+   const item=setup[series]||{last_number:0,registry_max:0,next_number:1};
+   const next=Number(item.next_number)||1;
+   return '<form class="kp-number-setup-card" data-number-setup-series="'+series+'" id="registry-start-form-'+series+'" data-registry-start-form>'+
+    '<h3>'+e(registrySeriesLabels[series])+'</h3>'+
+    '<p class="hint">'+e(setupNotes[series])+'</p>'+
+    '<div class="kp-number-setup-next"><span>เลขถัดไปตามทะเบียน</span><strong>'+next+'/'+setupYear+'</strong></div>'+
+    '<p class="kp-number-setup-used">เลขสูงสุดที่จัดสรร/จองแล้ว '+Math.max(Number(item.last_number)||0,Number(item.registry_max)||0)+'</p>'+
+    '<input type="hidden" name="series" value="'+series+'"><input type="hidden" name="year" value="'+setupYear+'">'+
+    '<label for="registry-next-'+series+'">กำหนดเลขถัดไป (เฉพาะลำดับ)</label>'+
+    '<div class="kp-number-setup-actions"><input id="registry-next-'+series+'" class="input" name="next" type="number" min="'+next+'" max="9999999" step="1" required value="'+next+'">'+
+    '<button class="primary" type="submit">บันทึกเลขถัดไป</button></div>'+
+    '</form>';
+  }).join('')+'</div>'+
+  '<p class="hint kp-number-setup-notice">เช่น เลขล่าสุด 3/2569 ต้องการให้ใบถัดไปเป็น 4/2569 ให้ใส่ 4 • ไม่แก้เลขที่ออกแล้ว • คำนำหน้า พว., ร., จ. ระบบจัดให้เอง</p>'+
+  '</details>':'';
  shell('ทะเบียนคุมเลขเอกสาร','โรงเรียน / งานพัสดุ',heading('ทะเบียนคุมเลขเอกสาร','ตรวจสอบเลขที่ ใช้กับเรื่องอะไร ใครจองและสถานะล่าสุด',btn('รีเฟรช','registry-refresh','secondary'))+
   '<div class="alert">เลขที่ใหม่ออกจากฐานข้อมูลกลาง ป้องกันเลขซ้ำระหว่างเจ้าหน้าที่ เลขยกเลิกจะไม่ถูกนำกลับมาใช้ ข้อมูลเดิมที่ซ้ำต้องตรวจสอบก่อนออกเลขใหม่</div>'+
  summary+'<section class="card"><h2>รายการเลขเอกสาร '+filtered.length+' รายการ</h2>'+filter+
@@ -384,7 +417,7 @@ function moveWizard(delta){
  document.getElementById('procurement-form')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function updateTotal(){const v=state.items.reduce((n,x)=>n+(Number(x.qty)||0)*(Number(x.price)||0),0);const el=document.getElementById('live-total');if(el){el.textContent=v.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท';el.style.color=v>5000?'#bf5140':'#0f8479';}}
-function detail(){const r=state.currentRecord;if(!r){records();return;}const s=state.school;const docs=r.kind==='purchase'?['รายงานขอซื้อพัสดุ','รายละเอียดพัสดุแนบท้าย','รายงานผลการพิจารณาฯ','ใบตรวจรับพัสดุ','ขออนุมัติเบิกจ่าย','ใบเบิกพัสดุ']:['รายงานขอจ้าง','รายละเอียดงานจ้างแนบท้าย','รายงานผลการพิจารณาฯ','ใบตรวจรับงานจ้าง','ขออนุมัติเบิกจ่าย'];shell('เอกสาร '+r.document_number,'งานพัสดุ / รายละเอียดรายการ',heading(e(r.title),'เลขที่ '+e(r.document_number)+'/'+e(r.fiscal_year)+' • '+dateThai(r.document_date),(canEditMainRecord(r)?btn('แก้ไขรายการ','edit-record','secondary'):'')+(canEditDocumentMeta(r)?btn('ข้อมูลเอกสาร / ตรวจรับ / เบิกจ่าย','doc-meta','secondary'):'')+btn('ทะเบียนคุมเลข','registry','secondary')+(canEditDocumentMeta(r)?['memo_number','approval_memo_number','payment_memo_number',...(r.document_meta?.delivery_date?['acceptance_number',...(r.kind==='purchase'?['requisition_number']:[])]:[])].filter(key=>!r.document_meta?.[key]).map(key=>btn('ออกเลข'+(registryFields[key]||key),'registry-issue','secondary','data-field="'+e(key)+'"')).join(''):'')+btn(i('download')+' พิมพ์ / บันทึก PDF','print'))+'<div class="stats-grid">'+[['ประเภท',r.kind==='purchase'?'จัดซื้อ':'จัดจ้าง'],['เลขเอกสาร',r.document_number+'/'+r.fiscal_year],['รายการ',(r.items||[]).length],['วงเงิน',money(r.total_satang)+' บาท']].map(([x,y])=>'<div class="stat"><div class="stat-top">'+x+'</div><strong style="font-size:22px">'+e(y)+'</strong></div>').join('')+'</div><div class="grid-two"><div class="card"><h2>ข้อมูลรายการ</h2><p><b>ผู้ขาย:</b> '+e(r.vendor_name||'-')+'</p><p><b>เหตุผล:</b> '+e(r.reason||'-')+'</p><p><b>งบประมาณ:</b> '+e(r.budget_source||'-')+'</p><p><b>ผู้ตรวจรับ:</b> '+e(r.inspector_name||'เว้นชื่อให้กรอกเองบนเอกสาร')+'</p><p><b>ผู้อำนวยการ:</b> '+e(r.signers?.director||s.director_name||'-')+'</p>'+tableItems(r)+'</div><div class="card"><h2>ชุดเอกสารที่สร้างได้</h2>'+docs.map((d,k)=>'<div class="row" style="border-bottom:1px solid #e9eff1;padding:12px 0"><span style="font-size:13px">'+(k+1)+'. '+d+'</span><span class="tag gray">A4</span></div>').join('')+'<div class="print-toolbar">'+btn(i('eye')+' ดูตัวอย่าง','preview','secondary')+btn(i('download')+' พิมพ์/PDF','print')+'</div><p class="hint">กด พิมพ์/PDF แล้วเลือกปลายทาง «บันทึกเป็น PDF» ในหน้าต่างพิมพ์ของเบราว์เซอร์ จากนั้นเลือกโฟลเดอร์บนคอมพิวเตอร์หรือบันทึกขึ้น Drive ด้วยตนเองได้ โดยเลือกตำแหน่งจัดเก็บไฟล์ได้เอง</p><div class="alert">ต้นแบบรอตรวจรับข้อความและข้อกฎหมายก่อนใช้งานราชการ</div>'+(isAdmin()?'<form id="renumber-form" style="border-top:1px solid #e8eff0;padding-top:15px;margin-top:16px"><h2>แก้ไขเลขเอกสาร</h2><div class="field"><label>เลขใหม่ (ไม่ซ้ำ)</label><input class="input" name="number" type="number" min="1" max="9999999" required value="'+e(r.document_number)+'"></div><div class="field"><label>เหตุผลในการแก้เลข</label><input class="input" name="reason" minlength="5" required placeholder="ระบุเหตุผลอย่างน้อย 5 ตัวอักษร"></div><button class="secondary" type="submit">ยืนยันแก้เลข</button><p class="hint">ระบบเก็บเลขเดิม ผู้แก้ไข และเหตุผลในประวัติ</p></form>':'')+'</div></div>');}
+function detail(){const r=state.currentRecord;if(!r){records();return;}const s=state.school;const docs=r.kind==='purchase'?['รายงานขอซื้อพัสดุ','รายละเอียดพัสดุแนบท้าย','รายงานผลการพิจารณาฯ','ใบตรวจรับพัสดุ','ขออนุมัติเบิกจ่าย','ใบเบิกพัสดุ']:['รายงานขอจ้าง','รายละเอียดงานจ้างแนบท้าย','รายงานผลการพิจารณาฯ','ใบตรวจรับงานจ้าง','ขออนุมัติเบิกจ่าย'];shell('เอกสาร '+r.document_number,'งานพัสดุ / รายละเอียดรายการ',heading(e(r.title),'เลขที่ '+e(r.document_number)+'/'+e(r.fiscal_year)+' • '+dateThai(r.document_date),(canEditMainRecord(r)?btn('แก้ไขรายการ','edit-record','secondary'):'')+(canEditDocumentMeta(r)?btn('ข้อมูลเอกสาร / ตรวจรับ / เบิกจ่าย','doc-meta','secondary'):'')+btn('ทะเบียนคุมเลข','registry','secondary')+(canEditDocumentMeta(r)?['memo_number','approval_memo_number','payment_memo_number',...(r.document_meta?.delivery_date?['acceptance_number',...(r.kind==='purchase'?['requisition_number']:[])]:[])].filter(key=>!r.document_meta?.[key]).map(key=>btn('ออกเลข'+(registryFields[key]||key),'registry-issue','secondary','data-field="'+e(key)+'"')).join(''):'')+btn(i('download')+' พิมพ์ / บันทึก PDF','print'))+'<div class="stats-grid">'+[['ประเภท',r.kind==='purchase'?'จัดซื้อ':'จัดจ้าง'],['เลขเอกสาร',r.document_number+'/'+r.fiscal_year],['รายการ',(r.items||[]).length],['วงเงิน',money(r.total_satang)+' บาท']].map(([x,y])=>'<div class="stat"><div class="stat-top">'+x+'</div><strong style="font-size:22px">'+e(y)+'</strong></div>').join('')+'</div><div class="grid-two"><div class="card"><h2>ข้อมูลรายการ</h2><p><b>ผู้ขาย:</b> '+e(r.vendor_name||'-')+'</p><p><b>เหตุผล:</b> '+e(r.reason||'-')+'</p><p><b>งบประมาณ:</b> '+e(r.budget_source||'-')+'</p><p><b>ผู้ตรวจรับ:</b> '+e(r.inspector_name||'เว้นชื่อให้กรอกเองบนเอกสาร')+'</p><p><b>ผู้อำนวยการ:</b> '+e(r.signers?.director||s.director_name||'-')+'</p>'+tableItems(r)+'</div><div class="card"><h2>ชุดเอกสารที่สร้างได้</h2>'+docs.map((d,k)=>'<div class="row" style="border-bottom:1px solid #e9eff1;padding:12px 0"><span style="font-size:13px">'+(k+1)+'. '+d+'</span><span class="tag gray">A4</span></div>').join('')+'<div class="print-toolbar">'+btn(i('eye')+' ดูตัวอย่าง','preview','secondary')+btn(i('download')+' พิมพ์/PDF','print')+'</div><p class="hint">กด พิมพ์/PDF แล้วเลือกปลายทาง «บันทึกเป็น PDF» ในหน้าต่างพิมพ์ของเบราว์เซอร์ จากนั้นเลือกโฟลเดอร์บนคอมพิวเตอร์หรือบันทึกขึ้น Drive ด้วยตนเองได้ โดยเลือกตำแหน่งจัดเก็บไฟล์ได้เอง</p><div class="alert">ต้นแบบรอตรวจรับข้อความและข้อกฎหมายก่อนใช้งานราชการ</div>'+'</div></div>');}
 function tableItems(r){return '<div class="table-scroller"><table><thead><tr><th>รายการ</th><th>จำนวน</th><th>ราคา</th></tr></thead><tbody>'+(r.items||[]).map(x=>'<tr><td>'+e(x.name)+'</td><td>'+e(x.qty)+' '+e(x.unit)+'</td><td>'+money(Number(x.price_satang)*Number(x.qty))+'</td></tr>').join('')+'</tbody></table></div>';}
 
 async function ensureAcceptanceNumber(){
@@ -711,7 +744,7 @@ if(['edit-staff','password-staff','cancel-staff','refresh-staff','toggle-staff',
   }
 }
 if(action==='registry'||action==='registry-refresh'){
- if(!state.demo){await Promise.all([loadRecords(),loadOfficialNumbers()]);}
+ if(!state.demo){await Promise.all([loadRecords(),loadOfficialNumbers(),loadOfficialNumberStarts()]);}
  state.page='registry';return render();
 }
 if(action==='registry-open'){
@@ -749,7 +782,7 @@ if(['registry-use','registry-edit','registry-void','registry-resolve'].includes(
  }
  const {error}=action==='registry-resolve'?await db.rpc('resolve_official_number_conflict',{p_registry_id:n.id,p_new_serial:next,p_reason:reason}):await db.rpc('manage_official_number',{p_registry_id:n.id,p_action:act,p_new_serial:next,p_reason:reason});
  if(error)return notify('ดำเนินการไม่สำเร็จ: '+error.message,true);
- await Promise.all([loadOfficialNumbers(),loadRecords()]);
+ await Promise.all([loadOfficialNumbers(),loadRecords(),loadOfficialNumberStarts()]);
  if(state.currentRecord)state.currentRecord=state.records.find(r=>r.id===state.currentRecord.id)||state.currentRecord;
  state.flash='บันทึกสถานะเลขทะเบียนและประวัติแล้ว';state.page='registry';return render();
 }
@@ -901,16 +934,34 @@ if(form.id==='registry-filter-form'){
  state.numberStatus=String(f.status||'all');state.numberYear=String(f.year||'all');
  return officialRegistry();
 }
-if(form.id==='registry-start-form'){
+if(form.id==='registry-setup-year-form'){
  if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
- if(!confirm('ยืนยันตั้งค่าเลขถัดไป? ตรวจสอบเลขจากทะเบียนกระดาษก่อนบันทึก'))return;
+ const year=Number(f.year);
+ if(!Number.isInteger(year)||year<2500||year>2700)return notify('ปี พ.ศ. ต้องอยู่ระหว่าง 2500–2700',true);
+ state.numberSetupYear=year;
+ await loadOfficialNumberStarts();
+ return officialRegistry();
+}
+if(form.matches('[data-registry-start-form]')){
+ if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
+ const year=Number(f.year),next=Number(f.next),series=String(f.series||'');
+ const current=state.numberStarts?.find(x=>x.series===series);
+ if(!['request','general','acceptance','requisition'].includes(series)||
+    !Number.isInteger(year)||year<2500||year>2700||
+    !Number.isInteger(next)||next<1||next>9999999)return notify('เลขและปีไม่ถูกต้อง',true);
+ if(year!==Number(state.numberSetupYear||new Date().getFullYear()+543))return notify('ปีที่เลือกเปลี่ยนไป กรุณาโหลดทะเบียนใหม่',true);
+ if(next<Number(current?.next_number||1))return notify('ไม่สามารถตั้งเลขต่ำกว่าที่ระบบเคยจัดสรรได้',true);
+ if(next===Number(current?.next_number||1))return notify('เลขถัดไปเป็น '+next+'/'+year+' อยู่แล้ว ไม่ต้องเปลี่ยน');
+ if(!confirm('ตั้งเลขถัดไปของทะเบียน '+(registrySeriesLabels[series]||series)+' เป็น '+next+'/'+year+' ใช่หรือไม่? เลขที่ออกไปแล้วจะไม่เปลี่ยน'))return;
  const {error}=await db.rpc('set_official_number_start',{
-  p_school_id:state.school.id,p_series:f.series,p_year:Number(f.year),p_next:Number(f.next)
+  p_school_id:state.school.id,p_series:series,p_year:year,p_next:next
  });
  if(error)return notify('ตั้งค่าเลขไม่สำเร็จ: '+error.message,true);
- await loadOfficialNumbers();state.flash='ตั้งค่าเลขเริ่มต้นเรียบร้อย';return officialRegistry();
+ await Promise.all([loadOfficialNumbers(),loadOfficialNumberStarts()]);
+ state.flash='ตั้งค่าเลขถัดไป '+next+'/'+year+' สำหรับ '+registrySeriesLabels[series]+' สำเร็จ';
+ return officialRegistry();
 }
-if(form.id==='renumber-form'){if(!isAdmin())return notify('ไม่มีสิทธิ์แก้เลข',true);const no=Number(f.number);if(state.demo){if(state.records.some(x=>x!==state.currentRecord&&x.kind===state.currentRecord.kind&&x.fiscal_year===state.currentRecord.fiscal_year&&x.document_number===no))return notify('เลขนี้มีอยู่แล้ว',true);state.currentRecord.document_number=no;state.flash='แก้เลขในโหมดตัวอย่างแล้ว';return render();}const {error}=await db.rpc('change_procurement_number',{p_record_id:state.currentRecord.id,p_new_number:no,p_reason:f.reason});if(error)return notify(error.message,true);await loadRecords();state.currentRecord=state.records.find(x=>x.id===state.currentRecord.id);state.flash='บันทึกการแก้ไขเลขเอกสารแล้ว';return render();}
+
 if(form.id==='doc-meta-form'){if(!canEditDocumentMeta(state.currentRecord))return notify('ไม่มีสิทธิ์แก้ไขข้อมูลเอกสารนี้',true);const m=docMetaValue(f,state.currentRecord.document_meta||{});const total=Number(state.currentRecord.total_satang||0)/100;if(['withholding_baht','fine_baht','payable_baht'].some(k=>m[k]!==undefined&&!(Number(m[k])>=0&&Number.isFinite(Number(m[k])))))return notify('กรุณากรอกยอดเงินที่ไม่ติดลบ',true);if(Number(m.withholding_baht||0)+Number(m.fine_baht||0)>total||m.payable_baht!==undefined&&Number(m.payable_baht)>total)return notify('ยอดหักหรือยอดจ่ายจริงเกินวงเงินจัดซื้อ/จัดจ้าง กรุณาตรวจสอบ',true);if(state.demo){state.currentRecord.document_meta=m;state.page='detail';return notify('อัปเดตเอกสารสาธิตแล้ว');}const {error}=await db.rpc('set_procurement_document_meta',{p_record_id:state.currentRecord.id,p_meta:m});if(error)throw Error('บันทึกข้อมูลเอกสารไม่สำเร็จ: '+error.message);state.currentRecord.document_meta=m;await loadRecords();state.page='detail';return notify('บันทึกเลขที่หนังสือและข้อมูลเอกสารแล้ว');}
  if(form.id==='procurement-form'){const editing=!!state.editingRecordId;const original=editing?state.records.find(x=>x.id===state.editingRecordId):null;if(editing&&!canEditMainRecord(original))return notify('ไม่มีสิทธิ์หรือรายการไม่อยู่ในสถานะฉบับร่าง',true);if(!editing&&!state.demo){await refreshSubscription();if(!canCreate())return notify('สิทธิ์สร้างเอกสารหมดอายุแล้ว กรุณาติดต่อเจ้าของแพลตฟอร์ม',true);}collectDraft();const d=state.draft;const docMeta=docMetaValue(d,editing?original?.document_meta||{}:{});const items=state.items.map(x=>({name:String(x.name).trim(),qty:Number(x.qty),unit:String(x.unit).trim(),price_satang:Math.round(Number(x.price)*100)}));let total=items.reduce((n,x)=>n+x.qty*x.price_satang,0);if(!items.length||items.some(x=>!x.name||!x.qty||!x.unit||!x.price_satang))return notify('กรุณากรอกรายการ จำนวน หน่วย และราคาให้ครบ',true);if(total<=0||total>500000)return notify('วงเงินต้องมากกว่า 0 และไม่เกิน 5,000 บาท',true);if(!d.title||!d.budget_source)return notify('กรุณากรอกเรื่องและงบประมาณ',true);
 if(editing){if(state.demo){Object.assign(original,{document_date:d.document_date,title:d.title,reason:d.reason||'',budget_source:d.budget_source,vendor_name:d.vendor_name||'',department:d.department||'',vendor_address:d.vendor_address??original?.vendor_address??'',inspector_name:d.inspector_name||'',due_date:d.due_date||null,items,total_satang:Math.round(total),document_meta:docMeta});state.currentRecord=original;}else{const payload={p_record_id:original.id,p_expected_updated_at:original.updated_at,p_document_date:d.document_date,p_title:d.title,p_reason:d.reason||'',p_budget_source:d.budget_source,p_vendor_name:d.vendor_name||'',p_department:d.department||'',p_vendor_address:d.vendor_address??original?.vendor_address??'',p_inspector_name:d.inspector_name||'',p_due_date:d.due_date||null,p_items:items};const {error}=await db.rpc('update_procurement_draft',payload);if(error)return notify('แก้ไขรายการไม่สำเร็จ: '+error.message,true);const {error:metaError}=await db.rpc('set_procurement_document_meta',{p_record_id:original.id,p_meta:docMeta});await loadRecords();state.currentRecord=state.records.find(x=>x.id===original.id);if(metaError)state.flash='บันทึกข้อมูลหลักแล้ว แต่ข้อมูลประกอบเอกสารไม่สำเร็จ: '+metaError.message;}state.editingRecordId=null;state.page='detail';state.flash=state.flash&&state.flash.startsWith('บันทึกข้อมูลหลักแล้ว')?state.flash:'แก้ไขรายการสำเร็จ โดยคงเลขทะเบียนเดิม';return render();}
