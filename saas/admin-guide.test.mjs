@@ -12,7 +12,7 @@ test('admin manual opens school data first and has no overview or mock screensho
  assert.match(first,/การตั้งค่าข้อมูลโรงเรียน/);
  assert.doesNotMatch(first,/ภาพรวมคู่มือ|data-section="overview"|kp-ag-welcome|kp-ag-topic-card/);
  assert.doesNotMatch(first,/kp-ag-graphic|ภาพจำลองหน้าจอ|kp-ag-mini-sidebar/);
- assert.equal((first.match(/data-action="admin-guide-section"/g)||[]).length,5);
+ assert.equal((first.match(/data-section="(?:school|signers|numbers|templates|users)"/g)||[]).length,6,'five submenu buttons plus return to first chapter');
  const fallback=adminGuideHtml('overview');
  assert.match(fallback,/การตั้งค่าข้อมูลโรงเรียน/);
  assert.doesNotMatch(fallback,/data-section="overview"/);
