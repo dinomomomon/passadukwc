@@ -757,3 +757,30 @@ table td {
  #procurement-form .kp-wizard-evidence {padding:0 10px;}
  #procurement-form .kp-wizard-evidence > summary span {display:block;padding:5px 0 0;}
 }
+
+
+/* Audit-safe removal of draft procurement: confirm before hiding any record. */
+.kp-danger-button {
+ display:inline-flex;align-items:center;justify-content:center;
+ color:#bc3030!important;background:#fff5f4!important;
+ border:1px solid #f4c4bf!important;border-radius:9px!important;
+ margin-left:5px;
+}
+.kp-danger-button:hover{background:#ffe7e5!important;color:#9a2020!important}
+.kp-delete-dialog {
+ border:0;border-radius:20px;padding:0;
+ width:min(470px,calc(100vw - 28px));
+ background:transparent;color:#172f4f;
+ box-shadow:0 18px 50px rgba(7,25,56,.25);
+}
+.kp-delete-dialog::backdrop{background:rgba(5,24,59,.5)}
+.kp-delete-dialog-panel{background:#fff;padding:26px;border-radius:20px;font-family:Sarabun,Tahoma,sans-serif}
+.kp-delete-icon{display:grid;place-items:center;width:45px;height:45px;border-radius:50%;background:#fff0ee;color:#c12e29;font-size:25px;font-weight:900;margin-bottom:12px}
+.kp-delete-dialog h2{font-size:20px;color:#112f5f;margin:0 0 12px}
+.kp-delete-dialog p{line-height:1.8;margin:0 0 15px;font-size:14px}
+.kp-delete-warning{padding:12px;border:1px solid #ffdaab;background:#fff9ee;border-radius:10px;font-size:12px;line-height:1.8}
+.kp-delete-dialog-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px;margin-top:19px}
+.kp-danger-confirm{background:#c33731!important;border:1px solid #c33731!important;color:#fff!important;border-radius:9px;padding:10px 17px;font-weight:800;cursor:pointer}
+.kp-danger-confirm:hover{background:#a82925!important}
+.kp-danger-confirm:disabled{opacity:.55;cursor:progress}
+@media(max-width:480px){.kp-delete-dialog-panel{padding:20px}.kp-delete-dialog-actions>button{flex:1}}
