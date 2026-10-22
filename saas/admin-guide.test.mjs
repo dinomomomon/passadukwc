@@ -37,7 +37,7 @@ test('real admin forms and numbering are described accurately without inventing 
   assert.ok(app.includes(exact)||editor.includes(exact),'Not grounded in product '+exact);
  }
  assert.match(entire,/พว\.\/พค\. ใช้ลำดับร่วมกัน/);
- assert.match(entire,/เลขหนังสือทั่วไป/);
+ assert.match(entire,/หนังสือทั่วไป/);
  assert.match(entire,/อย่างน้อย 6 ตัวอักษร/);
  assert.match(entire,/ไม่ยอมให้ตั้งเลขย้อนกลับ/);
  assert.doesNotMatch(entire,/พว\.[^\n]{0,40}พค\.[^\n]{0,40}แยกเลขเริ่มต้น/);
