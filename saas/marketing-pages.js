@@ -1,10 +1,9 @@
 /* Public school procurement marketing pages; no logged-in or private school data. */
 import {buildDocuments} from './print.js';
-import {guidePageHtml} from './user-guide.js';
 
-export const publicPageIds=['home','features','examples','guide','faq','contact'];
+export const publicPageIds=['home','features','examples','faq','contact'];
 const safe=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-const nav=[['home','หน้าแรก'],['features','ฟีเจอร์'],['examples','ตัวอย่างเอกสาร'],['guide','คู่มือการใช้งาน'],['faq','คำถามที่พบบ่อย'],['contact','ติดต่อเรา']];
+const nav=[['home','หน้าแรก'],['features','ฟีเจอร์'],['examples','ตัวอย่างเอกสาร'],['faq','คำถามที่พบบ่อย'],['contact','ติดต่อเรา']];
 const urlFor=page=>page==='home'?'/':'/?page='+encodeURIComponent(page);
 const link=(page,label,cls='')=>'<a href="'+urlFor(page)+'" data-action="public-page" data-page="'+page+'" class="'+cls+'">'+label+'</a>';
 const icon=(name)=>({
@@ -135,7 +134,7 @@ const faqPage=()=>'<section class="kp-pub-subhero kp-pub-container"><div>'+badge
 
 export function publicPageHtml(page='home'){
  const id=publicPageIds.includes(page)?page:'home';
- const content={home,features,examples,guide:guidePageHtml,faq:faqPage,contact:()=>coming('contact')}[id]();
+ const content={home,features,examples,faq:faqPage,contact:()=>coming('contact')}[id]();
  return '<div class="kp-public">'+header(id)+'<main id="main-content">'+content+'</main>'+footer()+'</div>';
 }
 
