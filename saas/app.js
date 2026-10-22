@@ -30,6 +30,7 @@ import {docMetaInputs,docMetaValue,docMetaWizardInputs} from './document-meta.js
 import {createTemplateEditor,activeTemplateLayouts,applyDocumentTemplates} from './template-builder.js';
 import {installStateNotices} from './notification-popup.js';
 import {publicPageIds,publicPageHtml,mountPublicDocument,filterPublicContent} from './marketing-pages.js';
+import {adminGuideHtml,adminGuideIds,adminGuideTopics} from './admin-guide.js';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 const app=document.getElementById('app');
 const bootStage=phase=>{try{window.__kruBootStage=phase;document.documentElement.dataset.kruBoot=phase;sessionStorage.setItem('kru_boot_stage',phase);}catch{}};
@@ -41,7 +42,7 @@ const demoRecords=[
  mkDemo('demo-2','hire',1,'จ้างทำป้ายประชาสัมพันธ์','ร้านป้ายตัวอย่าง',980,'2026-10-17',[{name:'งานออกแบบและจัดทำป้าย',qty:1,unit:'งาน',price_satang:98000}]),
  mkDemo('demo-3','purchase',2,'ซื้ออุปกรณ์การเรียน','ร้านศึกษาภัณฑ์',1250,'2026-10-18',[{name:'อุปกรณ์การเรียน',qty:5,unit:'ชุด',price_satang:25000}])
 ];
-const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:'',memberEditingId:null,memberResetId:null,officialNumbers:[],numberFilter:'',numberSeries:'all',numberStatus:'all',numberYear:'all',schoolTemplates:{},templateVersions:{}};
+const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:'',memberEditingId:null,memberResetId:null,officialNumbers:[],numberFilter:'',numberSeries:'all',numberStatus:'all',numberYear:'all',schoolTemplates:{},templateVersions:{},adminGuideSection:'overview'};
 installStateNotices(state);
 const money=n=>(Number(n||0)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const dateThai=d=>d?new Date(d+'T12:00:00+07:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
@@ -221,7 +222,7 @@ async function refreshSubscription(){
 const canCreate=()=>state.demo||state.subscription?.can_create===true;
 function createAction(){return canCreate()?btn(i('plus')+' สร้างรายการใหม่','create'):
  '<button type="button" class="secondary" data-action="subscription-help">สิทธิ์สร้างเอกสารหมดอายุ</button>';}
-function sidebar(){let items=[...menu];if(isSchoolAdmin()){items.push(['members','จัดการผู้ใช้งาน',i('users')]);items.push(['templates','แม่แบบเอกสาร',i('file')]);}if(isAdmin())items.push(['settings','ข้อมูลโรงเรียน',i('settings')]);return '<aside class="sidebar"><div class="side-brand">'+logo()+'</div>'+schoolIdentity()+'<div class="side-menu-label">งานพัสดุ</div>'+items.map(([act,label,icon])=>'<button class="navlink '+(state.page===act?'active':'')+'" data-action="'+act+'">'+icon+label+'</button>').join('')+(state.owner?'<div class="side-menu-label">เจ้าของระบบ</div><button data-action="owner" class="navlink">'+i('building')+'บริหารโรงเรียน</button>':'')+'<div class="side-footer">'+(state.demo?'โหมดตัวอย่าง (ไม่เก็บข้อมูล)':'บัญชีโรงเรียนออนไลน์')+'<br>ครูพัสดุ v0.1 · รุ่นทดลอง</div></aside>';}
+function sidebar(){let items=[...menu];if(isSchoolAdmin()){items.push(['members','จัดการผู้ใช้งาน',i('users')]);items.push(['templates','แม่แบบเอกสาร',i('file')]);}if(isAdmin())items.push(['settings','ข้อมูลโรงเรียน',i('settings')]);if(isSchoolAdmin())items.push(['admin-guide','คู่มือผู้ดูแลระบบ',i('book')]);return '<aside class="sidebar"><div class="side-brand">'+logo()+'</div>'+schoolIdentity()+'<div class="side-menu-label">งานพัสดุ</div>'+items.map(([act,label,icon])=>'<button class="navlink '+(state.page===act?'active':'')+'" data-action="'+act+'">'+icon+label+'</button>').join('')+(state.owner?'<div class="side-menu-label">เจ้าของระบบ</div><button data-action="owner" class="navlink">'+i('building')+'บริหารโรงเรียน</button>':'')+'<div class="side-footer">'+(state.demo?'โหมดตัวอย่าง (ไม่เก็บข้อมูล)':'บัญชีโรงเรียนออนไลน์')+'<br>ครูพัสดุ v0.1 · รุ่นทดลอง</div></aside>';}
 function shell(title,sub,body){const top='<header class="topbar"><div class="top-school">'+schoolLogo('topbar')+'<div><h2>'+e(state.school?.name||'ครูพัสดุ')+'</h2><p>'+e(sub||'ระบบจัดซื้อจัดจ้างออนไลน์')+'</p></div></div>'+accountHeader()+'</header>';app.innerHTML='<div class="shell">'+sidebar()+'<div class="workspace">'+top+'<div class="content">'+(state.demo?'<div class="alert">โหมดตัวอย่าง — ข้อมูลและเอกสารไม่ถูกบันทึกบนเซิร์ฟเวอร์ กรุณาเข้าสู่ระบบเพื่อใช้งานจริง</div>':subscriptionBanner())+msg()+body+'<div class="footer">ครูพัสดุ • KRU PASADU — ระบบทดลองสำหรับพัฒนาและตรวจรับ</div></div></div></div><div class="mobile-menu">'+menu.map(([a,t,ic])=>'<button data-action="'+a+'">'+ic+'<span>'+t.replace('ทะเบียนจัดซื้อจัดจ้าง','ทะเบียน')+'</span></button>').join('')+'</div>';}
 function heading(title,sub,action=''){return '<div class="page-title"><div><h1>'+title+'</h1><p>'+sub+'</p></div>'+action+'</div>';}
 const badge=r=>'<span class="tag '+(r.state==='draft'?'amber':'')+'">'+({draft:'ฉบับร่าง',review:'รอตรวจสอบ',approved:'อนุมัติ',received:'ตรวจรับแล้ว',completed:'เสร็จสิ้น',cancelled:'ยกเลิก'}[r.state]||'ร่าง')+'</span>';
@@ -737,7 +738,15 @@ function render(){
  if(state.page.startsWith('public-')&&publicPageIds.includes(state.page.slice(7))){
   publicMarketingPage(state.page.slice(7));return;
  }
- if(!state.user&&!state.demo){if(state.page==='auth')auth();else if(state.page==='verify-email')verificationPending();else landing();return;}if(state.user&&!state.owner&&!state.school&&!state.demo){waitAccess();return;}if(state.owner&&!state.school&&!state.demo){owner();return;}if(!state.school){state.school=demoSchool;}if(state.page==='records')return records();if(state.page==='registry')return officialRegistry();if(state.page==='templates')return templateEditor.view();if(state.page==='create')return form();if(state.page==='detail')return detail();if(state.page==='docmeta')return editDocumentMeta();if(state.page==='preview')return preview();if(state.page==='members')return members();if(state.page==='settings')return settings();if(state.page==='owner')return owner();dashboard();}
+ if(!state.user&&!state.demo){if(state.page==='auth')auth();else if(state.page==='verify-email')verificationPending();else landing();return;}if(state.user&&!state.owner&&!state.school&&!state.demo){waitAccess();return;}if(state.owner&&!state.school&&!state.demo){owner();return;}if(!state.school){state.school=demoSchool;}if(state.page==='records')return records();if(state.page==='registry')return officialRegistry();if(state.page==='templates')return templateEditor.view();if(state.page==='create')return form();if(state.page==='detail')return detail();if(state.page==='docmeta')return editDocumentMeta();if(state.page==='preview')return preview();if(state.page==='members')return members();if(state.page==='settings')return settings();if(state.page==='admin-guide')return renderAdminGuide();if(state.page==='owner')return owner();dashboard();}
+const adminGuideTopicsFind=id=>adminGuideTopics.find(x=>x.id===id);
+function renderAdminGuide(){
+ if(!isSchoolAdmin()){state.page='dashboard';notify('คู่มือนี้สำหรับแอดมินโรงเรียนเท่านั้น',true);return dashboard();}
+ const section=adminGuideIds.includes(state.adminGuideSection)?state.adminGuideSection:'overview';
+ shell('คู่มือผู้ดูแลระบบ','สำหรับแอดมินโรงเรียน',
+  heading('คู่มือผู้ดูแลระบบ','ดูภาพประกอบแล้วทำตามทีละขั้น หรือเปิดเมนูตั้งค่าจริง')+
+  adminGuideHtml(section));
+}
 async function loadUser(){if(!state.session){state.user=null;state.profile=null;state.owner=false;return;}const {data:user}=await db.auth.getUser();state.user=user?.user||null;if(!state.user){state.profile=null;return;}const [admin,memberships,profile]=await Promise.all([db.from('platform_admins').select('user_id').eq('user_id',state.user.id),db.from('memberships').select('school_id,role,schools(*)').eq('user_id',state.user.id).eq('active',true),db.from('profiles').select('full_name').eq('id',state.user.id).maybeSingle()]);if(admin.error)console.warn(admin.error.message);if(memberships.error)console.warn(memberships.error.message);if(profile.error)console.warn(profile.error.message);state.profile=profile.data||{full_name:state.user?.user_metadata?.full_name||''};state.owner=!!admin.data?.length;state.memberships=memberships.data||[];state.school=state.memberships[0]?.schools||null;if(state.owner){await loadOwner();}if(state.school)await Promise.all([loadRecords(),refreshSubscription(),templateEditor.load()]);}
 async function loadOwner(){
   const requests=[
@@ -776,6 +785,23 @@ if(action==='public-document'){
  return;
 }
 
+if(action==='admin-guide'){
+ if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้นที่เปิดคู่มือนี้ได้',true);
+ state.adminGuideSection='overview';state.page='admin-guide';render();return;
+}
+if(action==='admin-guide-section'){
+ if(!isSchoolAdmin())return notify('ไม่มีสิทธิ์เข้าถึงคู่มือผู้ดูแลระบบ',true);
+ const section=String(el?.dataset?.section||'overview');
+ if(section!=='overview'&&!adminGuideIds.includes(section))return notify('ไม่พบหัวข้อคู่มือ',true);
+ state.adminGuideSection=section;state.page='admin-guide';render();
+ document.querySelector('.content')?.scrollIntoView({block:'start'});return;
+}
+if(action==='admin-guide-open'){
+ if(!isSchoolAdmin())return notify('ไม่มีสิทธิ์เปิดเมนูนี้',true);
+ const topic=adminGuideTopicsFind(state.adminGuideSection);
+ if(!topic||topic.action!==String(el?.dataset?.target||''))return notify('ไม่พบเมนูตั้งค่าที่เกี่ยวข้อง',true);
+ return go(topic.action,{dataset:{}});
+}
 if(action==='templates'){if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);return templateEditor.open();}
 if(action.startsWith('tpl-'))return templateEditor.action(action,el);
 if(['edit-staff','password-staff','cancel-staff','refresh-staff','toggle-staff','remove-staff'].includes(action)){
