@@ -29,6 +29,7 @@ import {buildDocuments,escapeHtml as e,normalizeMemoPrefix} from './print.js';
 import {docMetaInputs,docMetaValue,docMetaWizardInputs} from './document-meta.js';
 import {createTemplateEditor,activeTemplateLayouts,applyDocumentTemplates} from './template-builder.js';
 import {installStateNotices} from './notification-popup.js';
+import {publicPageIds,publicPageHtml,mountPublicDocument,filterPublicContent} from './marketing-pages.js';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 const app=document.getElementById('app');
 const bootStage=phase=>{try{window.__kruBootStage=phase;document.documentElement.dataset.kruBoot=phase;sessionStorage.setItem('kru_boot_stage',phase);}catch{}};
@@ -100,7 +101,17 @@ function msg(){let x=(state.error?'<div class="alert danger-alert">'+e(state.err
 function notify(text,bad=false){if(bad)state.error=text;else state.flash=text;render();}
 function btn(text,action,cl='primary',attrs=''){return '<button type="button" class="'+cl+'" data-action="'+action+'" '+attrs+'>'+text+'</button>';}
 function landmark(){return '<div class="preview-device"><div class="preview-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="preview-content"><div class="preview-sidebar">'+Array(6).fill(0).map((_,ix)=>'<div class="preview-menu '+(ix===0?'active':'')+'"></div>').join('')+'</div><div class="preview-body"><div class="preview-title"></div><div class="preview-cards"><div class="preview-card"></div><div class="preview-card"></div><div class="preview-card"></div></div><div class="preview-rows">'+Array(7).fill('<div class="preview-row"></div>').join('')+'</div></div></div></div>';}
-function landing(){app.innerHTML='<div class="landing"><div class="land-nav">'+logo()+btn('เข้าสู่ระบบ →','login','secondary')+'</div><div class="land-hero"><div><span class="pill">✦ ระบบพัสดุยุคใหม่สำหรับทุกโรงเรียน</span><h1>งานพัสดุง่ายขึ้น<br>ด้วย <em>ครูพัสดุ</em></h1><p class="lead">จัดซื้อ จัดจ้าง ออกเลขเอกสารจากฐานข้อมูลเดียวกัน สร้างเอกสารราชการและพิมพ์ PDF ได้ในไม่กี่ขั้นตอน</p><div class="land-actions">'+btn('ทดลองดูระบบตัวอย่าง →','demo','primary')+btn('สมัครบัญชีโรงเรียน','signup','secondary')+'</div><div class="land-details"><span>✓ ออนไลน์</span><span>✓ เลขไม่ซ้ำ</span><span>✓ แบบเอกสาร A4</span></div><p class="muted" style="font-size:12px;margin-top:22px">เวอร์ชันทดลอง ยังอยู่ระหว่างตรวจรับข้อความราชการและแบบเอกสาร</p></div>'+landmark()+'</div></div>';}
+function landing(){app.innerHTML=publicPageHtml('home');}
+function publicMarketingPage(page){
+ if(!publicPageIds.includes(page))return landing();
+ app.innerHTML=publicPageHtml(page);
+ if(page==='examples')mountPublicDocument(0);
+}
+function publicQueryPage(){
+ const value=new URLSearchParams(window.location.search).get('page')||'home';
+ return publicPageIds.includes(value)&&value!=='home'?'public-'+value:'landing';
+}
+
 
 const KP_REMEMBER_EMAIL='kru_pasadu_remember_email';
 function rememberedEmail(){
@@ -712,7 +723,11 @@ function ownerSubscriptionsPanel(){
 
 function owner(){if(!state.owner){notify('ไม่มีสิทธิ์เจ้าของแพลตฟอร์ม',true);return;}const schools=state.schools||[],req=state.schoolRequests||[];app.innerHTML='<div class="shell"><aside class="sidebar"><div class="side-brand">'+logo()+'</div><div class="side-menu-label">แพลตฟอร์ม</div><button class="navlink active" data-action="owner">'+i('building')+'โรงเรียนทั้งหมด</button><button class="navlink" data-action="signout">'+i('logout')+'ออกจากระบบ</button><div class="side-footer">SUPER ADMIN · ครูพัสดุ</div></aside><div class="workspace"><header class="topbar"><div><h2>ครูพัสดุ · เจ้าของแพลตฟอร์ม</h2><p>บริหารการเปิดใช้โรงเรียน</p></div>'+accountHeader()+'</header><div class="content">'+msg()+heading('บริหารโรงเรียน','โรงเรียนและคำขอเปิดใช้งานทั่วทั้งแพลตฟอร์ม')+'<div class="stats-grid"><div class="stat"><div class="stat-top">โรงเรียนทั้งหมด</div><strong>'+schools.length+'</strong></div><div class="stat"><div class="stat-top">คำขอรออนุมัติ</div><strong>'+req.length+'</strong></div></div><div class="grid-two"><section class="card"><h2>คำขอเปิดใช้งาน</h2>'+(req.length?req.map(x=>'<div class="row" style="padding:14px 0;border-bottom:1px solid #e4eded"><div><b>'+e(x.school_name)+'</b><br><small class="muted">'+e(x.requester_email)+'</small></div>'+btn('อนุมัติ','approve-school','primary','data-id="'+e(x.request_id)+'"')+'</div>').join(''):'<p class="muted">ยังไม่มีคำขอที่รออนุมัติ</p>')+'</section><form class="card" id="new-school-form"><h2>สร้างโรงเรียนใหม่</h2><div class="field"><label>ชื่อโรงเรียน</label><input name="name" class="input" required></div><div class="field"><label>อีเมลแอดมินโรงเรียน (ต้องสมัครบัญชีแล้ว)</label><input name="email" class="input" type="email" required></div><button type="submit" class="primary">สร้างโรงเรียน</button></form></div><section class="card"><h2>โรงเรียนที่เปิดใช้งาน</h2><div class="table-scroller"><table><thead><tr><th>โรงเรียน</th><th>จังหวัด</th><th>สถานะ</th></tr></thead><tbody>'+schools.map(s=>'<tr><td>'+e(s.name)+'</td><td>'+e(s.province||'-')+'</td><td><span class="tag">'+e(s.status)+'</span></td></tr>').join('')+'</tbody></table></div></section>'+ownerSubscriptionsPanel()+'<p class="footer">บริหารข้อมูลในแต่ละโรงเรียนผ่านสมาชิกโรงเรียน ไม่อ่านเอกสารลูกค้าโดยไม่จำเป็น</p></div></div></div>';}
 function waitAccess(){app.innerHTML='<div class="landing"><div class="land-nav">'+logo()+btn('ออกจากระบบ','signout','secondary')+'</div><div style="max-width:660px;margin:65px auto;padding:25px"><div class="card">'+msg()+'<span class="pill">บัญชีพร้อมแล้ว</span><h1>รอรับสิทธิ์เข้าถึงโรงเรียน</h1><p>อีเมลบัญชี: <b>'+e(state.user.email)+'</b></p><p>หากโรงเรียนของคุณมีผู้ดูแลแล้ว ให้แจ้งอีเมลนี้แก่แอดมินเพื่อเพิ่มเข้าระบบ หรือส่งคำขอเปิดโรงเรียนใหม่ได้ด้านล่าง</p><form id="request-school-form"><div class="field"><label>ชื่อโรงเรียนที่ต้องการเปิดใช้งาน</label><input class="input" name="name" required placeholder="ชื่อโรงเรียน"></div><button type="submit" class="primary">ส่งคำขอเปิดโรงเรียน</button></form><p class="hint">คำขอต้องได้รับอนุมัติจากเจ้าของแพลตฟอร์มก่อนใช้ข้อมูลจริง</p>'+btn('ดูโหมดตัวอย่าง','demo','secondary')+'</div></div></div>';}
-function render(){if(!state.user&&!state.demo){if(state.page==='auth')auth();else if(state.page==='verify-email')verificationPending();else landing();return;}if(state.user&&!state.owner&&!state.school&&!state.demo){waitAccess();return;}if(state.owner&&!state.school&&!state.demo){owner();return;}if(!state.school){state.school=demoSchool;}if(state.page==='records')return records();if(state.page==='registry')return officialRegistry();if(state.page==='templates')return templateEditor.view();if(state.page==='create')return form();if(state.page==='detail')return detail();if(state.page==='docmeta')return editDocumentMeta();if(state.page==='preview')return preview();if(state.page==='members')return members();if(state.page==='settings')return settings();if(state.page==='owner')return owner();dashboard();}
+function render(){
+ if(state.page.startsWith('public-')&&publicPageIds.includes(state.page.slice(7))){
+  publicMarketingPage(state.page.slice(7));return;
+ }
+ if(!state.user&&!state.demo){if(state.page==='auth')auth();else if(state.page==='verify-email')verificationPending();else landing();return;}if(state.user&&!state.owner&&!state.school&&!state.demo){waitAccess();return;}if(state.owner&&!state.school&&!state.demo){owner();return;}if(!state.school){state.school=demoSchool;}if(state.page==='records')return records();if(state.page==='registry')return officialRegistry();if(state.page==='templates')return templateEditor.view();if(state.page==='create')return form();if(state.page==='detail')return detail();if(state.page==='docmeta')return editDocumentMeta();if(state.page==='preview')return preview();if(state.page==='members')return members();if(state.page==='settings')return settings();if(state.page==='owner')return owner();dashboard();}
 async function loadUser(){if(!state.session){state.user=null;state.profile=null;state.owner=false;return;}const {data:user}=await db.auth.getUser();state.user=user?.user||null;if(!state.user){state.profile=null;return;}const [admin,memberships,profile]=await Promise.all([db.from('platform_admins').select('user_id').eq('user_id',state.user.id),db.from('memberships').select('school_id,role,schools(*)').eq('user_id',state.user.id).eq('active',true),db.from('profiles').select('full_name').eq('id',state.user.id).maybeSingle()]);if(admin.error)console.warn(admin.error.message);if(memberships.error)console.warn(memberships.error.message);if(profile.error)console.warn(profile.error.message);state.profile=profile.data||{full_name:state.user?.user_metadata?.full_name||''};state.owner=!!admin.data?.length;state.memberships=memberships.data||[];state.school=state.memberships[0]?.schools||null;if(state.owner){await loadOwner();}if(state.school)await Promise.all([loadRecords(),refreshSubscription(),templateEditor.load()]);}
 async function loadOwner(){
   const requests=[
@@ -735,6 +750,22 @@ async function loadRecords(){if(!state.school||state.demo)return;const {data,err
 async function startDemo(){state.demo=true;state.user=null;state.school=demoSchool;state.schoolTemplates={};state.templateVersions={};state.records=[...demoRecords];state.owner=false;state.page='dashboard';render();}
 async function signOut(){if(state.demo){state.demo=false;state.school=null;state.profile=null;state.page='landing';state.records=[];render();return;}const {error}=await db.auth.signOut();if(error)return notify('ออกจากระบบไม่สำเร็จ: '+error.message,true);state.session=null;state.user=null;state.profile=null;state.school=null;state.schoolTemplates={};state.templateVersions={};state.owner=false;state.page='landing';render();}
 async function go(action,el){
+if(action==='public-page'){
+ const id=String(el?.dataset?.page||'home');
+ if(!publicPageIds.includes(id))return;
+ const target=id==='home'?'/':'/?page='+encodeURIComponent(id);
+ window.history.pushState({publicPage:id},'',target);
+ state.page=id==='home'?'landing':'public-'+id;
+ render();window.scrollTo({top:0,behavior:'instant'});return;
+}
+if(action==='public-document'){
+ const index=Number(el?.dataset?.index);
+ if(mountPublicDocument(index)){
+  document.getElementById('kp-public-document-preview')?.scrollIntoView({behavior:'smooth',block:'start'});
+ }
+ return;
+}
+
 if(action==='templates'){if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);return templateEditor.open();}
 if(action.startsWith('tpl-'))return templateEditor.action(action,el);
 if(['edit-staff','password-staff','cancel-staff','refresh-staff','toggle-staff','remove-staff'].includes(action)){
@@ -1039,7 +1070,7 @@ document.addEventListener('click',async ev=>{
 });
 document.addEventListener('submit',async ev=>{if(!ev.target.id)return;ev.preventDefault();const b=ev.target.querySelector('[type=submit]');if(b)b.disabled=true;try{await handleForm(ev.target);}catch(ex){notify(ex.message,true);}finally{if(b)b.disabled=false;}});
 document.addEventListener('focusin',ev=>{if(state.page==='templates'&&ev.target?.dataset?.templateText)templateEditor.selectInline(ev.target);});
-document.addEventListener('input',ev=>{const el=ev.target;if(state.page==='templates'&&el.dataset.templateText){templateEditor.inlineInput(el);return;}if(state.page==='templates'&&el.dataset.templateHeader){templateEditor.headerInput(el);return;}if(el.dataset.tplField)templateEditor.editField(el);if(['doc_withholding_baht','doc_fine_baht','doc_payable_baht'].includes(el.name))updatePayablePreview();if(el.name==='doc_delivery_date'&&el.value){const doc=el.closest('form');for(const targetName of ['doc_acceptance_date','doc_inspection_date']){const target=doc?.querySelector('[name="'+targetName+'"]');if(target&&!target.value)target.value=el.value;}}if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();}}});
+document.addEventListener('input',ev=>{const el=ev.target;if(el?.id==='kp-public-search'){filterPublicContent(el.value);return;}if(state.page==='templates'&&el.dataset.templateText){templateEditor.inlineInput(el);return;}if(state.page==='templates'&&el.dataset.templateHeader){templateEditor.headerInput(el);return;}if(el.dataset.tplField)templateEditor.editField(el);if(['doc_withholding_baht','doc_fine_baht','doc_payable_baht'].includes(el.name))updatePayablePreview();if(el.name==='doc_delivery_date'&&el.value){const doc=el.closest('form');for(const targetName of ['doc_acceptance_date','doc_inspection_date']){const target=doc?.querySelector('[name="'+targetName+'"]');if(target&&!target.value)target.value=el.value;}}if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();}}});
 document.addEventListener('change',ev=>{if(ev.target?.dataset?.tplField)templateEditor.editField(ev.target);});
 document.addEventListener('dragstart',ev=>{if(ev.target.closest?.('#te-print-preview [data-template-text],#te-print-preview [data-template-header]'))return;const t=ev.target.closest?.('[data-template-drag]');if(t&&state.page==='templates')templateEditor.dragStart(t,ev);});
 document.addEventListener('dragover',ev=>{if(state.page==='templates'&&ev.target.closest?.('[data-template-drag]'))ev.preventDefault();});
@@ -1085,6 +1116,11 @@ function bootTimeout(promise,ms,message){
     new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error(message)),ms);})
   ]).finally(()=>clearTimeout(timeoutId));
 }
+window.addEventListener('popstate',()=>{
+ if(state.user||state.demo)return;
+ state.page=publicQueryPage();
+ render();
+});
 db.auth.onAuthStateChange((event)=>{
   if(event==='PASSWORD_RECOVERY'){
     state.recoveryMode=true;
@@ -1099,7 +1135,7 @@ db.auth.onAuthStateChange((event)=>{
     const {data,error}=await bootTimeout(db.auth.getSession(),9000,'การตรวจสอบบัญชีใช้เวลานานเกินไป');
     if(error)throw error;
     state.session=data.session;
-    state.page=state.recoveryMode?'auth':'landing';
+    state.page=state.recoveryMode?'auth':publicQueryPage();
     if(state.session&&!state.recoveryMode){
       bootStage('auth-loading-roles');
       await bootTimeout(loadUser(),12000,'การโหลดสิทธิ์ผู้ใช้งานใช้เวลานานเกินไป');
