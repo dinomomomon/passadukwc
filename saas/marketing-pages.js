@@ -1,5 +1,6 @@
 /* Public school procurement marketing pages; no logged-in or private school data. */
 import {buildDocuments} from './print.js';
+import {guidePageHtml} from './user-guide.js';
 
 export const publicPageIds=['home','features','examples','guide','faq','contact'];
 const safe=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -134,7 +135,7 @@ const faqPage=()=>'<section class="kp-pub-subhero kp-pub-container"><div>'+badge
 
 export function publicPageHtml(page='home'){
  const id=publicPageIds.includes(page)?page:'home';
- const content={home,features,examples,guide:()=>coming('guide'),faq:faqPage,contact:()=>coming('contact')}[id]();
+ const content={home,features,examples,guide:guidePageHtml,faq:faqPage,contact:()=>coming('contact')}[id]();
  return '<div class="kp-public">'+header(id)+'<main id="main-content">'+content+'</main>'+footer()+'</div>';
 }
 
@@ -190,7 +191,13 @@ export function mountPublicDocument(index=0){
 }
 export function filterPublicContent(value){
  const needle=String(value||'').toLocaleLowerCase('th').trim();
- for(const el of document.querySelectorAll('[data-public-doc-card],[data-public-faq-item]')){
+ for(const el of document.querySelectorAll('[data-public-doc-card],[data-public-faq-item],[data-guide-chapter]')){
   el.hidden=!!needle&&!el.textContent.toLocaleLowerCase('th').includes(needle);
  }
+ const chapters=[...document.querySelectorAll('[data-guide-chapter]')];
+ const count=chapters.filter(el=>!el.hidden).length;
+ const message=document.getElementById('kp-guide-search-result');
+ if(message)message.textContent=needle?'พบ '+count+' จาก '+chapters.length+' บทเรียน':'แสดง '+chapters.length+' บทเรียน';
+ const noResults=document.getElementById('kp-guide-no-results');
+ if(noResults)noResults.hidden=count>0||!needle;
 }
