@@ -1007,3 +1007,46 @@ test('school admin configures one shared next number per official register and y
  assert.match(sql,/public\.is_school_admin\(p_school_id\)/);
  assert.match(sql,/INSERT INTO public\.audit_logs/);
 });
+
+
+test('draft actions display delete next to open and edit, and detail offers edit beside preview',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const js=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./brand-theme.css',import.meta.url),'utf8');
+ assert.match(js,/btn\('เปิดดู','open'/);
+ assert.match(js,/btn\('แก้ไข','open-edit'/);
+ assert.match(js,/btn\('ลบ','delete-record'/);
+ assert.match(js,/canDeleteMainRecord\(r\)\?btn\('ลบ'/);
+ assert.match(js,/const canDeleteMainRecord=r=>canEditMainRecord\(r\)/);
+ assert.match(js,/canEditMainRecord\(r\)\?btn\('แก้ไขรายการ','edit-record','secondary'\)/);
+ assert.match(js,/function openDeleteRecordDialog\(rec\)/);
+ assert.match(js,/id="kp-delete-record-dialog"/);
+ assert.match(js,/data-action="confirm-delete-record"/);
+ assert.match(js,/if\(action==='cancel-delete-record'\)/);
+ assert.match(css,/\.kp-delete-dialog::backdrop/);
+ assert.match(css,/\.kp-danger-button/);
+});
+test('deleting drafts preserves audit and all numbers; school-scoped server RPC rejects used documents',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const js=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('../supabase/migrations/20261022_soft_delete_procurement_drafts.sql',import.meta.url),'utf8');
+ assert.match(js,/db\.rpc\('delete_procurement_draft'/);
+ assert.match(js,/p_expected_updated_at:rec\.updated_at/);
+ assert.match(js,/\.is\('deleted_at',null\)/);
+ assert.match(js,/rec\.deleted_at=new Date\(\)\.toISOString\(\);rec\.state='cancelled'/);
+ assert.match(js,/state\.currentRecord=null;state\.editingRecordId=null;state\.page='records'/);
+ assert.match(sql,/auth\.uid\(\)/);
+ assert.match(sql,/m\.school_id=rec\.school_id AND m\.user_id=v_actor AND m\.active/);
+ assert.match(sql,/m\.role='procurement_officer' AND rec\.created_by=v_actor/);
+ assert.match(sql,/rec\.state<>'draft' OR rec\.deleted_at IS NOT NULL/);
+ assert.match(sql,/rec\.updated_at IS DISTINCT FROM p_expected_updated_at/);
+ assert.match(sql,/n\.document_field<>'procurement_number'/);
+ assert.match(sql,/n\.status='used'/);
+ assert.match(sql,/public\.document_versions/);
+ assert.match(sql,/UPDATE public\.official_number_registry[\s\S]*?status='void'[\s\S]*?WHERE procurement_id=rec\.id AND status='reserved'/);
+ assert.match(sql,/UPDATE public\.procurements[\s\S]*?SET state='cancelled',deleted_at=clock_timestamp\(\)/);
+ assert.match(sql,/INSERT INTO public\.audit_logs/);
+ assert.doesNotMatch(sql,/DELETE\s+FROM\s+public\.(procurements|official_number_registry)/i,'no hard deletes in a legal register');
+ assert.match(sql,/REVOKE ALL ON FUNCTION public\.delete_procurement_draft/);
+ assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.delete_procurement_draft/);
+});
