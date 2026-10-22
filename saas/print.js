@@ -65,12 +65,12 @@ function signatureBlock(name,role='',date=false,opts={}){
  return '<div class="signature-card kp-signature'+css+compact+'">'+
  '<div class="'+write+'">ลงชื่อ <span class="'+line+'"></span></div>'+
  '<div class="signature-name">('+name+')</div>'+label+
- (date?'<div class="signature-date">วันที่ <span class="date-rule"></span></div>':'')+'</div>';
+ (date?'<div class="signature-date">วันที่ '+(opts.dateValue?'<span class="kp-signature-date-value">'+thaiDate(opts.dateValue)+'</span>':'<span class="date-rule"></span>')+'</div>':'')+'</div>';
 }
-function sign(name,role,date=false,position=''){return signatureBlock(name,role,date,{position});}
-function directorSign(r,s,actions){return '<div class="director-sign"><div class="director-action">'+actions+'</div>'+
- signatureBlock(director(r,s),'',true,{kind:'director',schoolName:s.name||'โรงเรียน'})+'</div>';}
-function signRow(r,s){return '<div class="sign-grid">'+sign(officer(r,s),'เจ้าหน้าที่',true)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true)+'</div>';}
+function sign(name,role,date=false,position='',dateValue=''){return signatureBlock(name,role,date,{position,dateValue});}
+function directorSign(r,s,actions,dateValue=''){return '<div class="director-sign"><div class="director-action">'+actions+'</div>'+
+ signatureBlock(director(r,s),'',true,{kind:'director',schoolName:s.name||'โรงเรียน',dateValue})+'</div>';}
+function signRow(r,s,dateValue=''){return '<div class="sign-grid">'+sign(officer(r,s),'เจ้าหน้าที่',true,'',dateValue)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true,'',dateValue)+'</div>';}
 function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const numberKey=cls==='gov-approval'?'approval_memo_number':cls==='gov-payment'?'payment_memo_number':'memo_number';const prefix=m.memo_prefix||s.memo_prefix;const no=numberKey==='memo_number'?renderMemoReference(prefix,m[numberKey]):(normalizeMemoNumber(m[numberKey],prefix)||'........../........');
  return '<section class="paper-page official gov-doc memo-page '+cls+'"><div class="doc-sheet-body">'+
  '<div class="memo-top"><img class="garuda-emblem" src="/garuda-memo.svg" alt="ตราครุฑ"><h1>บันทึกข้อความ</h1></div>'+
@@ -124,13 +124,13 @@ const body=line+'<p class="indent">งานพัสดุได้ตรวจ
  '<p class="indent">จึงเรียนมาเพื่อโปรดพิจารณา</p>'+
  '<ol class="gov-numbered"><li>เห็นชอบในรายงานขอ'+verb+'ดังกล่าวข้างต้น</li>'+
  '<li>อนุมัติให้แต่งตั้ง '+v(r.inspector_name)+' ตำแหน่ง '+v(meta(r).inspector_position)+' เป็นผู้ตรวจรับ'+item+'</li></ol>';
-return memo(r,s,title,body,signRow(r,s)+directorSign(r,s,'เห็นชอบ<br>อนุมัติ'),'gov-request');}
+return memo(r,s,title,body,signRow(r,s,r.document_date)+directorSign(r,s,'เห็นชอบ<br>อนุมัติ',r.document_date),'gov-request');}
 function annex(r,s,buy){const noun=buy?'พัสดุที่จะซื้อ':'งานจ้าง',subject=buy?'รายงานขอซื้อ':'รายงานขอจ้าง',chunks=pageChunks(r.items,officialPageSize(r));
  return chunks.map((part,i)=>page('รายละเอียดของ'+noun+' แนบท้าย'+subject,
  lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560')+'<p class="gov-law gov-law-second">ข้อ 22 วรรคหนึ่ง (2) และข้อ 22 วรรคสอง</p>'+
  '<p class="gov-count">จำนวน'+(buy?'พัสดุ':'งานจ้าง')+' '+(r.items||[]).length+' รายการ'+(chunks.length>1?' (หน้าที่ '+(i+1)+'/'+chunks.length+')':'')+'</p>'+
  itemTable({...r,items:part.items,__item_offset:part.offset,__show_totals:i===chunks.length-1},'annex',fillerHeight(part.items,90,9))+
- '<div class="gov-annex-sign">'+signRow(r,s)+'</div>','gov-annex')).join('');
+ '<div class="gov-annex-sign">'+signRow(r,s,r.document_date)+'</div>','gov-annex')).join('');
 }
 function approval(r,s,buy){const verb=buy?'ซื้อ':'จ้าง',noun=buy?'พัสดุ':'งานจ้าง',m=meta(r),vendor=v(r.vendor_name);
 const body='<p class="indent">ตามที่ ผู้อำนวยการ'+e(s.name||'โรงเรียน')+' เห็นชอบ'+(buy?'รายงานขอซื้อพัสดุ':'รายงานขอจ้าง')+' จำนวน '+(r.items||[]).length+' รายการ เป็นเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+') ตามระเบียบกระทรวงการคลังฯ พ.ศ. 2560 ข้อ 24 รายละเอียดดังแนบ</p>'+
@@ -139,7 +139,7 @@ const body='<p class="indent">ตามที่ ผู้อำนวยกา�
  '<p class="indent">จึงเรียนมาเพื่อโปรดทราบ และพิจารณาเห็นชอบ</p>'+
  '<ol class="gov-numbered"><li>ให้สั่ง'+verb+(buy?'พัสดุ':'')+'จาก '+vendor+' ในวงเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+') กำหนดส่งมอบภายในวันที่ '+(r.due_date?thaiDate(r.due_date):blank)+'</li>'+
  '<li>ลงนามใน'+(buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง')+' ดังแนบ</li></ol>';
-const signatures='<div class="gov-vertical-sign">'+sign(officer(r,s),'เจ้าหน้าที่',true)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true)+'</div>'+directorSign(r,s,'เห็นชอบ<br>ลงนามแล้ว');
+const signatures='<div class="gov-vertical-sign">'+sign(officer(r,s),'เจ้าหน้าที่',true,'',r.document_date)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true,'',r.document_date)+'</div>'+directorSign(r,s,'เห็นชอบ<br>ลงนามแล้ว',r.document_date);
 return memo(r,s,'รายงานผลการพิจารณาและขออนุมัติสั่ง'+verb,body,signatures,'gov-approval');}
 function acceptance(r,s,buy){const noun=buy?'พัสดุ':'งานจ้าง',vendor=v(r.vendor_name),m=meta(r);const dd= r.due_date?thaiDate(r.due_date):blank;
 const body=lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 175')+
