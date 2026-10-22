@@ -220,9 +220,10 @@ test('four-step wizard preserves draft and validates each stage',async()=>{
  assert.match(app,/data-wizard-panel/);
  assert.match(app,/collectDraft\(\);state\.wizardStep/);
 });
-test('new memo reference inputs are individually labeled and editable',()=>{
+test('memo reference fields are individually labeled and prefix is chosen only once in wizard stage 1',()=>{
  const html=docMetaInputs({memo_prefix:'พว.',memo_number:'1/2569',approval_memo_number:'2/2569',payment_memo_number:'3/2569'},{mode:'create'});
- for(const key of ['memo_prefix','memo_number','approval_memo_number','payment_memo_number'])assert.match(html,new RegExp('name="doc_'+key+'"'));
+ for(const key of ['memo_number','approval_memo_number','payment_memo_number'])assert.match(html,new RegExp('name="doc_'+key+'"'));
+ assert.doesNotMatch(html,/name="doc_memo_prefix"/);
  assert.match(html,/ที่ — รายงานผลการพิจารณาฯ/);
  assert.match(html,/ที่ — ทราบผลและขออนุมัติเบิกจ่าย/);
 });
@@ -249,7 +250,10 @@ test('the three printed memo pages use precisely one distinct reference per page
 });
 test('form strips reused พว. in old memo values but never erases the document number',()=>{
  const html=docMetaInputs({memo_prefix:'พว. 5/2569',memo_number:'พว. 6/2569'},{mode:'create'});
- assert.match(html,/name="doc_memo_prefix"[^>]*value="พว\."/);
+ assert.doesNotMatch(html,/name="doc_memo_prefix"/);
+ const full=docMetaInputs({memo_prefix:'พว. 5/2569',memo_number:'พว. 6/2569'},{mode:'all'});
+ assert.match(full,/name="doc_memo_prefix"/);
+ assert.match(full,/<option value="พว\." selected>/);
  assert.match(html,/name="doc_memo_number"[^>]*value="6\/2569"/);
  const saved=docMetaValue({doc_memo_prefix:'พว. 5/2569',doc_memo_number:'พว. 6/2569'});
  assert.equal(saved.memo_prefix,'พว.');
@@ -377,7 +381,7 @@ test('receipt and requisition only reserve after the actual delivery is recorded
 test('registry searches all historical document subjects, not only dashboard recent rows',async()=>{
  const {readFileSync}=await import('node:fs');
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
- assert.match(app,/select\('\*,procurements\(title,vendor_name,kind\)'\)/);
+ assert.match(app,/select\('\*,procurements\(title,vendor_name,kind,document_meta\)'\)/);
  assert.match(app,/range\(offset,offset\+size-1\)/);
  assert.match(app,/recordsById\.get\(n\.procurement_id\)\|\|n\.procurements/);
 });
