@@ -1064,3 +1064,48 @@ test('purchase and hire wizard allow amounts above 5000 baht without arbitrary c
  assert.match(sql,/replace\(def,'price<1 OR price>500000','price<1'\)/);
  assert.match(sql,/replace\(def,'amount<1 OR amount>500000','amount<1'\)/);
 });
+
+
+test('first three request/annex/approval documents inherit memo header date under each signer',async()=>{
+ const docDate='2026-10-01';
+ const docs=buildDocuments({...sample,document_date:docDate,document_meta:{...sample.document_meta,memo_prefix:'พว.'}},school)
+  .split(/(?=<section class="paper-page)/);
+ assert.equal(docs.length,6);
+ const expected='วันที่ <span class="kp-signature-date-value">1 ตุลาคม 2569</span>';
+ assert.equal((docs[0].match(/kp-signature-date-value/g)||[]).length,3,'request officer, head, director');
+ assert.equal((docs[1].match(/kp-signature-date-value/g)||[]).length,2,'annex officer and head');
+ assert.equal((docs[2].match(/kp-signature-date-value/g)||[]).length,3,'approval officer, head and director');
+ for(const doc of docs.slice(0,3))assert.ok(doc.includes(expected));
+ assert.doesNotMatch(docs[3],/kp-signature-date-value/,'receipt signatures rely on actual inspection evidence');
+ assert.doesNotMatch(docs[4],/kp-signature-date-value/,'payment signatures are not pre-certified by request date');
+ assert.doesNotMatch(docs[5],/kp-signature-date-value/,'requisition dates must not default to the request date');
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ assert.match(css,/\.signature-date \.kp-signature-date-value/);
+});
+
+test('request prefix พว. or พค. is selected per procurement record and shares safe request number series',async()=>{
+ const {docMetaInputs,docMetaValue}=await import('./document-meta.js');
+ const a=buildDocuments({...sample,document_meta:{...sample.document_meta,memo_prefix:'พว.',memo_number:'7/2569'}},school);
+ const b=buildDocuments({...sample,document_meta:{...sample.document_meta,memo_prefix:'พค.',memo_number:'8/2569'}},school);
+ assert.match(a,/พว\. 7\/2569/);
+ assert.match(b,/พค\. 8\/2569/);
+ assert.match(b,/รายงานขอซื้อพัสดุ/,'official form title remains the same');
+ const creating=docMetaInputs({memo_prefix:'พค.'},{mode:'create',kind:'purchase'});
+ assert.doesNotMatch(creating,/name="doc_memo_prefix"/,'prefix must be selected only once, at procurement step 1');
+ const editing=docMetaInputs({memo_prefix:'พค.'},{kind:'purchase'});
+ assert.match(editing,/พค\. — ครุภัณฑ์/);
+ assert.match(editing,/name="doc_memo_prefix"/);
+ assert.equal(docMetaValue({doc_memo_prefix:'พค.'}).memo_prefix,'พค.');
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(app,/id="kp-purchase-category"/);
+ assert.match(app,/name="doc_memo_prefix"/);
+ assert.match(app,/kind==='hire'/);
+ assert.match(app,/if\(row\.series==='request'\)return \(normalizeMemoPrefix\(row\.procurements\?\.document_meta\?\.memo_prefix/);
+ assert.match(app,/procurements\(title,vendor_name,kind,document_meta\)/);
+ assert.match(app,/ev\.target\?\.name==='kind'/);
+ // Both use the existing school/year request counter; not a new counter that could collide.
+ const sql=readFileSync(new URL('../supabase/migrations/20261020_official_number_registry.sql',import.meta.url),'utf8');
+ assert.match(sql,/request/);
+});
