@@ -43,7 +43,7 @@ const demoRecords=[
  mkDemo('demo-2','hire',1,'จ้างทำป้ายประชาสัมพันธ์','ร้านป้ายตัวอย่าง',980,'2026-10-17',[{name:'งานออกแบบและจัดทำป้าย',qty:1,unit:'งาน',price_satang:98000}]),
  mkDemo('demo-3','purchase',2,'ซื้ออุปกรณ์การเรียน','ร้านศึกษาภัณฑ์',1250,'2026-10-18',[{name:'อุปกรณ์การเรียน',qty:5,unit:'ชุด',price_satang:25000}])
 ];
-const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:'',memberEditingId:null,memberResetId:null,officialNumbers:[],numberFilter:'',numberSeries:'all',numberStatus:'all',numberYear:'all',schoolTemplates:{},templateVersions:{},adminGuideSection:'overview'};
+const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:'',memberEditingId:null,memberResetId:null,officialNumbers:[],numberFilter:'',numberSeries:'all',numberStatus:'all',numberYear:'all',schoolTemplates:{},templateVersions:{},adminGuideSection:'school'};
 installStateNotices(state);
 const money=n=>(Number(n||0)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const dateThai=d=>d?new Date(d+'T12:00:00+07:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
@@ -600,7 +600,8 @@ async function printOfficialDocuments(){
 
 function preview(){detail();const sheet=applyDocumentTemplates(buildDocuments(state.currentRecord,state.school),liveTemplateLayouts(state.currentRecord),state.currentRecord,state.school);document.getElementById('print-area').innerHTML=sheet;const target=app.querySelector('.content');target.insertAdjacentHTML('beforeend','<div class="card" id="preview-output"><div class="section-head"><h2>ตัวอย่างเอกสารสำหรับพิมพ์</h2>'+btn('พิมพ์ / PDF','print')+'</div><div class="doc-preview"><div class="preview-page"><div class="official">'+sheet+'</div></div></div><p class="hint">กรุณาตรวจข้อความและจำนวนหน้าก่อนใช้งานจริง</p></div>');document.querySelector('#preview-output')?.scrollIntoView({behavior:'smooth'});const previewRoot=app.querySelector('#preview-output');requestAnimationFrame(()=>{fitDirectorPosition(previewRoot);fitOfficialTableHeaders(previewRoot);});document.fonts?.ready?.then(()=>requestAnimationFrame(()=>{fitDirectorPosition(previewRoot);fitOfficialTableHeaders(previewRoot);}));}
 
-function settings(){if(!isAdmin()){notify('เฉพาะผู้ดูแลโรงเรียน',true);return;}const s=state.school;const inp=(t,k)=>'<div class="field"><label>'+t+'</label><input class="input" name="'+k+'" value="'+e(k==='memo_prefix'?normalizeMemoPrefix(s[k]):s[k]||'')+'"></div>';shell('ข้อมูลโรงเรียน','ตั้งค่าผู้ลงนาม',heading('ตั้งค่าโรงเรียนและผู้ลงนาม','ชื่อและตำแหน่งที่ตั้งค่าใช้กับรายการใหม่ ส่วนเอกสารเก่าจะเก็บชื่อเดิม')+'<div class="card"><h2>โลโก้โรงเรียน</h2><div class="school-logo-setting">'+schoolLogo('settings')+'<div><b>'+e(s.name)+'</b><p class="muted">สำหรับหน้า Dashboard และเมนูของโรงเรียนเท่านั้น <strong>ไม่แทรกในเอกสารราชการและไม่แทนตราครุฑ</strong></p></div></div><form id="school-logo-form"><div class="field"><label>แนบไฟล์โลโก้โรงเรียน (PNG, JPG หรือ WEBP)</label><input class="input" id="school-logo-file" name="school_logo" type="file" accept="image/png,image/jpeg,image/webp" required><small class="hint">ขนาดไม่เกิน 1 MB แนะนำภาพสี่เหลี่ยมจัตุรัส พื้นหลังโปร่งใส</small></div><div class="logo-form-actions"><button class="secondary" type="submit">อัปโหลดโลโก้โรงเรียน</button>'+(s.logo_path||state.demoLogoUrl?btn('นำโลโก้ออก','remove-school-logo','mini-btn'):'')+'</div></form></div><form class="card" id="school-form"><h2>ข้อมูลสถานศึกษา</h2>'+inp('ชื่อโรงเรียน','name')+'<div class="form-grid">'+inp('อำเภอ','district')+inp('จังหวัด','province')+'</div><h2>รหัสหนังสือและที่อยู่บนเอกสาร</h2><div class="form-grid">'+inp('รหัสหนังสือเท่านั้น เช่น พว. (ไม่ใส่ 1/2569)','memo_prefix')+inp('ที่อยู่โรงเรียนสำหรับเอกสาร','address')+'</div><h2>ชื่อผู้ลงนาม</h2><div class="form-grid">'+inp('เจ้าหน้าที่พัสดุ','officer_name')+inp('หัวหน้าเจ้าหน้าที่พัสดุ','head_name')+inp('ผู้อำนวยการสถานศึกษา','director_name')+inp('เจ้าหน้าที่การเงิน','finance_name')+'</div><button type="submit" class="primary">บันทึกข้อมูลโรงเรียน</button></form>');}
+function schoolSettingsMarkup(){const s=state.school;const inp=(t,k)=>'<div class="field"><label>'+t+'</label><input class="input" name="'+k+'" value="'+e(k==='memo_prefix'?normalizeMemoPrefix(s[k]):s[k]||'')+'"></div>';return heading('ตั้งค่าโรงเรียนและผู้ลงนาม','ชื่อและตำแหน่งที่ตั้งค่าใช้กับรายการใหม่ ส่วนเอกสารเก่าจะเก็บชื่อเดิม')+'<div class="card"><h2>โลโก้โรงเรียน</h2><div class="school-logo-setting">'+schoolLogo('settings')+'<div><b>'+e(s.name)+'</b><p class="muted">สำหรับหน้า Dashboard และเมนูของโรงเรียนเท่านั้น <strong>ไม่แทรกในเอกสารราชการและไม่แทนตราครุฑ</strong></p></div></div><form id="school-logo-form"><div class="field"><label>แนบไฟล์โลโก้โรงเรียน (PNG, JPG หรือ WEBP)</label><input class="input" id="school-logo-file" name="school_logo" type="file" accept="image/png,image/jpeg,image/webp" required><small class="hint">ขนาดไม่เกิน 1 MB แนะนำภาพสี่เหลี่ยมจัตุรัส พื้นหลังโปร่งใส</small></div><div class="logo-form-actions"><button class="secondary" type="submit">อัปโหลดโลโก้โรงเรียน</button>'+(s.logo_path||state.demoLogoUrl?btn('นำโลโก้ออก','remove-school-logo','mini-btn'):'')+'</div></form></div><form class="card" id="school-form"><h2>ข้อมูลสถานศึกษา</h2>'+inp('ชื่อโรงเรียน','name')+'<div class="form-grid">'+inp('อำเภอ','district')+inp('จังหวัด','province')+'</div><h2>รหัสหนังสือและที่อยู่บนเอกสาร</h2><div class="form-grid">'+inp('รหัสหนังสือเท่านั้น เช่น พว. (ไม่ใส่ 1/2569)','memo_prefix')+inp('ที่อยู่โรงเรียนสำหรับเอกสาร','address')+'</div><h2>ชื่อผู้ลงนาม</h2><div class="form-grid">'+inp('เจ้าหน้าที่พัสดุ','officer_name')+inp('หัวหน้าเจ้าหน้าที่พัสดุ','head_name')+inp('ผู้อำนวยการสถานศึกษา','director_name')+inp('เจ้าหน้าที่การเงิน','finance_name')+'</div><button type="submit" class="primary">บันทึกข้อมูลโรงเรียน</button></form>';}
+function settings(){if(!isAdmin()){notify('เฉพาะผู้ดูแลโรงเรียน',true);return;}shell('ข้อมูลโรงเรียน','ตั้งค่าผู้ลงนาม',schoolSettingsMarkup());}
 
 const staffRoleLabels={
   school_admin:'แอดมินโรงเรียน',
@@ -743,10 +744,10 @@ function render(){
 const adminGuideTopicsFind=id=>adminGuideTopics.find(x=>x.id===id);
 function renderAdminGuide(){
  if(!isSchoolAdmin()){state.page='dashboard';notify('คู่มือนี้สำหรับแอดมินโรงเรียนเท่านั้น',true);return dashboard();}
- const section=adminGuideIds.includes(state.adminGuideSection)?state.adminGuideSection:'overview';
+ const section=adminGuideIds.includes(state.adminGuideSection)?state.adminGuideSection:'school';
  shell('คู่มือผู้ดูแลระบบ','สำหรับแอดมินโรงเรียน',
   heading('คู่มือผู้ดูแลระบบ','ดูภาพประกอบแล้วทำตามทีละขั้น หรือเปิดเมนูตั้งค่าจริง')+
-  adminGuideHtml(section));
+  adminGuideHtml(section,(section==='school'||section==='signers')?schoolSettingsMarkup():''));
 }
 async function loadUser(){if(!state.session){state.user=null;state.profile=null;state.owner=false;return;}const {data:user}=await db.auth.getUser();state.user=user?.user||null;if(!state.user){state.profile=null;return;}const [admin,memberships,profile]=await Promise.all([db.from('platform_admins').select('user_id').eq('user_id',state.user.id),db.from('memberships').select('school_id,role,schools(*)').eq('user_id',state.user.id).eq('active',true),db.from('profiles').select('full_name').eq('id',state.user.id).maybeSingle()]);if(admin.error)console.warn(admin.error.message);if(memberships.error)console.warn(memberships.error.message);if(profile.error)console.warn(profile.error.message);state.profile=profile.data||{full_name:state.user?.user_metadata?.full_name||''};state.owner=!!admin.data?.length;state.memberships=memberships.data||[];state.school=state.memberships[0]?.schools||null;if(state.owner){await loadOwner();}if(state.school)await Promise.all([loadRecords(),refreshSubscription(),templateEditor.load()]);}
 async function loadOwner(){
@@ -788,14 +789,25 @@ if(action==='public-document'){
 
 if(action==='admin-guide'){
  if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้นที่เปิดคู่มือนี้ได้',true);
- state.adminGuideSection='overview';state.page='admin-guide';render();return;
+ state.adminGuideSection='school';state.page='admin-guide';render();return;
 }
 if(action==='admin-guide-section'){
  if(!isSchoolAdmin())return notify('ไม่มีสิทธิ์เข้าถึงคู่มือผู้ดูแลระบบ',true);
  const section=String(el?.dataset?.section||'overview');
- if(section!=='overview'&&!adminGuideIds.includes(section))return notify('ไม่พบหัวข้อคู่มือ',true);
+ if(!adminGuideIds.includes(section))return notify('ไม่พบหัวข้อคู่มือ',true);
  state.adminGuideSection=section;state.page='admin-guide';render();
  document.querySelector('.content')?.scrollIntoView({block:'start'});return;
+}
+if(action==='admin-guide-focus'){
+ if(!isSchoolAdmin())return notify('ไม่มีสิทธิ์ใช้งาน',true);
+ const target=String(el?.dataset?.field||'');
+ const allowed=['school_logo','name','district','province','memo_prefix','address','officer_name','head_name','director_name','finance_name','submit'];
+ if(!allowed.includes(target))return;
+ const selector=target==='school_logo'?'#school-logo-file':target==='submit'?'#school-form button[type="submit"]':'#school-form [name="'+target+'"]';
+ const node=document.querySelector(selector);
+ if(node){document.querySelectorAll('.kp-ag-field-focus').forEach(n=>n.classList.remove('kp-ag-field-focus'));
+ node.closest('.field')?.classList.add('kp-ag-field-focus');
+ node.scrollIntoView({behavior:'smooth',block:'center'});node.focus({preventScroll:true});}return;
 }
 if(action==='admin-guide-open'){
  if(!isSchoolAdmin())return notify('ไม่มีสิทธิ์เปิดเมนูนี้',true);
