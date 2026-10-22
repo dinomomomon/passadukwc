@@ -183,14 +183,13 @@ test('unset deductions do not silently imply zero withholding or tax',()=>{
 });
 
 
-test('payment memo leaves the finance-controlled reference blank while request and approval keep assigned numbers',()=>{
+test('request, approval and payment each keep their own automatically assigned memo number',()=>{
  const record={...sample,document_meta:{memo_prefix:'พว.',memo_number:'11/2569',approval_memo_number:'12/2569',payment_memo_number:'13/2569'}};
  const html=buildDocuments(record,school);
  assert.match(html,/พว\. 11\/2569/);
- assert.match(html,/<strong>ที่<\/strong><span class="memo-value">12\/2569<\/span>/);
- assert.match(html,/<strong>ที่<\/strong><span class="memo-value kp-payment-number-writein"[^>]*><\/span>/);
- assert.doesNotMatch(html,/<strong>ที่<\/strong><span class="memo-value">13\/2569<\/span>/);
+ for(const no of ['12/2569','13/2569'])assert.match(html,new RegExp('<strong>ที่<\\/strong><span class="memo-value">'+no.replace('/','\\/')+'<\\/span>'));
  assert.equal((html.match(/พว\.\s+(?:11|12|13)\/2569/g)||[]).length,1);
+ assert.doesNotMatch(html,/kp-payment-number-writein/);
 });
 test('annex legal article 22 begins its own line',()=>{
  const html=buildDocuments(sample,school);
@@ -222,15 +221,13 @@ test('four-step wizard preserves draft and validates each stage',async()=>{
  assert.match(app,/data-wizard-panel/);
  assert.match(app,/collectDraft\(\);state\.wizardStep/);
 });
-test('memo reference fields are individually labeled and prefix is chosen only once in wizard stage 1',()=>{
+test('all assigned reference fields are visible as read-only and prefix is chosen only once in wizard',()=>{
  const html=docMetaInputs({memo_prefix:'พว.',memo_number:'1/2569',approval_memo_number:'2/2569',payment_memo_number:'3/2569'},{mode:'create'});
- for(const key of ['memo_number','approval_memo_number'])assert.match(html,new RegExp('name="doc_'+key+'"'));
- assert.doesNotMatch(html,/name="doc_payment_memo_number"/);
+ for(const key of ['memo_number','approval_memo_number','payment_memo_number'])assert.match(html,new RegExp('name="doc_'+key+'"'));
  assert.doesNotMatch(html,/name="doc_memo_prefix"/);
  assert.match(html,/ที่ — รายงานผลการพิจารณาฯ/);
  assert.match(html,/ฝ่ายการเงินเขียนเอง/);
 });
-
 test('memo prefix cannot accidentally contain numbers when printing (real duplicated screenshot)',()=>{
  assert.equal(normalizeMemoPrefix('พว 1/2569'),'พว');
  assert.equal(normalizeMemoPrefix('พว. 1/2569'),'พว.');
@@ -239,16 +236,14 @@ test('memo prefix cannot accidentally contain numbers when printing (real duplic
  assert.equal(renderMemoReference('พว. 1/2569','พว. 2/2569'),'พว. 2/2569');
  assert.equal(renderMemoReference('พว. 1/2569','พว. 1/2569 2/2569'),'พว. 2/2569');
 });
-test('the three printed memo pages use precisely one distinct reference per page',()=>{
+test('three printed memo pages each retain a unique official reference, with no duplicated prefix',()=>{
  const record={...sample,document_meta:{
   memo_prefix:'พว. 1/2569',memo_number:'พว. 2/2569',
   approval_memo_number:'3/2569',payment_memo_number:'พว. 4/2569'
  }};
  const html=buildDocuments(record,{...school,memo_prefix:'พว. 1/2569'});
  assert.match(html,/พว\. 2\/2569/);
- assert.match(html,/<strong>ที่<\/strong><span class="memo-value">3\/2569<\/span>/);
- assert.match(html,/<strong>ที่<\/strong><span class="memo-value kp-payment-number-writein"[^>]*><\/span>/);
- assert.doesNotMatch(html,/<strong>ที่<\/strong><span class="memo-value">4\/2569<\/span>/);
+ for(const no of ['3/2569','4/2569'])assert.match(html,new RegExp('<strong>ที่<\\/strong><span class="memo-value">'+no.replace('/','\\/')+'<\\/span>'));
  assert.equal((html.match(/พว\.\s+(?:2|3|4)\/2569/g)||[]).length,1);
  assert.doesNotMatch(html,/พว\.\s+1\/2569\s+2\/2569/);
  assert.equal((html.match(/memo-field-number/g)||[]).length,3);
@@ -269,7 +264,7 @@ test('duplicated reference sequences in one input are rejected instead of silent
  assert.deepEqual(docMetaValue({doc_memo_number:'พว.'}),{});
 });
 
-test('the request memo alone carries the school prefix in both purchase and hire',()=>{
+test('request has school prefix, approval and payment use bare numbers for purchase and hire',()=>{
  for(const kind of ['purchase','hire']){
   const record={...sample,kind,document_meta:{
    memo_prefix:'พว.',memo_number:'2/2569',
@@ -277,12 +272,9 @@ test('the request memo alone carries the school prefix in both purchase and hire
   }};
   const html=buildDocuments(record,school);
   const numbers=[...html.matchAll(/<div class="memo-field memo-field-number"><strong>ที่<\/strong><span class="memo-value">([^<]+)<\/span>/g)].map(m=>m[1]);
-  assert.deepEqual(numbers,['พว. 2/2569','3/2569']);
-  assert.match(html,/<strong>ที่<\/strong><span class="memo-value kp-payment-number-writein"[^>]*><\/span>/);
+  assert.deepEqual(numbers,['พว. 2/2569','3/2569','4/2569']);
  }
 });
-
-
 test('purchasing wizard step four includes editable requisition form number',()=>{
  const html=docMetaInputs({requisition_number:'จ. 218/2569'},{mode:'create',kind:'purchase'});
  assert.match(html,/name="doc_requisition_number"/);
@@ -332,10 +324,9 @@ test('finance notes entered as real values are still available as optional addit
 
 test('official number input is read-only because school ledger allocates and tracks it',()=>{
  const form=docMetaInputs({memo_number:'2/2569',approval_memo_number:'3/2569',payment_memo_number:'4/2569'},{mode:'create',kind:'purchase'});
- for(const field of ['memo_number','approval_memo_number','requisition_number']){
+ for(const field of ['memo_number','approval_memo_number','payment_memo_number','requisition_number']){
   assert.match(form,new RegExp('name="doc_'+field+'"[^>]*readonly'));
  }
- assert.doesNotMatch(form,/name="doc_payment_memo_number"/);
  const stored=docMetaValue({doc_memo_number:'1/2569',doc_approval_memo_number:'2/2569',
   doc_requisition_number:'จ. 2/2569',doc_inspector_position:'ครู'});
  assert.equal(stored.memo_number,undefined);
@@ -1002,7 +993,7 @@ test('school admin configures one shared next number per official register and y
  assert.match(js,/data-registry-start-form/);
  assert.match(js,/registry-setup-year-form/);
  assert.match(js,/เลขสูงสุดที่จัดสรร\/จองแล้ว/);
- assert.match(js,/หน้าทราบผลและขออนุมัติเบิกจ่ายเว้นเลขให้ฝ่ายการเงินลงเอง/,'payment header number belongs to finance; new requests do not consume a second general number');
+ assert.match(js,/ทะเบียนร่วมของรายงานผลการพิจารณาฯ และทราบผลและขออนุมัติเบิกจ่าย/,'approval and payment keep their common general number series');
  assert.match(js,/if\(next<Number\(current\?\.next_number\|\|1\)\)/);
  assert.match(js,/db\.rpc\('set_official_number_start'/);
  assert.match(js,/await Promise\.all\(\[loadOfficialNumbers\(\),loadOfficialNumberStarts\(\)\]\)/);
@@ -1123,35 +1114,36 @@ test('request prefix พว. or พค. is selected per procurement record and s
 });
 
 
-test('payment memo leaves a visibly ruled writing area even for legacy auto-assigned numbers',async()=>{
+test('payment memo keeps its auto-issued number but always leaves DATE blank even for existing records',async()=>{
  const {readFileSync}=await import('node:fs');
  const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
- const sql=readFileSync(new URL('../supabase/migrations/20261022_finance_controls_payment_memo_number.sql',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('../supabase/migrations/20261022_restore_automatic_payment_memo_number.sql',import.meta.url),'utf8');
+ const oldDate='2026-10-01';
  for(const kind of ['purchase','hire']){
-  const record={...sample,kind,document_meta:{
+  const record={...sample,kind,document_date:oldDate,document_meta:{
    ...sample.document_meta,memo_number:'11/2569',approval_memo_number:'12/2569',
    payment_memo_number:'999/2569'
   }};
-  const documents=buildDocuments(record,school);
-  const pages=documents.split(/(?=<section class="paper-page)/);
-  const payment=pages[kind==='purchase'?4:4];
-  const request=pages[0],approval=pages[2];
+  const pages=buildDocuments(record,school).split(/(?=<section class="paper-page)/);
+  const request=pages[0],approval=pages[2],payment=pages[4];
   assert.match(request,/<strong>ที่<\/strong><span class="memo-value">พว\. 11\/2569<\/span>/);
   assert.match(approval,/<strong>ที่<\/strong><span class="memo-value">12\/2569<\/span>/);
-  assert.match(payment,/<strong>ที่<\/strong><span class="memo-value kp-payment-number-writein" aria-label="[^"]+"><\/span>/);
-  assert.doesNotMatch(payment,/999\/2569/,'even legacy reserved finance numbers are never printed');
-  assert.match(payment,/<strong class="date-label">วันที่<\/strong><span class="memo-value">/,'memo header date remains unchanged');
+  assert.match(payment,/<strong>ที่<\/strong><span class="memo-value">999\/2569<\/span>/,'historic payment numbers stay visible');
+  assert.match(payment,/<strong class="date-label">วันที่<\/strong><span class="memo-value kp-payment-date-writein" aria-label="[^"]+"><\/span>/);
+  assert.doesNotMatch(payment,/วันที่<\/strong><span class="memo-value">1 ตุลาคม 2569<\/span>/,'old request date must never appear in finance date');
+  assert.match(request,/<strong class="date-label">วันที่<\/strong><span class="memo-value">1 ตุลาคม 2569<\/span>/);
+  assert.match(approval,/<strong class="date-label">วันที่<\/strong><span class="memo-value">1 ตุลาคม 2569<\/span>/);
  }
- assert.match(css,/\.gov-payment \.memo-field-number \.kp-payment-number-writein/);
+ assert.match(css,/\.gov-payment \.memo-field-number \.kp-payment-date-writein/);
  assert.match(css,/border-bottom:1px dotted #333!important/);
- assert.match(css,/@media print[\s\S]*?\.gov-payment \.memo-field-number \.kp-payment-number-writein/);
- assert.match(sql,/PERFORM public\.issue_official_number\(NEW\.id,'memo_number'\)/);
- assert.match(sql,/PERFORM public\.issue_official_number\(NEW\.id,'approval_memo_number'\)/);
- assert.doesNotMatch(sql,/PERFORM public\.issue_official_number\(NEW\.id,'payment_memo_number'\)/);
+ assert.match(css,/@media print[\s\S]*?\.gov-payment \.memo-field-number \.kp-payment-date-writein/);
+ for(const field of ['memo_number','approval_memo_number','payment_memo_number']){
+  assert.match(sql,new RegExp("PERFORM public\\.issue_official_number\\(NEW\\.id,'"+field+"'\\)"));
+ }
  assert.doesNotMatch(sql,/DELETE\s+FROM\s+public\.official_number_registry/i);
  const {docMetaInputs}=await import('./document-meta.js');
  for(const mode of ['create','all']){
   const fields=docMetaInputs({payment_memo_number:'999/2569'},{mode,kind:'purchase'});
-  assert.doesNotMatch(fields,/name="doc_payment_memo_number"/,'finance number no longer appears as an editable school field');
+  assert.match(fields,/name="doc_payment_memo_number"[^>]*readonly/,'number remains visible and locked');
  }
 });
