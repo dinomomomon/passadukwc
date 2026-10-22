@@ -40,7 +40,7 @@ test('real admin forms and numbering are described accurately without inventing 
  assert.match(entire,/หนังสือทั่วไป/);
  assert.match(entire,/อย่างน้อย 6 ตัวอักษร/);
  assert.match(entire,/ไม่ยอมให้ตั้งเลขย้อนกลับ/);
- assert.doesNotMatch(entire,/พว\.[^\n]{0,40}พค\.[^\n]{0,40}แยกเลขเริ่มต้น/);
+ assert.match(entire,/ไม่ได้ตั้ง พว\. กับ พค\. แยกเลขเริ่มต้น/);
 });
 test('admin guide is role-gated in sidebar, render path and click actions',()=>{
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
