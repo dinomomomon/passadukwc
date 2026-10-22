@@ -978,3 +978,32 @@ test('A4 legal texts are escaped and static government references remain untouch
  assert.match(js,/title.textContent=expandTemplateText/);
  assert.match(js,/legalSecond.textContent=expandTemplateText/);
 });
+
+
+test('school admin configures one shared next number per official register and year',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const js=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('../supabase/migrations/20261022_school_number_start_forward_only.sql',import.meta.url),'utf8');
+ assert.match(js,/async function loadOfficialNumberStarts\(\)/);
+ assert.match(js,/db\.rpc\('get_official_number_starts'/);
+ assert.match(js,/setupSeries=\['request','general','acceptance','requisition'\]/);
+ assert.match(js,/data-registry-start-form/);
+ assert.match(js,/registry-setup-year-form/);
+ assert.match(js,/เลขสูงสุดที่จัดสรร\/จองแล้ว/);
+ assert.match(js,/ไม่แยกเลขตามแบบฟอร์ม/,'approval and payment use one shared general sequence');
+ assert.match(js,/if\(next<Number\(current\?\.next_number\|\|1\)\)/);
+ assert.match(js,/db\.rpc\('set_official_number_start'/);
+ assert.match(js,/await Promise\.all\(\[loadOfficialNumbers\(\),loadOfficialNumberStarts\(\)\]\)/);
+ assert.doesNotMatch(js,/id="renumber-form"/,'record details should not have a duplicate renumber editor');
+ assert.doesNotMatch(js,/form\.id==='renumber-form'/,'retired form submit handler must be removed');
+ assert.match(js,/registry-edit/,'number corrections remain in the official registry');
+ assert.match(css,/\.kp-number-setup-grid/,'four series must be shown as readable cards');
+ assert.match(sql,/FOR UPDATE/,'current counter must be locked to avoid races');
+ assert.match(sql,/p_next<=GREATEST/,'must never set backwards over a reserved or cancelled number');
+ assert.match(sql,/r\.school_id=p_school_id/,'lookup never crosses school boundaries');
+ assert.match(sql,/CREATE OR REPLACE FUNCTION public\.get_official_number_starts/);
+ assert.match(sql,/REVOKE ALL ON FUNCTION public\.get_official_number_starts/);
+ assert.match(sql,/public\.is_school_admin\(p_school_id\)/);
+ assert.match(sql,/INSERT INTO public\.audit_logs/);
+});
