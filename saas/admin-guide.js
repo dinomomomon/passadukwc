@@ -1,8 +1,8 @@
-/* Private school-admin guide: illustrated mock-ups only. No user data is accessed.
- * Actual navigation into settings is delegated to app.js and its existing role gate. */
+/* Private school-admin guide. School and signatory chapters render the ACTUAL
+ * school settings controls from app.js; never reproduce mock screenshots. */
 const escape=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 export const adminGuideTopics=[
- {id:'school',icon:'🏫',title:'ตั้งค่าระบบและข้อมูลโรงเรียน',subtitle:'ข้อมูลพื้นฐาน โลโก้โรงเรียน รหัสหนังสือ และข้อมูลที่อยู่',action:'settings',target:'ข้อมูลโรงเรียน',
+ {id:'school',icon:'🏫',title:'การตั้งค่าข้อมูลโรงเรียน',subtitle:'ข้อมูลพื้นฐาน โลโก้โรงเรียน รหัสหนังสือ และข้อมูลที่อยู่',action:'settings',target:'ข้อมูลโรงเรียน',
  steps:[
   {heading:'เปิดเมนูข้อมูลโรงเรียน',desc:'เลือก “ข้อมูลโรงเรียน” จากแถบเมนูด้านซ้าย (เข้าสู่ระบบด้วยบัญชีแอดมินโรงเรียนก่อน)',focus:'ข้อมูลโรงเรียน',fields:[['เมนูที่ใช้','ข้อมูลโรงเรียน'],['สิทธิ์ที่ต้องมี','แอดมินโรงเรียน']],button:'เปิดหน้าตั้งค่า'},
   {heading:'กรอกข้อมูลสถานศึกษา',desc:'กรอกชื่อโรงเรียน อำเภอ จังหวัด และที่อยู่สำหรับออกเอกสารให้ตรงข้อมูลจริง',focus:'ชื่อโรงเรียน',fields:[['ชื่อโรงเรียน','โรงเรียนตัวอย่าง'],['อำเภอ','เมือง'],['จังหวัด','เชียงใหม่'],['ที่อยู่โรงเรียนสำหรับเอกสาร','ตามที่อยู่จริง']],button:'บันทึกข้อมูลโรงเรียน'},
@@ -40,29 +40,46 @@ export const adminGuideTopics=[
 ];
 export const adminGuideIds=adminGuideTopics.map(t=>t.id);
 const iconMark='◉';
-const graphic=(step,topic,stepNo)=>'<figure class="kp-ag-graphic" role="group" aria-label="ภาพอธิบายขั้นตอนที่ '+stepNo+' '+escape(step.heading)+'">'+
- '<div class="kp-ag-window"><div class="kp-ag-browser"><span class="kp-ag-dots">● ● ●</span><b>ครูพัสดุ · ภาพจำลองหน้าจอ</b><span class="kp-ag-window-k">สาธิต</span></div>'+
- '<div class="kp-ag-window-body"><aside class="kp-ag-mini-sidebar"><strong>ครูพัสดุ</strong><span>ภาพรวม</span><span>ทะเบียนจัดซื้อจัดจ้าง</span><span class="'+(topic.target.includes('เลข')?'kp-ag-side-selected':'')+'">ทะเบียนคุมเลขเอกสาร</span><span class="'+(topic.target==='จัดการผู้ใช้งาน'?'kp-ag-side-selected':'')+'">จัดการผู้ใช้งาน</span><span class="'+(topic.target==='แม่แบบเอกสาร'?'kp-ag-side-selected':'')+'">แม่แบบเอกสาร</span><span class="'+(topic.target==='ข้อมูลโรงเรียน'?'kp-ag-side-selected':'')+'">ข้อมูลโรงเรียน</span></aside>'+
- '<div class="kp-ag-mini-main"><div class="kp-ag-mini-heading">'+escape(topic.target)+'<span class="kp-ag-mini-chip">ตัวอย่าง</span></div>'+
- '<div class="kp-ag-mini-rows">'+step.fields.map(([label,value])=>'<div class="kp-ag-mini-row '+(label===(step.fields.some(x=>x[0]===step.focus)?step.focus:step.fields[0][0])?'kp-ag-highlight':'')+'"><div><small>'+escape(label)+'</small><span>'+escape(value)+'</span></div>'+(label===(step.fields.some(x=>x[0]===step.focus)?step.focus:step.fields[0][0])?'<b class="kp-ag-orange-pin">'+stepNo+'</b>':'')+'</div>').join('')+'</div>'+
- '<div class="kp-ag-mini-bottom"><span>ตรวจข้อมูลก่อนดำเนินการจริง</span><span class="kp-ag-illustrated-button '+(step.focus===step.button?'kp-ag-highlight-button':'')+'">'+escape(step.button)+'</span></div></div></div></div>'+
- '<figcaption>ภาพประกอบจำลองจากหน้าฟอร์มระบบ ไม่ใช่ข้อมูลผู้ใช้จริง</figcaption></figure>';
-export function adminGuideHtml(selected='overview'){
- const current=adminGuideTopics.find(t=>t.id===selected);
- const subnav='<nav class="kp-ag-subnav" aria-label="เมนูย่อยคู่มือแอดมิน">'+
-  '<button type="button" class="'+(!current?'is-active':'')+'" data-action="admin-guide-section" data-section="overview">⌂ ภาพรวมคู่มือ</button>'+
-  adminGuideTopics.map((t,i)=>'<button type="button" class="'+(current?.id===t.id?'is-active':'')+'" data-action="admin-guide-section" data-section="'+t.id+'"><span>'+String(i+1).padStart(2,'0')+'</span>'+escape(t.title)+'</button>').join('')+'</nav>';
- const body=!current?
-  '<div class="kp-ag-welcome"><span class="kp-ag-eyebrow">สำหรับบัญชีแอดมินโรงเรียนเท่านั้น</span><h2>ตั้งค่าครูพัสดุให้พร้อม<br><em>ก่อนเริ่มใช้งานจริง</em></h2><p>คู่มือภาพทีละขั้น ครบตั้งแต่ข้อมูลโรงเรียน ผู้ลงนาม เลขทะเบียน แม่แบบเอกสาร ไปจนถึงกำหนดสิทธิ์เจ้าหน้าที่</p>'+
-   '<div class="kp-ag-progress"><span>5 หัวข้อหลัก</span><span>20 ขั้นตอนพร้อมภาพ</span><span>กดไปหน้าตั้งค่าจริงได้</span></div></div>'+
-   '<div class="kp-ag-topic-grid">'+adminGuideTopics.map((t,i)=>'<button type="button" class="kp-ag-topic-card" data-action="admin-guide-section" data-section="'+t.id+'"><span class="kp-ag-topic-count">'+String(i+1).padStart(2,'0')+'</span><span class="kp-ag-topic-emoji" aria-hidden="true">'+t.icon+'</span><strong>'+escape(t.title)+'</strong><small>'+escape(t.subtitle)+'</small><span class="kp-ag-topic-open">ดูภาพทีละขั้น →</span></button>').join('')+'</div>':
-  '<article class="kp-ag-lesson"><header class="kp-ag-lesson-head"><span class="kp-ag-lesson-icon" aria-hidden="true">'+current.icon+'</span><div><span class="kp-ag-eyebrow">คู่มือแอดมิน • '+String(adminGuideTopics.indexOf(current)+1).padStart(2,'0')+' / 05</span><h2>'+escape(current.title)+'</h2><p>'+escape(current.subtitle)+'</p></div>'+
-   '<button type="button" data-action="admin-guide-open" data-target="'+current.action+'" class="kp-ag-live-button">ไปยังเมนูจริง ↗</button></header>'+
-   '<div class="kp-ag-target"><span>คลิกในระบบจริงตามเส้นทาง</span><strong>เมนูด้านซ้าย → '+escape(current.target)+'</strong></div>'+
-   '<div class="kp-ag-step-list">'+current.steps.map((step,i)=>'<section class="kp-ag-step"><div class="kp-ag-step-header"><span class="kp-ag-step-no">'+(i+1)+'</span><div><h3>'+escape(step.heading)+'</h3><p>'+escape(step.desc)+'</p></div></div>'+
-   graphic(step,current,i+1)+'</section>').join('')+'</div>'+
-   '<div class="kp-ag-important"><strong>ข้อควรระวัง</strong><p>'+escape(current.note)+'</p></div>'+
-   '<div class="kp-ag-lesson-actions"><button type="button" data-action="admin-guide-section" data-section="overview">← กลับสารบัญ</button>'+
-   '<button type="button" data-action="admin-guide-open" data-target="'+current.action+'">เปิดเมนูจริง ↗</button></div></article>';
- return '<div class="kp-admin-guide">'+subnav+'<section class="kp-ag-body">'+body+'</section></div>';
+
+const realFieldSteps={
+ school:[
+  {title:'อัปโหลดโลโก้โรงเรียน',desc:'เลื่อนดูโลโก้ปัจจุบัน คลิก “เลือกไฟล์” แล้วเลือก PNG, JPG หรือ WEBP ไม่เกิน 1 MB ก่อนกด “อัปโหลดโลโก้โรงเรียน” โลโก้ใช้เฉพาะหน้า Dashboard และเมนู ไม่ใช่ตราครุฑในเอกสารราชการ',field:'school_logo',button:'ไปที่ช่องเลือกไฟล์จริง ↘'},
+  {title:'กรอกข้อมูลสถานศึกษา',desc:'กรอกชื่อโรงเรียน อำเภอ และจังหวัดให้ตรงข้อมูลโรงเรียน ช่องเหล่านี้อยู่ใต้หัวข้อ “ข้อมูลสถานศึกษา”',field:'name',button:'ไปที่ช่องชื่อโรงเรียนจริง ↘'},
+  {title:'กรอกรหัสหนังสือและที่อยู่บนเอกสาร',desc:'กรอกเฉพาะรหัสหนังสือ เช่น พว. (ไม่ต้องใส่เลข 1/2569) และใส่ที่อยู่โรงเรียนสำหรับเอกสารตามความเป็นจริง',field:'memo_prefix',button:'ไปที่ช่องรหัสหนังสือจริง ↘'},
+  {title:'ตรวจสอบแล้วบันทึก',desc:'ตรวจข้อมูลสถานศึกษาและผู้ลงนามในฟอร์มเดียวกันให้ครบ จากนั้นกด “บันทึกข้อมูลโรงเรียน” ระบบแจ้งผลการบันทึกบนหน้าจอ',field:'submit',button:'ไปที่ปุ่มบันทึกจริง ↘'}
+ ],
+ signers:[
+  {title:'ระบุเจ้าหน้าที่พัสดุ',desc:'กรอกชื่อ–นามสกุลของเจ้าหน้าที่พัสดุ ตามคำสั่งหรือข้อมูลล่าสุดของโรงเรียน',field:'officer_name',button:'ไปที่ช่องเจ้าหน้าที่พัสดุจริง ↘'},
+  {title:'ระบุหัวหน้าเจ้าหน้าที่พัสดุ',desc:'กรอกชื่อ–นามสกุลหัวหน้าเจ้าหน้าที่พัสดุให้ตรงตามผู้รับผิดชอบจริง',field:'head_name',button:'ไปที่ช่องหัวหน้าเจ้าหน้าที่จริง ↘'},
+  {title:'ระบุผู้อำนวยการและเจ้าหน้าที่การเงิน',desc:'กรอกชื่อ–นามสกุลในช่องผู้อำนวยการสถานศึกษา และเจ้าหน้าที่การเงินตามลำดับ',field:'director_name',button:'ไปที่ช่องผู้อำนวยการจริง ↘'},
+  {title:'บันทึกและตรวจหน้าเอกสาร',desc:'กด “บันทึกข้อมูลโรงเรียน” แล้วตรวจชื่อและตำแหน่งบนตัวอย่างเอกสาร A4 ก่อนนำไปใช้จริง ชื่อบนเอกสารไม่ใช่ลายเซ็น',field:'submit',button:'ไปที่ปุ่มบันทึกจริง ↘'}
+ ]
+};
+const actualFormGuide=(current,liveSchoolHtml)=>{
+ const instructions=realFieldSteps[current.id];
+ const steps=instructions.map((step,i)=>'<article class="kp-ag-real-step"><span class="kp-ag-step-no">'+(i+1)+'</span><div><h3>'+escape(step.title)+'</h3><p>'+escape(step.desc)+'</p>'+
+  '<button type="button" class="kp-ag-focus-button" data-action="admin-guide-focus" data-field="'+escape(step.field)+'">'+escape(step.button)+'</button></div></article>').join('');
+ return '<section class="kp-ag-live-instructions"><h3>ทำตามหน้าฟอร์มจริงของระบบ</h3><p>กดปุ่ม “ไปที่ช่องจริง” เพื่อเลื่อนไปยังช่องที่ต้องกรอกได้ทันที ไม่ใช่ภาพจำลอง และบันทึกข้อมูลในแบบฟอร์มของโรงเรียนได้โดยตรง</p>'+
+  '<div class="kp-ag-real-steps">'+steps+'</div></section>'+
+  '<section class="kp-ag-real-form"><div class="kp-ag-real-form-head"><span>ฟอร์มข้อมูลโรงเรียนจากระบบปัจจุบัน</span><strong>ใช้งานและบันทึกจริง</strong></div>'+
+  '<div class="kp-ag-live-form">'+liveSchoolHtml+'</div></section>';
+};
+export function adminGuideHtml(selected='school',liveSchoolHtml=''){
+ const current=adminGuideTopics.find(t=>t.id===selected)||adminGuideTopics[0];
+ const subnav='<nav class="kp-ag-subnav" aria-label="เมนูย่อยคู่มือผู้ดูแลระบบ">'+
+  adminGuideTopics.map((t,i)=>'<button type="button" class="'+(current.id===t.id?'is-active':'')+'" data-action="admin-guide-section" data-section="'+t.id+'"><span>'+String(i+1).padStart(2,'0')+'</span>'+escape(t.title)+'</button>').join('')+'</nav>';
+ const real=['school','signers'].includes(current.id)&&!!liveSchoolHtml;
+ const standardSteps=!real?'<div class="kp-ag-step-list kp-ag-text-guide">'+current.steps.map((step,i)=>
+  '<section class="kp-ag-step"><div class="kp-ag-step-header"><span class="kp-ag-step-no">'+(i+1)+'</span><div><h3>'+escape(step.heading)+'</h3><p>'+escape(step.desc)+'</p></div></div></section>').join('')+'</div>':'';
+ const intro=real?actualFormGuide(current,liveSchoolHtml):
+  '<div class="kp-ag-no-simulation"><strong>คำแนะนำตามขั้นตอนของระบบ</strong><p>เนื้อหาหัวข้อนี้เป็นข้อความแนะนำพร้อมทางเข้าเมนูจริง ยังไม่มีภาพหน้าจอจริงที่ยืนยันแล้ว จึงไม่แสดงภาพจำลองที่อาจทำให้เข้าใจผิด</p></div>'+standardSteps;
+ const article='<article class="kp-ag-lesson"><header class="kp-ag-lesson-head"><span class="kp-ag-lesson-icon" aria-hidden="true">'+current.icon+'</span><div>'+
+  '<span class="kp-ag-eyebrow">คู่มือผู้ดูแลระบบ • '+String(adminGuideTopics.indexOf(current)+1).padStart(2,'0')+' / 05</span>'+
+  '<h2>'+escape(current.title)+'</h2><p>'+escape(current.subtitle)+'</p></div>'+
+  '<button type="button" data-action="admin-guide-open" data-target="'+escape(current.action)+'" class="kp-ag-live-button">เปิดเมนูจริง ↗</button></header>'+
+  '<div class="kp-ag-target"><span>เมนูที่เกี่ยวข้อง</span><strong>เมนูด้านซ้าย → '+escape(current.target)+'</strong></div>'+intro+
+  '<div class="kp-ag-important"><strong>ข้อควรระวัง</strong><p>'+escape(current.note)+'</p></div>'+
+  '<div class="kp-ag-lesson-actions"><button type="button" data-action="admin-guide-section" data-section="school">กลับหัวข้อแรก</button>'+
+  '<button type="button" data-action="admin-guide-open" data-target="'+escape(current.action)+'">เปิดเมนูจริง ↗</button></div></article>';
+ return '<div class="kp-admin-guide">'+subnav+'<section class="kp-ag-body">'+article+'</section></div>';
 }
