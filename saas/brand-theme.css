@@ -292,6 +292,17 @@ button.secondary:hover {
 .section-head h2 { color: #163B74; }
 
 /* Tags and status. Color is backed up by readable text labels */
+/* Persisted and validated records are saved successfully, NOT officially approved.
+   Database draft state remains unchanged so edit/delete permissions continue to work. */
+.tag.kp-saved-complete{
+ color:#146c48;
+ background:#e7f8ef;
+ border-color:#b9e7ce;
+ font-weight:800;
+}
+.kp-detail-status{display:inline-flex;vertical-align:middle;margin-left:9px}
+.kp-detail-status .tag{font-size:12px;font-weight:800;letter-spacing:normal;vertical-align:middle}
+
 .tag {
   background: #E7F1FF;
   color: #0C5EB9;
