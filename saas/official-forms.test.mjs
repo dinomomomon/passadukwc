@@ -1002,7 +1002,7 @@ test('school admin configures one shared next number per official register and y
  assert.match(js,/data-registry-start-form/);
  assert.match(js,/registry-setup-year-form/);
  assert.match(js,/เลขสูงสุดที่จัดสรร\/จองแล้ว/);
- assert.match(js,/ไม่แยกเลขตามแบบฟอร์ม/,'approval and payment use one shared general sequence');
+ assert.match(js,/หน้าทราบผลและขออนุมัติเบิกจ่ายเว้นเลขให้ฝ่ายการเงินลงเอง/,'payment header number belongs to finance; new requests do not consume a second general number');
  assert.match(js,/if\(next<Number\(current\?\.next_number\|\|1\)\)/);
  assert.match(js,/db\.rpc\('set_official_number_start'/);
  assert.match(js,/await Promise\.all\(\[loadOfficialNumbers\(\),loadOfficialNumberStarts\(\)\]\)/);
