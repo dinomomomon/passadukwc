@@ -807,3 +807,20 @@ table td {
 .kp-category-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .kp-category-settings>.hint{margin-top:14px;line-height:1.8}
 @media(max-width:680px){.kp-category-row{grid-template-columns:minmax(0,1fr);gap:8px}.kp-category-remove{justify-self:start}}
+
+/* Responsive signer roster and conditional procurement-officer selector. */
+.kp-officer-settings{margin-top:18px}
+.kp-officer-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.kp-officer-heading h2{margin:0 0 6px}
+.kp-officer-list{display:flex;flex-direction:column;gap:11px;margin:18px 0}
+.kp-officer-row{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,.75fr) minmax(0,.85fr) auto;gap:13px;align-items:end;padding:14px;border-radius:14px;background:#f5f9ff;border:1px solid #dbe9fb}
+.kp-officer-row .field{margin:0;min-width:0}
+.kp-officer-switch,.kp-officer-default{display:flex;align-items:center;gap:8px;min-height:42px;cursor:pointer;color:#245083;font-size:13px;font-weight:700}
+.kp-officer-switch input,.kp-officer-default input{accent-color:#0b66d6;width:16px;height:16px}
+.kp-officer-remove{align-self:end;min-height:42px!important;border:1px solid #f4c6c6!important;background:#fff8f7!important;color:#b84343!important}
+.kp-officer-actions{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.kp-officer-settings>.hint{line-height:1.85;margin-top:13px}
+.kp-officer-picker{margin:15px 0}
+.kp-officer-picker .select{width:100%;min-height:43px}
+@media(max-width:820px){.kp-officer-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.kp-officer-row .field{grid-column:1/-1}.kp-officer-remove{justify-self:start}}
+@media(max-width:450px){.kp-officer-row{grid-template-columns:minmax(0,1fr)}.kp-officer-row .field{grid-column:auto}.kp-officer-switch,.kp-officer-default{min-height:28px}}

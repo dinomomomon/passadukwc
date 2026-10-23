@@ -131,7 +131,7 @@ test('both production hosts bundle user manual from the same assets and styles',
  const pkg=JSON.parse(read('package.json')),index=read('index.html'),css=read('admin-guide.css');
  assert.match(pkg.scripts.build,/staff-guide\.test\.mjs/);
  assert.match(index,/admin-guide\.css\?v=20261023-staff-guide-v2/);
- assert.match(index,/app\.js\?v=20261023-staff-guide-v4/);
+ assert.match(index,/app\.js\?v=20261023-officer-auto-v1/);
  assert.match(css,/\.kp-ug-pending/);
  assert.match(read('build.mjs'),/bundle:true/);
  assert.match(read('build.mjs'),/staff-guide-create-1\.svg/);
