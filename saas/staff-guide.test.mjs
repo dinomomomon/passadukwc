@@ -1,0 +1,67 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {staffGuideTopics,staffGuideIds,staffGuideHtml} from './staff-guide.js';
+const read=name=>readFileSync(new URL('./'+name,import.meta.url),'utf8');
+
+test('user manual has exactly three requested topics in the requested order',()=>{
+ assert.deepEqual(staffGuideIds,['create','records','registry']);
+ assert.deepEqual(staffGuideTopics.map(t=>t.title),[
+  'การสร้างรายการใหม่','ทะเบียนจัดซื้อจัดจ้าง','ทะเบียนคุมเลขเอกสาร'
+ ]);
+ assert.equal(staffGuideTopics.length,3);
+ for(let i=0;i<staffGuideTopics.length;i++){
+  const topic=staffGuideTopics[i],html=staffGuideHtml(topic.id);
+  assert.match(html,new RegExp('data-action="user-guide-section" data-section="'+topic.id+'"'));
+  assert.match(html,new RegExp('data-action="user-guide-open" data-target="'+topic.action+'"'));
+  assert.match(html,new RegExp('0'+(i+1)+' / 03'));
+  assert.equal((html.match(/data-action="user-guide-section"/g)||[]).length,4);
+  assert.doesNotMatch(html,/<img|<form|data:image|fake screenshot|บันทึกสำเร็จ/i);
+ }
+ assert.match(staffGuideHtml('missing'),/การสร้างรายการใหม่/);
+});
+
+test('guide is available through regular and mobile navigation to every school role, including demo',()=>{
+ const app=read('app.js');
+ const menuLine=app.split('\n').find(line=>line.startsWith('const menu='));
+ assert.match(menuLine,/\['user-guide','คู่มือผู้ใช้งาน',i\('book'\)\]/);
+ assert.match(app,/function sidebar\(\)\{let items=\[\.\.\.menu\]/);
+ assert.match(app,/\.replace\('คู่มือผู้ใช้งาน','คู่มือ'\)/);
+ assert.match(app,/if\(state\.page==='user-guide'\)return renderStaffGuide\(\)/);
+ assert.match(app,/if\(action==='user-guide'\)/);
+ assert.match(app,/if\(action==='user-guide-section'\)/);
+ assert.match(app,/if\(action==='user-guide-open'\)/);
+ assert.doesNotMatch(app.slice(app.indexOf("if(action==='user-guide'){"),app.indexOf("if(action==='admin-guide'){")) ,/isSchoolAdmin\(\)/);
+ assert.match(app,/if\(!state\.user&&!state\.demo\)return;/);
+});
+
+test('owner and users waiting for school access can read guide, without school access bypass',()=>{
+ const app=read('app.js');
+ assert.match(app,/data-action="user-guide"[^>]*>.*คู่มือผู้ใช้งาน/);
+ assert.match(app,/btn\('คู่มือผู้ใช้งาน','user-guide','secondary'\)/);
+ assert.match(app,/renderUniversalUserGuide\(\)/);
+ assert.match(app,/staffGuideHtml\(selected,\{canOpenMenu:false\}\)/);
+ assert.match(app,/if\(!state\.school&&!state\.demo\)return notify\('ต้องได้รับสิทธิ์เข้าถึงโรงเรียนก่อนเปิดเมนูทำงาน'/);
+ assert.doesNotMatch(staffGuideHtml('records',{canOpenMenu:false}),/data-action="user-guide-open"/);
+ assert.match(staffGuideHtml('records',{canOpenMenu:false}),/ทะเบียนจัดซื้อจัดจ้าง/);
+});
+
+test('existing admin-only manual and purchase/number registries are untouched',()=>{
+ const app=read('app.js');
+ assert.match(app,/if\(action==='admin-guide'\)\{\s*if\(!isSchoolAdmin\(\)\)/);
+ assert.match(app,/if\(state\.page==='admin-guide'\)return renderAdminGuide\(\)/);
+ for(const method of ['create_procurement','set_procurement_document_meta','loadOfficialNumbers','manage_official_number']){
+  assert.ok(app.includes(method),method+' must still be present');
+ }
+ assert.match(app,/function renderStaffGuide\(\)/);
+ assert.match(app,/function renderUniversalUserGuide\(\)/);
+});
+
+test('both production hosts bundle user manual from the same assets and styles',()=>{
+ const pkg=JSON.parse(read('package.json')),index=read('index.html'),css=read('admin-guide.css');
+ assert.match(pkg.scripts.build,/staff-guide\.test\.mjs/);
+ assert.match(index,/admin-guide\.css\?v=20261023-staff-guide-v1/);
+ assert.match(index,/app\.js\?v=20261023-staff-guide-v1/);
+ assert.match(css,/\.kp-ug-pending/);
+ assert.match(read('build.mjs'),/bundle:true/);
+});
