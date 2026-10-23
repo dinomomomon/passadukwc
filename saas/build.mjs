@@ -8,7 +8,7 @@ const staticAssets=[
   'print-fix.css','official-print.css','print-responsive.css','print-readable.css',
   'print-pagination.css','print-adaptive.css','print-signatures-responsive.css',
   'auth-unified.css','marketing-pages.css','admin-guide.css','staff-management.css','government-forms.css','template-builder.css','notification-popup.css',
-  'config.js','print.js','kru-pasadu-icon.svg','garuda-memo.svg'
+  'config.js','print.js','kru-pasadu-icon.svg','garuda-memo.svg','admin-guide-school-infographic.svg'
 ];
 const root=process.cwd();
 await mkdir(resolve(root,'dist'),{recursive:true});
