@@ -1,5 +1,5 @@
-/* Private school-admin guide. School and signatory chapters render the ACTUAL
- * school settings controls from app.js; never reproduce mock screenshots. */
+/* Private school-admin guide with user-approved infographic references.
+ * This guide never duplicates editable school forms or alters official numbering. */
 const escape=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 export const adminGuideTopics=[
  {id:'school',icon:'🏫',title:'การตั้งค่าข้อมูลโรงเรียน',subtitle:'ข้อมูลพื้นฐาน โลโก้โรงเรียน รหัสหนังสือ และข้อมูลที่อยู่',action:'settings',target:'ข้อมูลโรงเรียน',
@@ -9,14 +9,7 @@ export const adminGuideTopics=[
   {heading:'ตั้งรหัสหนังสือและโลโก้',desc:'รหัสหนังสือใส่เฉพาะคำย่อ เช่น พว. ไม่รวมเลข 1/2569 และไฟล์โลโก้ใช้ที่หน้าเว็บเท่านั้น',focus:'รหัสหนังสือ',fields:[['รหัสหนังสือเท่านั้น','พว.'],['โลโก้โรงเรียน','อัปโหลด PNG / JPG / WEBP'],['ข้อจำกัดไฟล์','ไม่เกิน 1 MB']],button:'อัปโหลดโลโก้โรงเรียน'},
   {heading:'บันทึกและตรวจทาน',desc:'กดบันทึกข้อมูลโรงเรียน แล้วตรวจชื่อและรหัสที่หัวเอกสารตัวอย่าง ก่อนใช้งานจริง',focus:'บันทึกข้อมูลโรงเรียน',fields:[['ข้อมูลสถานศึกษา','ตรวจสอบครบแล้ว'],['รหัสหนังสือ','พว.'],['ตรวจตัวอย่าง','เปิดดู A4']],button:'บันทึกข้อมูลโรงเรียน'}],
  note:'การแก้ข้อมูลโรงเรียนไม่ได้หมายความว่าเอกสารราชการที่ออกไปแล้วได้รับการแก้ไขหรืออนุมัติย้อนหลัง'},
- {id:'signers',icon:'✍️',title:'ตั้งค่าผู้ลงนาม',subtitle:'กำหนดชื่อผู้เกี่ยวข้องให้แสดงบนแบบฟอร์มโดยอัตโนมัติ',action:'settings',target:'ข้อมูลโรงเรียน',
- steps:[
-  {heading:'เข้าหน้าข้อมูลโรงเรียน',desc:'ในเมนูข้อมูลโรงเรียน เลื่อนลงมาที่ส่วน “ชื่อผู้ลงนาม”',focus:'ชื่อผู้ลงนาม',fields:[['เมนู','ข้อมูลโรงเรียน'],['ส่วนของฟอร์ม','ชื่อผู้ลงนาม']],button:'เลื่อนมายังผู้ลงนาม'},
-  {heading:'ใส่ชื่อเจ้าหน้าที่และหัวหน้า',desc:'กรอกชื่อ–นามสกุลของเจ้าหน้าที่พัสดุและหัวหน้าเจ้าหน้าที่ตามคำสั่งมอบหมาย',focus:'เจ้าหน้าที่พัสดุ',fields:[['เจ้าหน้าที่พัสดุ','นายเจ้าหน้าที่ ตัวอย่าง'],['หัวหน้าเจ้าหน้าที่พัสดุ','นางสาวหัวหน้า ตัวอย่าง']],button:'ตรวจชื่อให้ถูกต้อง'},
-  {heading:'ใส่ชื่อผู้อำนวยการและการเงิน',desc:'กรอกชื่อผู้อำนวยการสถานศึกษาและเจ้าหน้าที่การเงิน หากมีการเปลี่ยนตัวบุคคลให้แก้ข้อมูลก่อนสร้างรายการใหม่',focus:'ผู้อำนวยการสถานศึกษา',fields:[['ผู้อำนวยการสถานศึกษา','นางสาวผู้อำนวยการ ตัวอย่าง'],['เจ้าหน้าที่การเงิน','นางสาวการเงิน ตัวอย่าง']],button:'บันทึกข้อมูลโรงเรียน'},
-  {heading:'ตรวจชื่อใต้บล็อกลายเซ็น',desc:'เปิดรายการตัวอย่างหรือฉบับร่าง และดูหน้า A4 ตรวจชื่อและตำแหน่งทุกตำแหน่งอีกครั้ง',focus:'บล็อกลายเซ็น',fields:[['ลงชื่อ','..............................'],['ชื่อผู้ลงนาม','(นางสาวหัวหน้า ตัวอย่าง)'],['ตำแหน่ง','หัวหน้าเจ้าหน้าที่']],button:'ดูตัวอย่าง A4'}],
- note:'ชื่อที่ปรากฏเป็นข้อมูลประกอบแบบฟอร์ม ไม่ใช่ลายมือชื่อจริง และไม่ควรตีความว่าได้รับอนุมัติแล้ว'},
- {id:'numbers',icon:'#️⃣',title:'ตั้งค่าเลขทะเบียนคุม',subtitle:'เลขเริ่มต้น ปีงบประมาณ และลำดับอัตโนมัติของแต่ละทะเบียน',action:'registry',target:'ทะเบียนคุมเลขเอกสาร',
+ {id:'numbers',icon:'#️⃣',title:'การตั้งค่าเลขทะเบียนคุม',subtitle:'เลขเริ่มต้น ปีงบประมาณ และลำดับอัตโนมัติของแต่ละทะเบียน',action:'registry',target:'ทะเบียนคุมเลขเอกสาร',
  steps:[
   {heading:'เปิดทะเบียนคุมเลข',desc:'คลิก “ทะเบียนคุมเลขเอกสาร” ที่เมนูด้านซ้าย แล้วเปิดส่วน “กำหนดเลขถัดไปอัตโนมัติ (แอดมินโรงเรียน)”',focus:'กำหนดเลขถัดไปอัตโนมัติ',fields:[['เมนู','ทะเบียนคุมเลขเอกสาร'],['สิทธิ์','แอดมินโรงเรียน']],button:'กำหนดเลขถัดไปอัตโนมัติ'},
   {heading:'เลือกปี พ.ศ.',desc:'กรอกปี พ.ศ. ของทะเบียนที่ต้องการ เช่น 2570 แล้วกด “ดูเลขของปีนี้” เพื่ออ่านเลขสูงสุดที่เคยออก',focus:'ปี พ.ศ.',fields:[['ปี พ.ศ.','2570'],['เลขที่ใช้แล้ว','ตรวจสอบก่อนตั้งต้น']],button:'ดูเลขของปีนี้'},
@@ -41,49 +34,40 @@ export const adminGuideTopics=[
 export const adminGuideIds=adminGuideTopics.map(t=>t.id);
 const iconMark='◉';
 
-const realFieldSteps={
- school:[
-  {title:'อัปโหลดโลโก้โรงเรียน',desc:'เลื่อนดูโลโก้ปัจจุบัน คลิก “เลือกไฟล์” แล้วเลือก PNG, JPG หรือ WEBP ไม่เกิน 1 MB ก่อนกด “อัปโหลดโลโก้โรงเรียน” โลโก้ใช้เฉพาะหน้า Dashboard และเมนู ไม่ใช่ตราครุฑในเอกสารราชการ',field:'school_logo',button:'ไปที่ช่องเลือกไฟล์จริง ↘'},
-  {title:'กรอกข้อมูลสถานศึกษา',desc:'กรอกชื่อโรงเรียน อำเภอ และจังหวัดให้ตรงข้อมูลโรงเรียน ช่องเหล่านี้อยู่ใต้หัวข้อ “ข้อมูลสถานศึกษา”',field:'name',button:'ไปที่ช่องชื่อโรงเรียนจริง ↘'},
-  {title:'กรอกรหัสหนังสือและที่อยู่บนเอกสาร',desc:'กรอกเฉพาะรหัสหนังสือ เช่น พว. (ไม่ต้องใส่เลข 1/2569) และใส่ที่อยู่โรงเรียนสำหรับเอกสารตามความเป็นจริง',field:'memo_prefix',button:'ไปที่ช่องรหัสหนังสือจริง ↘'},
-  {title:'ตรวจสอบแล้วบันทึก',desc:'ตรวจข้อมูลสถานศึกษาและผู้ลงนามในฟอร์มเดียวกันให้ครบ จากนั้นกด “บันทึกข้อมูลโรงเรียน” ระบบแจ้งผลการบันทึกบนหน้าจอ',field:'submit',button:'ไปที่ปุ่มบันทึกจริง ↘'}
- ],
- signers:[
-  {title:'ระบุเจ้าหน้าที่พัสดุ',desc:'กรอกชื่อ–นามสกุลของเจ้าหน้าที่พัสดุ ตามคำสั่งหรือข้อมูลล่าสุดของโรงเรียน',field:'officer_name',button:'ไปที่ช่องเจ้าหน้าที่พัสดุจริง ↘'},
-  {title:'ระบุหัวหน้าเจ้าหน้าที่พัสดุ',desc:'กรอกชื่อ–นามสกุลหัวหน้าเจ้าหน้าที่พัสดุให้ตรงตามผู้รับผิดชอบจริง',field:'head_name',button:'ไปที่ช่องหัวหน้าเจ้าหน้าที่จริง ↘'},
-  {title:'ระบุผู้อำนวยการและเจ้าหน้าที่การเงิน',desc:'กรอกชื่อ–นามสกุลในช่องผู้อำนวยการสถานศึกษา และเจ้าหน้าที่การเงินตามลำดับ',field:'director_name',button:'ไปที่ช่องผู้อำนวยการจริง ↘'},
-  {title:'บันทึกและตรวจหน้าเอกสาร',desc:'กด “บันทึกข้อมูลโรงเรียน” แล้วตรวจชื่อและตำแหน่งบนตัวอย่างเอกสาร A4 ก่อนนำไปใช้จริง ชื่อบนเอกสารไม่ใช่ลายเซ็น',field:'submit',button:'ไปที่ปุ่มบันทึกจริง ↘'}
- ]
-};
-const actualFormGuide=(current,liveSchoolHtml)=>{
- const instructions=realFieldSteps[current.id];
- const steps=instructions.map((step,i)=>'<article class="kp-ag-real-step"><span class="kp-ag-step-no">'+(i+1)+'</span><div><h3>'+escape(step.title)+'</h3><p>'+escape(step.desc)+'</p>'+
-  '<button type="button" class="kp-ag-focus-button" data-action="admin-guide-focus" data-field="'+escape(step.field)+'">'+escape(step.button)+'</button></div></article>').join('');
- return '<section class="kp-ag-live-instructions"><h3>ทำตามหน้าฟอร์มจริงของระบบ</h3><p>กดปุ่ม “ไปที่ช่องจริง” เพื่อเลื่อนไปยังช่องที่ต้องกรอกได้ทันที ไม่ใช่ภาพจำลอง และบันทึกข้อมูลในแบบฟอร์มของโรงเรียนได้โดยตรง</p>'+
-  '<div class="kp-ag-real-steps">'+steps+'</div></section>'+
-  '<section class="kp-ag-real-form"><div class="kp-ag-real-form-head"><span>ฟอร์มข้อมูลโรงเรียนจากระบบปัจจุบัน</span><strong>ใช้งานและบันทึกจริง</strong></div>'+
-  '<div class="kp-ag-live-form">'+liveSchoolHtml+'</div></section>';
-};
-export function adminGuideHtml(selected='school',liveSchoolHtml=''){
+export function adminGuideHtml(selected='school'){
  const current=adminGuideTopics.find(t=>t.id===selected)||adminGuideTopics[0];
  const subnav='<nav class="kp-ag-subnav" aria-label="เมนูย่อยคู่มือผู้ดูแลระบบ">'+
   adminGuideTopics.map((t,i)=>'<button type="button" class="'+(current.id===t.id?'is-active':'')+'" data-action="admin-guide-section" data-section="'+t.id+'"><span>'+String(i+1).padStart(2,'0')+'</span>'+escape(t.title)+'</button>').join('')+'</nav>';
- const schoolInfographic=current.id==='school';
- const real=current.id==='signers'&&!!liveSchoolHtml;
- const standardSteps=!schoolInfographic&&!real?'<div class="kp-ag-step-list kp-ag-text-guide">'+current.steps.map((step,i)=>
-  '<section class="kp-ag-step"><div class="kp-ag-step-header"><span class="kp-ag-step-no">'+(i+1)+'</span><div><h3>'+escape(step.heading)+'</h3><p>'+escape(step.desc)+'</p></div></div></section>').join('')+'</div>':'';
- const schoolGuideImage='<section class="kp-ag-infographic-guide"><figure>'+
-  '<a href="/admin-guide-school-infographic.svg" target="_blank" rel="noopener noreferrer" class="kp-ag-infographic-link" title="คลิกเปิดภาพคู่มือขนาดเต็ม">'+
-  '<img src="/admin-guide-school-infographic.svg" alt="คู่มือการตั้งค่าข้อมูลโรงเรียนเป็นอินโฟกราฟิก 4 ขั้นตอน ได้แก่ อัปโหลดโลโก้โรงเรียน กรอกชื่อโรงเรียน อำเภอและจังหวัด กรอกรหัสหนังสือและที่อยู่ และกรอกชื่อผู้ลงนามก่อนบันทึก" width="1448" height="1086" loading="eager" decoding="async"></a>'+
-  '<figcaption>ตัวอย่างข้อมูลสมมติสำหรับแนะนำการกรอก ไม่ใช่ข้อมูลจริงของโรงเรียน • คลิกที่ภาพเพื่อดูขนาดเต็ม</figcaption>'+
-  '</figure><p class="kp-ag-infographic-hint">เมื่อต้องการกรอกข้อมูลจริง ให้กดปุ่ม “เปิดเมนูจริง” ด้านบน ระบบจะพาไปที่หน้าข้อมูลโรงเรียน</p></section>';
- const intro=schoolInfographic?schoolGuideImage:real?actualFormGuide(current,liveSchoolHtml):
-  '<div class="kp-ag-no-simulation"><strong>คำแนะนำตามขั้นตอนของระบบ</strong><p>เนื้อหาหัวข้อนี้เป็นข้อความแนะนำพร้อมทางเข้าเมนูจริง ยังไม่มีภาพหน้าจอจริงที่ยืนยันแล้ว จึงไม่แสดงภาพจำลองที่อาจทำให้เข้าใจผิด</p></div>'+standardSteps;
+ const infographic={
+  school:{
+   src:'/admin-guide-school-infographic.svg',
+   width:1448,height:1086,
+   alt:'อินโฟกราฟิกคู่มือการตั้งค่าข้อมูลโรงเรียน 4 ขั้นตอน อัปโหลดโลโก้ กรอกข้อมูลสถานศึกษา รหัสหนังสือ ที่อยู่ และชื่อผู้ลงนาม',
+   caption:'ตัวอย่างข้อมูลสมมติสำหรับแนะนำการกรอก ไม่ใช่ข้อมูลจริงของโรงเรียน',
+   hint:'เมื่อต้องการกรอกข้อมูลจริง ให้กด “เปิดเมนูจริง” เพื่อไปยังหน้าข้อมูลโรงเรียน'
+  },
+  numbers:{
+   src:'/admin-guide-registry-infographic.svg',
+   width:1536,height:1024,
+   alt:'อินโฟกราฟิกคู่มือการตั้งค่าเลขทะเบียนคุม เลือกปี พ.ศ. ดูเลขของปีนี้ กำหนดเลขถัดไปแยกสี่ทะเบียน ได้แก่ รายงานขอซื้อขอจ้าง หนังสือรายงานผลและเบิกจ่าย ใบตรวจรับ และใบเบิกพัสดุ',
+   caption:'ตัวเลขในอินโฟกราฟิกเป็นตัวอย่างประกอบการตั้งค่าเท่านั้น ไม่ใช่เลขจริงที่ระบบจัดสรร',
+   hint:'กำหนดเลขถัดไปเป็นเพียงเลขลำดับ ไม่ต้องกรอกรหัสหรือต่อท้ายปี พ.ศ. และห้ามนำเลขที่เคยใช้หรือจองแล้วกลับมาใช้ซ้ำ'
+  }
+ }[current.id];
+ const infographicHtml=infographic?
+  '<section class="kp-ag-infographic-guide"><figure><a href="'+infographic.src+'" target="_blank" rel="noopener noreferrer" class="kp-ag-infographic-link" title="คลิกเปิดภาพคู่มือขนาดเต็ม">'+
+  '<img src="'+infographic.src+'" alt="'+escape(infographic.alt)+'" width="'+infographic.width+'" height="'+infographic.height+'" loading="eager" decoding="async"></a>'+
+  '<figcaption>'+escape(infographic.caption)+' • คลิกภาพเพื่อดูขนาดเต็ม</figcaption></figure>'+
+  '<p class="kp-ag-infographic-hint">'+escape(infographic.hint)+'</p></section>':'';
+ const standardSteps=infographic?'':'<div class="kp-ag-no-simulation"><strong>คำแนะนำตามขั้นตอนของระบบ</strong><p>หัวข้อนี้แสดงคำแนะนำตามฟังก์ชันปัจจุบัน ไม่มีภาพจำลองที่อาจไม่ตรงกับฟอร์มจริง</p></div>'+
+  '<div class="kp-ag-step-list kp-ag-text-guide">'+current.steps.map((step,i)=>
+   '<section class="kp-ag-step"><div class="kp-ag-step-header"><span class="kp-ag-step-no">'+(i+1)+'</span><div><h3>'+escape(step.heading)+'</h3><p>'+escape(step.desc)+'</p></div></div></section>').join('')+'</div>';
  const article='<article class="kp-ag-lesson"><header class="kp-ag-lesson-head"><span class="kp-ag-lesson-icon" aria-hidden="true">'+current.icon+'</span><div>'+
-  '<span class="kp-ag-eyebrow">คู่มือผู้ดูแลระบบ • '+String(adminGuideTopics.indexOf(current)+1).padStart(2,'0')+' / 05</span>'+
+  '<span class="kp-ag-eyebrow">คู่มือผู้ดูแลระบบ • '+String(adminGuideTopics.indexOf(current)+1).padStart(2,'0')+' / 04</span>'+
   '<h2>'+escape(current.title)+'</h2><p>'+escape(current.subtitle)+'</p></div>'+
   '<button type="button" data-action="admin-guide-open" data-target="'+escape(current.action)+'" class="kp-ag-live-button">เปิดเมนูจริง ↗</button></header>'+
-  '<div class="kp-ag-target"><span>เมนูที่เกี่ยวข้อง</span><strong>เมนูด้านซ้าย → '+escape(current.target)+'</strong></div>'+intro+
+  '<div class="kp-ag-target"><span>เมนูที่เกี่ยวข้อง</span><strong>เมนูด้านซ้าย → '+escape(current.target)+'</strong></div>'+
+  infographicHtml+standardSteps+
   '<div class="kp-ag-important"><strong>ข้อควรระวัง</strong><p>'+escape(current.note)+'</p></div>'+
   '<div class="kp-ag-lesson-actions"><button type="button" data-action="admin-guide-section" data-section="school">กลับหัวข้อแรก</button>'+
   '<button type="button" data-action="admin-guide-open" data-target="'+escape(current.action)+'">เปิดเมนูจริง ↗</button></div></article>';
