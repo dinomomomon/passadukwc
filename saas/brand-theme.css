@@ -795,3 +795,15 @@ table td {
 .kp-danger-confirm:hover{background:#a82925!important}
 .kp-danger-confirm:disabled{opacity:.55;cursor:progress}
 @media(max-width:480px){.kp-delete-dialog-panel{padding:20px}.kp-delete-dialog-actions>button{flex:1}}
+
+/* School-scoped category settings only; no document or registry CSS affected. */
+.kp-category-settings{margin-top:18px}
+.kp-category-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.kp-category-title h2{margin-top:0}
+.kp-category-list{display:flex;flex-direction:column;gap:10px;margin:17px 0}
+.kp-category-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.8fr) auto;align-items:end;gap:12px;padding:14px;background:#f7faff;border:1px solid #dce8fb;border-radius:13px}
+.kp-category-row .field{min-width:0;margin:0}
+.kp-category-remove{min-height:42px;border:1px solid #f5c7c7!important;color:#b72d2d!important;background:#fff7f7!important}
+.kp-category-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.kp-category-settings>.hint{margin-top:14px;line-height:1.8}
+@media(max-width:680px){.kp-category-row{grid-template-columns:minmax(0,1fr);gap:8px}.kp-category-remove{justify-self:start}}

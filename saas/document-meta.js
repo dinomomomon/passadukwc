@@ -7,20 +7,26 @@ export const primaryDocumentFields=[["memo_prefix","รหัสรายงา�
 const editableKeys=new Set(documentInfoFields.map(([key])=>key));
 const memoNumbers=new Set(['memo_number','approval_memo_number','payment_memo_number']);
 const registryNumbers=new Set(['memo_number','approval_memo_number','payment_memo_number','acceptance_number','requisition_number']);
-function fieldHtml([key,label,type],meta){
+function fieldHtml([key,label,type],meta,categories){
  const inputType=type||'text',raw=meta?.[key]??meta?.['doc_'+key]??'';
  const value=key==='memo_prefix'?normalizeMemoPrefix(raw):
   memoNumbers.has(key)&&memoNumberTokens(raw).length<=1?
    normalizeMemoNumber(raw,meta?.memo_prefix??meta?.doc_memo_prefix??''):raw;
  if(key==='memo_prefix'){
   const normalized=normalizeMemoPrefix(value)||'พว.';
-  const choices=['พว.','พค.'];
-  if(!choices.includes(normalized))choices.push(normalized);
+  const base=Array.isArray(categories)&&categories.length?categories:[{name:'วัสดุ',prefix:'พว.'},{name:'ครุภัณฑ์',prefix:'พค.'}];
+  const grouped=new Map();
+  for(const cat of base){
+   if(!cat?.prefix||!cat?.name)continue;
+   if(!grouped.has(cat.prefix))grouped.set(cat.prefix,[]);
+   grouped.get(cat.prefix).push(cat.name);
+  }
+  if(!grouped.has(normalized))grouped.set(normalized,['รหัสเดิมของเอกสารนี้']);
   return '<div class="field"><label for="doc_memo_prefix">'+e(label)+'</label>'+
    '<select class="select" id="doc_memo_prefix" name="doc_memo_prefix" aria-label="รหัสรายงานขอซื้อ">'+
-    choices.map(code=>'<option value="'+e(code)+'" '+(code===normalized?'selected':'')+'>'+
-     e(code==='พว.'?'พว. — วัสดุ':code==='พค.'?'พค. — ครุภัณฑ์':code+' — รหัสเดิมของโรงเรียน')+'</option>').join('')+
-   '</select><p class="hint">กรณีเลือกครุภัณฑ์ให้ตรวจสอบหมวดงบประมาณตามเกณฑ์ของหน่วยงานก่อนบันทึก</p></div>';
+    [...grouped].map(([code,names])=>'<option value="'+e(code)+'" '+(code===normalized?'selected':'')+'>'+
+     e(code+' — '+names.join(' / '))+'</option>').join('')+
+   '</select><p class="hint">รหัสรายงานตามหมวดที่โรงเรียนกำหนด ไม่แก้เลขทะเบียนคุม</p></div>';
  }
  const placeholder=key==='memo_prefix'?'พว.':memoNumbers.has(key)?'เช่น 2/2569 (ไม่ต้องใส่ พว.)':inputType==='date'?'เลือกวันที่':'ไม่ทราบให้เว้นว่าง';
  return '<div class="field"><label for="doc_'+e(key)+'">'+e(label)+'</label><input class="input" id="doc_'+e(key)+'" name="doc_'+e(key)+'" type="'+inputType+'" '+(inputType==='number'?'min="0" step=".01" inputmode="decimal"':'')+(registryNumbers.has(key)?' readonly aria-describedby="registry-help"':'')+' value="'+e(value)+'" placeholder="'+(registryNumbers.has(key)?'ระบบออกเลขอัตโนมัติ':placeholder)+'"></div>';
@@ -28,13 +34,13 @@ function fieldHtml([key,label,type],meta){
 export function docMetaInputs(meta={},options={}){
  const mode=typeof options==='string'?options:(options.mode||'all');
  const kind=typeof options==='string'?'purchase':(options.kind||'purchase');
- if(mode==='create')return '<div class="form-grid">'+primaryDocumentFields.filter(f=>f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta)).join('')+(kind==='purchase'?fieldHtml(['requisition_number','ใบเบิกพัสดุ เลขที่ (กรอกได้ เช่น จ. 218/2569)'],meta):'')+'</div><p class="hint">รหัส พว. หรือ พค. เลือกจากประเภทการจัดซื้อในขั้นที่ 1 รายงานผลการพิจารณาและทราบผลและขออนุมัติเบิกจ่ายออกเลขที่จากทะเบียนอัตโนมัติ ส่วนวันที่บนเอกสารทราบผลและขออนุมัติเบิกจ่ายจะเว้นให้ฝ่ายการเงินเขียนเอง</p>'; 
- const main='<section class="doc-meta-section"><h3>เลขที่หนังสือและตำแหน่งผู้ตรวจรับ</h3><p class="hint">เลขที่ทราบผลและขออนุมัติเบิกจ่ายออกอัตโนมัติตามทะเบียน ส่วนวันที่บนหัวกระดาษของฉบับนี้เว้นไว้ให้ฝ่ายการเงินกรอกเอง</p><div class="form-grid">'+primaryDocumentFields.filter(f=>kind==='purchase'||f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta)).join('')+'</div></section>';
+ if(mode==='create')return '<div class="form-grid">'+primaryDocumentFields.filter(f=>f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta)).join('')+(kind==='purchase'?fieldHtml(['requisition_number','ใบเบิกพัสดุ เลขที่ (กรอกได้ เช่น จ. 218/2569)'],meta):'')+'</div><p class="hint">รหัสตามหมวดที่โรงเรียนกำหนดเลือกจากขั้นที่ 1 รายงานผลการพิจารณาและทราบผลและขออนุมัติเบิกจ่ายออกเลขที่จากทะเบียนอัตโนมัติ ส่วนวันที่บนเอกสารทราบผลและขออนุมัติเบิกจ่ายจะเว้นให้ฝ่ายการเงินเขียนเอง</p>'; 
+ const main='<section class="doc-meta-section"><h3>เลขที่หนังสือและตำแหน่งผู้ตรวจรับ</h3><p class="hint">เลขที่ทราบผลและขออนุมัติเบิกจ่ายออกอัตโนมัติตามทะเบียน ส่วนวันที่บนหัวกระดาษของฉบับนี้เว้นไว้ให้ฝ่ายการเงินกรอกเอง</p><div class="form-grid">'+primaryDocumentFields.filter(f=>kind==='purchase'||f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta,options.categories)).join('')+'</div></section>';
  const sections=documentInfoGroups.filter(g=>kind==='purchase'||g.id!=='requisition').map(g=>{
   const extra=g.advanced?.length?'<details class="doc-meta-advanced"><summary>กรณีพิเศษ / ข้อมูลเพิ่มเติม</summary><div class="form-grid">'+g.advanced.map(f=>fieldHtml(f,meta)).join('')+'</div></details>':'';
   return '<details class="doc-meta-section" '+(g.id==='order'?'open':'')+'><summary>'+e(g.title)+'</summary><p class="hint">'+e(g.description)+'</p><div class="form-grid">'+g.fields.map(f=>fieldHtml(f,meta)).join('')+'</div>'+extra+'</details>';
  }).join('');
- return main+sections+'<p id="registry-help" class="hint">เลขที่เอกสารออกอัตโนมัติและแก้ผ่านเมนูทะเบียนคุมเลขเท่านั้น เพื่อป้องกันเลขซ้ำ</p><p class="hint">ใช้ พว. เฉพาะรายงานขอซื้อ/ขอจ้าง เอกสารฉบับอื่นใช้เลขหลังคำว่า ที่ เท่านั้น ยอดเงินรวมและกิจกรรม/โครงการเชื่อมจากข้อมูลหลัก ส่วนยอดเบิกจ่ายคำนวณอัตโนมัติเมื่อไม่กรอกยอดสุทธิเอง</p>';
+ return main+sections+'<p id="registry-help" class="hint">เลขที่เอกสารออกอัตโนมัติและแก้ผ่านเมนูทะเบียนคุมเลขเท่านั้น เพื่อป้องกันเลขซ้ำ</p><p class="hint">ใช้รหัสตามหมวดเฉพาะรายงานขอซื้อ/ขอจ้าง เอกสารฉบับอื่นใช้เลขหลังคำว่า ที่ เท่านั้น ยอดเงินรวมและกิจกรรม/โครงการเชื่อมจากข้อมูลหลัก ส่วนยอดเบิกจ่ายคำนวณอัตโนมัติเมื่อไม่กรอกยอดสุทธิเอง</p>';
 }
 /**
  * Optional evidence panels in the 4-step procurement wizard.
