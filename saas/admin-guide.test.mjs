@@ -96,7 +96,35 @@ test('infographic assets get built and displayed in responsive container on both
  assert.match(css,/@media\(max-width:700px\)/);
  assert.match(build,/'admin-guide-registry-infographic\.svg'/);
  assert.match(build,/'admin-guide-school-infographic\.svg'/);
- assert.match(index,/admin-guide\.css\?v=20261023-registry-infographic-v1/);
- assert.match(index,/app\.js\?v=20261023-orange-title-v2/);
+ assert.match(build,/'admin-guide-templates-1\.svg'/);
+ assert.match(build,/'admin-guide-templates-2\.svg'/);
+ assert.match(index,/admin-guide\.css\?v=20261023-template-manual-v1/);
+ assert.match(index,/app\.js\?v=20261023-template-manual-v1/);
  assert.doesNotMatch(publicPages,/\['guide','คู่มือการใช้งาน'\]/);
+});
+
+
+test('template editor admin tutorial presents six accurate steps across two real-screen graphics',()=>{
+ const html=adminGuideHtml('templates');
+ assert.match(html,/src="\/admin-guide-templates-1\.svg\?v=20261023-real-editor-v1"/);
+ assert.match(html,/src="\/admin-guide-templates-2\.svg\?v=20261023-real-editor-v1"/);
+ assert.match(html,/href="\/admin-guide-templates-1\.svg\?v=20261023-real-editor-v1"/);
+ assert.match(html,/href="\/admin-guide-templates-2\.svg\?v=20261023-real-editor-v1"/);
+ assert.equal((html.match(/class="kp-ag-manual-figure"/g)||[]).length,2);
+ assert.match(html,/width="1600" height="1520"/);
+ assert.match(html,/บันทึกฉบับร่างก่อนกดประกาศใช้/);
+ assert.match(html,/ข้อความสีฟ้าเป็นฟิลด์จากระบบที่แก้ในแม่แบบไม่ได้/);
+ assert.match(html,/PDF ทั้งข้อความสั้นและข้อความยาว/);
+ assert.match(html,/data-action="admin-guide-open" data-target="templates"/);
+ for(const n of [1,2]){
+  const svg=svgWebp('admin-guide-templates-'+n+'.svg');
+  assert.match(svg,/viewBox="0 0 1600 1520"/);
+  assert.match(svg,/width="1600" height="1520"/);
+ }
+ const editor=read('template-builder.js');
+ for(const label of ['tpl-page','tpl-block','tpl-up','tpl-down','tpl-format','tpl-save','tpl-publish','tpl-history','tpl-reset']){
+  assert.ok(editor.includes(label),'Missing actual editor action: '+label);
+ }
+ assert.match(editor,/กรุณาบันทึกฉบับร่างก่อนประกาศใช้/);
+ assert.match(editor,/ชื่อบุคคล ตำแหน่ง เลขเอกสาร วันที่ และยอดเงินส่วนนี้ดึงจากฐานข้อมูล/);
 });
