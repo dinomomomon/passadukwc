@@ -52,8 +52,8 @@ test('school guide image is retained unchanged and can open full size',()=>{
 test('new registry guide uses infographic based on four numbering controls in actual admin screen',()=>{
  const markup=adminGuideHtml('numbers');
  assert.match(markup,/การตั้งค่าเลขทะเบียนคุม/);
- assert.match(markup,/src="\/admin-guide-registry-infographic\.svg"/);
- assert.match(markup,/href="\/admin-guide-registry-infographic\.svg"/);
+ assert.match(markup,/src="\/admin-guide-registry-infographic\.svg\?v=20261023-orange-title-v2"/);
+ assert.match(markup,/href="\/admin-guide-registry-infographic\.svg\?v=20261023-orange-title-v2"/);
  assert.match(markup,/width="1536" height="1024"/);
  assert.match(markup,/หนังสือรายงานผลและเบิกจ่าย/);
  assert.match(markup,/ใบตรวจรับ และใบเบิกพัสดุ/);
@@ -97,6 +97,6 @@ test('infographic assets get built and displayed in responsive container on both
  assert.match(build,/'admin-guide-registry-infographic\.svg'/);
  assert.match(build,/'admin-guide-school-infographic\.svg'/);
  assert.match(index,/admin-guide\.css\?v=20261023-registry-infographic-v1/);
- assert.match(index,/app\.js\?v=20261023-registry-infographic-v1/);
+ assert.match(index,/app\.js\?v=20261023-orange-title-v2/);
  assert.doesNotMatch(publicPages,/\['guide','คู่มือการใช้งาน'\]/);
 });
