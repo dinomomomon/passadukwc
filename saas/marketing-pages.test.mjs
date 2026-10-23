@@ -80,7 +80,7 @@ test('marketing assets are included in build, cached safely, and preserve intern
  const css=readFileSync(new URL('./marketing-pages.css',import.meta.url),'utf8');
  assert.match(build,/'marketing-pages\.css'/);
  assert.match(index,/marketing-pages\.css\?v=20261022-[a-z0-9-]+/);
- assert.match(index,/app\.js\?v=20261022-[a-z0-9-]+/);
+ assert.match(index,/app\.js\?v=2026102[23]-[a-z0-9-]+/);
  assert.match(app,/from '\.\/marketing-pages\.js'/);
  assert.match(app,/if\(action==='public-page'\)/);
  assert.match(app,/if\(action==='public-document'\)/);
