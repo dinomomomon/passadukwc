@@ -68,10 +68,16 @@ export function adminGuideHtml(selected='school',liveSchoolHtml=''){
  const current=adminGuideTopics.find(t=>t.id===selected)||adminGuideTopics[0];
  const subnav='<nav class="kp-ag-subnav" aria-label="เมนูย่อยคู่มือผู้ดูแลระบบ">'+
   adminGuideTopics.map((t,i)=>'<button type="button" class="'+(current.id===t.id?'is-active':'')+'" data-action="admin-guide-section" data-section="'+t.id+'"><span>'+String(i+1).padStart(2,'0')+'</span>'+escape(t.title)+'</button>').join('')+'</nav>';
- const real=['school','signers'].includes(current.id)&&!!liveSchoolHtml;
- const standardSteps=!real?'<div class="kp-ag-step-list kp-ag-text-guide">'+current.steps.map((step,i)=>
+ const schoolInfographic=current.id==='school';
+ const real=current.id==='signers'&&!!liveSchoolHtml;
+ const standardSteps=!schoolInfographic&&!real?'<div class="kp-ag-step-list kp-ag-text-guide">'+current.steps.map((step,i)=>
   '<section class="kp-ag-step"><div class="kp-ag-step-header"><span class="kp-ag-step-no">'+(i+1)+'</span><div><h3>'+escape(step.heading)+'</h3><p>'+escape(step.desc)+'</p></div></div></section>').join('')+'</div>':'';
- const intro=real?actualFormGuide(current,liveSchoolHtml):
+ const schoolGuideImage='<section class="kp-ag-infographic-guide"><figure>'+
+  '<a href="/admin-guide-school-infographic.svg" target="_blank" rel="noopener noreferrer" class="kp-ag-infographic-link" title="คลิกเปิดภาพคู่มือขนาดเต็ม">'+
+  '<img src="/admin-guide-school-infographic.svg" alt="คู่มือการตั้งค่าข้อมูลโรงเรียนเป็นอินโฟกราฟิก 4 ขั้นตอน ได้แก่ อัปโหลดโลโก้โรงเรียน กรอกชื่อโรงเรียน อำเภอและจังหวัด กรอกรหัสหนังสือและที่อยู่ และกรอกชื่อผู้ลงนามก่อนบันทึก" width="1448" height="1086" loading="eager" decoding="async"></a>'+
+  '<figcaption>ตัวอย่างข้อมูลสมมติสำหรับแนะนำการกรอก ไม่ใช่ข้อมูลจริงของโรงเรียน • คลิกที่ภาพเพื่อดูขนาดเต็ม</figcaption>'+
+  '</figure><p class="kp-ag-infographic-hint">เมื่อต้องการกรอกข้อมูลจริง ให้กดปุ่ม “เปิดเมนูจริง” ด้านบน ระบบจะพาไปที่หน้าข้อมูลโรงเรียน</p></section>';
+ const intro=schoolInfographic?schoolGuideImage:real?actualFormGuide(current,liveSchoolHtml):
   '<div class="kp-ag-no-simulation"><strong>คำแนะนำตามขั้นตอนของระบบ</strong><p>เนื้อหาหัวข้อนี้เป็นข้อความแนะนำพร้อมทางเข้าเมนูจริง ยังไม่มีภาพหน้าจอจริงที่ยืนยันแล้ว จึงไม่แสดงภาพจำลองที่อาจทำให้เข้าใจผิด</p></div>'+standardSteps;
  const article='<article class="kp-ag-lesson"><header class="kp-ag-lesson-head"><span class="kp-ag-lesson-icon" aria-hidden="true">'+current.icon+'</span><div>'+
   '<span class="kp-ag-eyebrow">คู่มือผู้ดูแลระบบ • '+String(adminGuideTopics.indexOf(current)+1).padStart(2,'0')+' / 05</span>'+
