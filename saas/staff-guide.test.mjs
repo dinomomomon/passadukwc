@@ -16,11 +16,30 @@ test('user manual has exactly three requested topics in the requested order',()=
   assert.match(html,new RegExp('data-action="user-guide-open" data-target="'+topic.action+'"'));
   assert.match(html,new RegExp('0'+(i+1)+' / 03'));
   assert.equal((html.match(/data-action="user-guide-section"/g)||[]).length,4);
-  assert.doesNotMatch(html,/<img|<form|data:image|fake screenshot|บันทึกสำเร็จ/i);
+  assert.doesNotMatch(html,/<form|data:image|fake screenshot|บันทึกสำเร็จ/i);
  }
  assert.match(staffGuideHtml('missing'),/การสร้างรายการใหม่/);
 });
 
+test('step 1–4 infographics appear only under creation guide, with full-size links',()=>{
+ const create=staffGuideHtml('create'),records=staffGuideHtml('records'),registry=staffGuideHtml('registry');
+ for(const [filename,step] of [['staff-guide-create-1.svg','1'],['staff-guide-create-2.svg','3']]){
+  assert.match(create,new RegExp('href="/'+filename+'"'));
+  assert.match(create,new RegExp('src="/'+filename+'"'));
+  assert.match(create,/target="_blank"/);
+  const svg=read(filename);
+  assert.match(svg,/viewBox="0 0 1500 1290"/);
+  assert.match(svg,new RegExp('ขั้นที่ '+step));
+  assert.match(svg,/KRU PASADU/);
+  assert.doesNotMatch(svg,/<script|onload=|javascript:/i);
+  assert.ok(svg.endsWith('</svg>'));
+ }
+ assert.equal((create.match(/class="kp-ug-figure"/g)||[]).length,2);
+ assert.match(create,/width="1500" height="1290"/);
+ assert.doesNotMatch(create,/ขณะนี้ยังไม่มีภาพประกอบ/);
+ assert.doesNotMatch(records,/<img|staff-guide-create/);
+ assert.doesNotMatch(registry,/<img|staff-guide-create/);
+});
 test('guide is available through regular and mobile navigation to every school role, including demo',()=>{
  const app=read('app.js');
  const menuLine=app.split('\n').find(line=>line.startsWith('const menu='));
@@ -60,8 +79,11 @@ test('existing admin-only manual and purchase/number registries are untouched',(
 test('both production hosts bundle user manual from the same assets and styles',()=>{
  const pkg=JSON.parse(read('package.json')),index=read('index.html'),css=read('admin-guide.css');
  assert.match(pkg.scripts.build,/staff-guide\.test\.mjs/);
- assert.match(index,/admin-guide\.css\?v=20261023-staff-guide-v1/);
- assert.match(index,/app\.js\?v=20261023-staff-guide-v1/);
+ assert.match(index,/admin-guide\.css\?v=20261023-staff-guide-v2/);
+ assert.match(index,/app\.js\?v=20261023-staff-guide-v2/);
  assert.match(css,/\.kp-ug-pending/);
  assert.match(read('build.mjs'),/bundle:true/);
+ assert.match(read('build.mjs'),/staff-guide-create-1\.svg/);
+ assert.match(read('build.mjs'),/staff-guide-create-2\.svg/);
+ assert.match(css,/\.kp-ug-figure img/);
 });
