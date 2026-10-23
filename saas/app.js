@@ -747,7 +747,7 @@ function renderAdminGuide(){
  const section=adminGuideIds.includes(state.adminGuideSection)?state.adminGuideSection:'school';
  shell('คู่มือผู้ดูแลระบบ','สำหรับแอดมินโรงเรียน',
   heading('คู่มือผู้ดูแลระบบ','ดูภาพประกอบแล้วทำตามทีละขั้น หรือเปิดเมนูตั้งค่าจริง')+
-  adminGuideHtml(section,(section==='school'||section==='signers')?schoolSettingsMarkup():''));
+  adminGuideHtml(section,section==='signers'?schoolSettingsMarkup():''));
 }
 async function loadUser(){if(!state.session){state.user=null;state.profile=null;state.owner=false;return;}const {data:user}=await db.auth.getUser();state.user=user?.user||null;if(!state.user){state.profile=null;return;}const [admin,memberships,profile]=await Promise.all([db.from('platform_admins').select('user_id').eq('user_id',state.user.id),db.from('memberships').select('school_id,role,schools(*)').eq('user_id',state.user.id).eq('active',true),db.from('profiles').select('full_name').eq('id',state.user.id).maybeSingle()]);if(admin.error)console.warn(admin.error.message);if(memberships.error)console.warn(memberships.error.message);if(profile.error)console.warn(profile.error.message);state.profile=profile.data||{full_name:state.user?.user_metadata?.full_name||''};state.owner=!!admin.data?.length;state.memberships=memberships.data||[];state.school=state.memberships[0]?.schools||null;if(state.owner){await loadOwner();}if(state.school)await Promise.all([loadRecords(),refreshSubscription(),templateEditor.load()]);}
 async function loadOwner(){
