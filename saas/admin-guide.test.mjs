@@ -25,28 +25,43 @@ test('admin manual opens school data first and has no overview or mock screensho
   assert.doesNotMatch(html,/kp-ag-graphic|ภาพจำลองหน้าจอ|kp-ag-mini-sidebar/);
  }
 });
-test('school and signatory manual sections embed REAL school forms (shared markup, not fake inputs)',()=>{
+test('school chapter uses exact user-provided infographic, not a live form or generic mock',()=>{
+ const fakeActualSchoolMarkup='<form id="school-form"><input name="name"></form>';
+ const html=adminGuideHtml('school',fakeActualSchoolMarkup);
+ assert.match(html,/src="\/admin-guide-school-infographic\.svg"/);
+ assert.match(html,/href="\/admin-guide-school-infographic\.svg"/);
+ assert.match(html,/width="1448" height="1086"/);
+ assert.match(html,/ตัวอย่างข้อมูลสมมติ/);
+ assert.match(html,/คลิกที่ภาพเพื่อดูขนาดเต็ม/);
+ assert.doesNotMatch(html,/id="school-form"|kp-ag-live-form|data-action="admin-guide-focus"/);
+ assert.match(html,/data-action="admin-guide-open" data-target="settings"/);
+ const svg=readFileSync(new URL('./admin-guide-school-infographic.svg',import.meta.url),'utf8');
+ const embedded=svg.match(/href="data:image\/webp;base64,([A-Za-z0-9+/=]+)"/);
+ assert.ok(embedded && embedded[1].length>150000,'full artwork must be bundled, not a placeholder');
+ const img=Buffer.from(embedded[1],'base64');
+ assert.equal(img.toString('ascii',0,4),'RIFF');
+ assert.equal(img.toString('ascii',8,12),'WEBP');
+ assert.match(svg,/width="1448" height="1086"/);
+});
+
+test('signatory chapter retains actual school signatory form, while other sections avoid fictitious screenshots',()=>{
  const realSchoolMarkup='<form id="school-logo-form"><input type="file" name="school_logo"></form>'+
-  '<form id="school-form"><input name="name"><input name="district"><input name="province">'+
-  '<input name="memo_prefix"><input name="address"><input name="officer_name">'+
-  '<input name="head_name"><input name="director_name"><input name="finance_name">'+
-  '<button type="submit">บันทึกข้อมูลโรงเรียน</button></form>';
- for(const topic of ['school','signers']){
-  const html=adminGuideHtml(topic,realSchoolMarkup);
-  assert.match(html,/id="school-logo-form"/);
-  assert.match(html,/id="school-form"/);
-  assert.match(html,/ใช้งานและบันทึกจริง/);
-  assert.match(html,/data-action="admin-guide-focus"/);
-  assert.equal((html.match(/class="kp-ag-real-step"/g)||[]).length,4);
-  assert.doesNotMatch(html,/ภาพจำลองหน้าจอ|id="kp-ag-browser"/);
- }
- const first=adminGuideHtml('school',realSchoolMarkup);
- for(const field of ['school_logo','name','memo_prefix','submit'])
-  assert.ok(first.includes('data-field="'+field+'"'));
+  '<form id="school-form"><input name="officer_name"><input name="head_name">'+
+  '<input name="director_name"><input name="finance_name"><button type="submit">บันทึกข้อมูลโรงเรียน</button></form>';
  const signers=adminGuideHtml('signers',realSchoolMarkup);
+ assert.match(signers,/id="school-logo-form"/);
+ assert.match(signers,/id="school-form"/);
+ assert.match(signers,/ใช้งานและบันทึกจริง/);
+ assert.match(signers,/data-action="admin-guide-focus"/);
+ assert.equal((signers.match(/class="kp-ag-real-step"/g)||[]).length,4);
  for(const field of ['officer_name','head_name','director_name','submit'])
   assert.ok(signers.includes('data-field="'+field+'"'));
+ for(const section of ['numbers','templates','users']){
+  const html=adminGuideHtml(section);
+  assert.doesNotMatch(html,/admin-guide-school-infographic|kp-ag-graphic|kp-ag-mini-sidebar/);
+ }
 });
+
 test('real settings markup remains shared and actions preserve admin checks and saving',()=>{
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  assert.match(app,/function schoolSettingsMarkup\(\)/);
@@ -55,7 +70,7 @@ test('real settings markup remains shared and actions preserve admin checks and 
  assert.match(app,/adminGuideSection:'school'/);
  assert.match(app,/state\.adminGuideSection='school';state\.page='admin-guide'/);
  assert.match(app,/const section=adminGuideIds\.includes\(state\.adminGuideSection\)\?state\.adminGuideSection:'school'/);
- assert.match(app,/adminGuideHtml\(section,\(section==='school'\|\|section==='signers'\)\?schoolSettingsMarkup\(\):''\)/);
+ assert.match(app,/adminGuideHtml\(section,section==='signers'\?schoolSettingsMarkup\(\):''\)/);
  assert.match(app,/if\(action==='admin-guide-focus'\)\{\s*if\(!isSchoolAdmin\(\)\)/);
  assert.match(app,/if\(!adminGuideIds\.includes\(section\)\)/);
  assert.match(app,/if\(action==='admin-guide'\)\{\s*if\(!isSchoolAdmin\(\)\)/);
@@ -69,7 +84,7 @@ test('real settings markup remains shared and actions preserve admin checks and 
   assert.ok(app.includes("'"+name+"'"),'Real settings must include '+name);
  }
 });
-test('visual instructions highlight actual controls and CSS ships in production',()=>{
+test('infographic is bundled and responsive while actual school controls remain separate',()=>{
  const css=readFileSync(new URL('./admin-guide.css',import.meta.url),'utf8');
  const index=readFileSync(new URL('./index.html',import.meta.url),'utf8');
  const build=readFileSync(new URL('./build.mjs',import.meta.url),'utf8');
@@ -79,7 +94,12 @@ test('visual instructions highlight actual controls and CSS ships in production'
  assert.match(css,/\.kp-ag-real-step/);
  assert.match(css,/@media\(max-width:780px\)/);
  assert.match(build,/'admin-guide\.css'/);
- assert.match(index,/admin-guide\.css\?v=20261022-live-form-v2/);
+ assert.match(css,/\.kp-ag-infographic-link img/);
+ assert.match(css,/\.kp-ag-infographic-guide/);
+ assert.match(css,/@media\(max-width:700px\)/);
+ assert.match(index,/admin-guide\.css\?v=20261023-school-infographic-v1/);
+ assert.match(index,/app\.js\?v=20261023-school-infographic-v1/);
+ assert.match(build,/'admin-guide-school-infographic\.svg'/);
  assert.doesNotMatch(pages,/guide:guidePageHtml/);
  assert.doesNotMatch(pages,/\['guide','คู่มือการใช้งาน'\]/);
 });
