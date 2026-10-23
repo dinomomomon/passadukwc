@@ -20,7 +20,7 @@ test('four admin subtopics: school, registry, templates, users; no separate sign
   'การตั้งค่าข้อมูลโรงเรียน','การตั้งค่าเลขทะเบียนคุม','แก้ไขแม่แบบเอกสาร','จัดการผู้ใช้งานและสิทธิ์'
  ]);
  assert.equal(adminGuideTopics.length,4);
- assert.equal(adminGuideTopics.reduce((n,t)=>n+t.steps.length,0),16);
+ assert.equal(adminGuideTopics.reduce((n,t)=>n+t.steps.length,0),17);
  const first=adminGuideHtml();
  assert.match(first,/การตั้งค่าข้อมูลโรงเรียน/);
  assert.match(first,/src="\/admin-guide-school-infographic\.svg"/);
@@ -98,8 +98,9 @@ test('infographic assets get built and displayed in responsive container on both
  assert.match(build,/'admin-guide-school-infographic\.svg'/);
  assert.match(build,/'admin-guide-templates-1\.svg'/);
  assert.match(build,/'admin-guide-templates-2\.svg'/);
+ assert.match(build,/'admin-guide-users-infographic\.svg'/);
  assert.match(index,/admin-guide\.css\?v=20261023-template-manual-v1/);
- assert.match(index,/app\.js\?v=20261023-template-manual-v1/);
+ assert.match(index,/app\.js\?v=20261023-users-manual-v1/);
  assert.doesNotMatch(publicPages,/\['guide','คู่มือการใช้งาน'\]/);
 });
 
@@ -127,4 +128,36 @@ test('template editor admin tutorial presents six accurate steps across two real
  }
  assert.match(editor,/กรุณาบันทึกฉบับร่างก่อนประกาศใช้/);
  assert.match(editor,/ชื่อบุคคล ตำแหน่ง เลขเอกสาร วันที่ และยอดเงินส่วนนี้ดึงจากฐานข้อมูล/);
+});
+
+
+test('administrator user and permissions guide shows a full-size, anonymous five-step infographic',()=>{
+ const html=adminGuideHtml('users');
+ assert.match(html,/จัดการผู้ใช้งานและสิทธิ์/);
+ assert.match(html,/src="\/admin-guide-users-infographic\.svg\?v=20261023-users-guide-v1"/);
+ assert.match(html,/href="\/admin-guide-users-infographic\.svg\?v=20261023-users-guide-v1"/);
+ assert.match(html,/width="1700" height="1490"/);
+ assert.match(html,/ชื่อและอีเมลเป็นข้อมูลสมมติ/);
+ assert.match(html,/รหัสผ่านต้องอย่างน้อย 6 ตัวอักษร/);
+ assert.match(html,/การลบผู้ใช้จะถอนสิทธิ์ออกจากโรงเรียนแต่เก็บประวัติเอกสารไว้/);
+ assert.match(html,/ไม่สามารถปิดสิทธิ์หรือลบบัญชีตนเองได้/);
+ assert.match(html,/data-action="admin-guide-open" data-target="members"/);
+ assert.doesNotMatch(html,/kp-ag-real-form|kp-ag-mini-sidebar|id="member-form"/);
+ const svg=svgWebp('admin-guide-users-infographic.svg');
+ assert.match(svg,/width="1700" height="1490"/);
+ assert.match(svg,/viewBox="0 0 1700 1490"/);
+ const steps=adminGuideTopics.find(x=>x.id==='users').steps;
+ assert.equal(steps.length,5);
+ assert.match(steps.map(s=>s.heading).join(' '),/เพิ่ม/);
+ assert.match(steps.map(s=>s.desc).join(' '),/ปิดสิทธิ์/);
+ assert.match(steps.map(s=>s.desc).join(' '),/เปิดสิทธิ์/);
+ const app=read('app.js');
+ for(const action of ['edit-staff','password-staff','toggle-staff','remove-staff','member-form']){
+  assert.ok(app.includes(action),'Existing admin UI action must match manual: '+action);
+ }
+ for(const label of ['อีเมลสำหรับเข้าสู่ระบบ','กำหนดรหัสผ่าน','ยืนยันรหัสผ่าน','หน้าที่ในระบบ','+ สร้างบัญชีและให้สิทธิ์ใช้งาน']){
+  assert.ok(app.includes(label),'Form label not found in actual UI: '+label);
+ }
+ assert.match(app,/minlength="6"/);
+ assert.match(app,/const isSchoolAdmin=/);
 });
