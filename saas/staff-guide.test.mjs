@@ -37,8 +37,35 @@ test('step 1–4 infographics appear only under creation guide, with full-size l
  assert.equal((create.match(/class="kp-ug-figure"/g)||[]).length,2);
  assert.match(create,/width="1500" height="1290"/);
  assert.doesNotMatch(create,/ขณะนี้ยังไม่มีภาพประกอบ/);
- assert.doesNotMatch(records,/<img|staff-guide-create/);
+ assert.doesNotMatch(records,/staff-guide-create/);
+ assert.match(records,/staff-guide-records-1\.svg/);
+ assert.match(records,/staff-guide-records-2\.svg/);
  assert.doesNotMatch(registry,/<img|staff-guide-create/);
+});
+test('records guide publishes two full-width Thai infographics with independent enlargement links',()=>{
+ const records=staffGuideHtml('records');
+ const creation=staffGuideHtml('create');
+ const other=staffGuideHtml('registry');
+ const assetNames=['staff-guide-records-1.svg','staff-guide-records-2.svg'];
+ for(const name of assetNames){
+  assert.match(records,new RegExp('href="/'+name+'"'));
+  assert.match(records,new RegExp('src="/'+name+'"'));
+  const svg=read(name);
+  assert.match(svg,/viewBox="0 0 1540 1290"/);
+  assert.match(svg,/ทะเบียนจัดซื้อจัดจ้าง/);
+  assert.match(svg,/KRU PASADU/);
+  assert.ok(svg.endsWith('</svg>'));
+  assert.doesNotMatch(svg,/<script|onload=|javascript:|โรงเรียนกาวิละวิทยาลัย/i);
+  assert.doesNotMatch(creation,new RegExp(name));
+  assert.doesNotMatch(other,new RegExp(name));
+ }
+ assert.equal((records.match(/class="kp-ug-figure"/g)||[]).length,2);
+ assert.equal((records.match(/target="_blank"/g)||[]).length>=2,true);
+ assert.match(records,/width="1540" height="1290"/);
+ assert.doesNotMatch(records,/ขณะนี้ยังไม่มีภาพประกอบ/);
+ assert.match(other,/ขณะนี้ยังไม่มีภาพประกอบ/);
+ assert.match(read('build.mjs'),/staff-guide-records-1\.svg/);
+ assert.match(read('build.mjs'),/staff-guide-records-2\.svg/);
 });
 test('guide is available through regular and mobile navigation to every school role, including demo',()=>{
  const app=read('app.js');
@@ -80,7 +107,7 @@ test('both production hosts bundle user manual from the same assets and styles',
  const pkg=JSON.parse(read('package.json')),index=read('index.html'),css=read('admin-guide.css');
  assert.match(pkg.scripts.build,/staff-guide\.test\.mjs/);
  assert.match(index,/admin-guide\.css\?v=20261023-staff-guide-v2/);
- assert.match(index,/app\.js\?v=20261023-staff-guide-v2/);
+ assert.match(index,/app\.js\?v=20261023-staff-guide-v3/);
  assert.match(css,/\.kp-ug-pending/);
  assert.match(read('build.mjs'),/bundle:true/);
  assert.match(read('build.mjs'),/staff-guide-create-1\.svg/);

@@ -29,6 +29,16 @@ export function staffGuideHtml(selected='create',{canOpenMenu=true}={}){
       '<img src="/staff-guide-create-2.svg" width="1500" height="1290" loading="lazy" alt="คู่มือการสร้างรายการใหม่ ขั้นที่ 3 ผู้ขายและผู้ตรวจรับ และขั้นที่ 4 เลขที่หนังสือและตรวจสอบ พร้อมภาพตัวอย่างหน้าจอและคำอธิบายภาษาไทย"></a>'+
       '<figcaption>ส่วนที่ 2 • ขั้นที่ 3–4 — ผู้ขายและผู้ตรวจรับ เลขหนังสือและตรวจสอบ • คลิกภาพเพื่อเปิดขนาดเต็ม</figcaption></figure>'+
      '<p class="kp-ag-infographic-hint">หมายเหตุ: ภาพเป็นการจัดวางช่องกรอกตามหน้าจอระบบจริงโดยใช้ข้อมูลสมมติ รหัสหนังสือและหมวดพัสดุขึ้นอยู่กับการตั้งค่าของโรงเรียน และเลขหนังสือออกโดยทะเบียนคุมเลข</p>'+
+    '</div>':current.id==='records'?
+    '<div class="kp-ug-infographics">'+
+     '<p class="kp-ug-intro">คู่มือทะเบียนจัดซื้อจัดจ้าง 2 ส่วน ครอบคลุมการค้นหา การเปิดดูรายการ และการพิมพ์หรือบันทึกเอกสาร PDF โดยใช้ข้อมูลสมมติประกอบ</p>'+
+     '<figure class="kp-ug-figure"><a href="/staff-guide-records-1.svg" class="kp-ag-infographic-link" target="_blank" rel="noopener noreferrer" title="เปิดภาพคู่มือทะเบียนจัดซื้อจัดจ้าง ส่วนที่ 1 ขนาดเต็ม">'+
+      '<img src="/staff-guide-records-1.svg" width="1540" height="1290" loading="eager" alt="คู่มือทะเบียนจัดซื้อจัดจ้าง ส่วนที่ 1 การค้นหารายการ เปิดดูรายละเอียด และตรวจสอบข้อมูลสรุป"></a>'+
+      '<figcaption>ส่วนที่ 1 • ค้นหารายการและเปิดดูรายละเอียด • คลิกภาพเพื่อเปิดขนาดเต็ม</figcaption></figure>'+
+     '<figure class="kp-ug-figure"><a href="/staff-guide-records-2.svg" class="kp-ag-infographic-link" target="_blank" rel="noopener noreferrer" title="เปิดภาพคู่มือทะเบียนจัดซื้อจัดจ้าง ส่วนที่ 2 ขนาดเต็ม">'+
+      '<img src="/staff-guide-records-2.svg" width="1540" height="1290" loading="lazy" alt="คู่มือทะเบียนจัดซื้อจัดจ้าง ส่วนที่ 2 ตรวจสอบชุดเอกสารและบันทึกเป็นไฟล์ PDF"></a>'+
+      '<figcaption>ส่วนที่ 2 • ตรวจสอบชุดเอกสาร พิมพ์ และบันทึก PDF • คลิกภาพเพื่อเปิดขนาดเต็ม</figcaption></figure>'+
+     '<p class="kp-ag-infographic-hint">ตัวอย่างภาพประกอบเป็นข้อมูลสมมติ ปุ่มแก้ไขและลบจะแสดงตามสิทธิ์ของผู้ใช้งานและสถานะรายการ และการพิมพ์หรือบันทึก PDF ต้องตรวจสอบข้อมูลในเอกสารจริงก่อนทุกครั้ง</p>'+
     '</div>':
     '<div class="kp-ug-pending" role="status"><span class="kp-ug-pending-icon" aria-hidden="true">📖</span>'+
      '<h3>เตรียมพื้นที่สำหรับคู่มือหัวข้อนี้แล้ว</h3>'+
