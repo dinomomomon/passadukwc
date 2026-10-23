@@ -110,3 +110,8 @@
  .kp-ag-infographic-link img{break-inside:avoid;max-height:240mm;object-fit:contain}
  .kp-ag-infographic-hint{display:none}
 }
+
+/* Multi-panel real-interface infographics for the template editor tutorial. */
+.kp-ag-manual-figure+.kp-ag-manual-figure{margin-top:20px}
+.kp-ag-manual-figure img{display:block;width:100%;height:auto;object-fit:contain}
+@media(max-width:700px){.kp-ag-manual-figure+.kp-ag-manual-figure{margin-top:13px}}
