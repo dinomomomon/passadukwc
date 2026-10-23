@@ -39,6 +39,13 @@ export function staffGuideHtml(selected='create',{canOpenMenu=true}={}){
       '<img src="/staff-guide-records-2.svg" width="1540" height="1290" loading="lazy" alt="คู่มือทะเบียนจัดซื้อจัดจ้าง ส่วนที่ 2 ตรวจสอบชุดเอกสารและบันทึกเป็นไฟล์ PDF"></a>'+
       '<figcaption>ส่วนที่ 2 • ตรวจสอบชุดเอกสาร พิมพ์ และบันทึก PDF • คลิกภาพเพื่อเปิดขนาดเต็ม</figcaption></figure>'+
      '<p class="kp-ag-infographic-hint">ตัวอย่างภาพประกอบเป็นข้อมูลสมมติ ปุ่มแก้ไขและลบจะแสดงตามสิทธิ์ของผู้ใช้งานและสถานะรายการ และการพิมพ์หรือบันทึก PDF ต้องตรวจสอบข้อมูลในเอกสารจริงก่อนทุกครั้ง</p>'+
+    '</div>':current.id==='registry'?
+    '<div class="kp-ug-infographics">'+
+     '<p class="kp-ug-intro">คู่มือทะเบียนคุมเลขเอกสารสำหรับผู้ใช้งานทุกบทบาท อธิบายแถบสรุป การค้นหาและตัวกรอง รายการเลขเอกสาร ความหมายสถานะ และปุ่มเปิดรายการกับรีเฟรช</p>'+
+     '<figure class="kp-ug-figure"><a href="/staff-guide-registry.svg" class="kp-ag-infographic-link" target="_blank" rel="noopener noreferrer" title="เปิดภาพคู่มือทะเบียนคุมเลขเอกสารขนาดเต็ม">'+
+      '<img src="/staff-guide-registry.svg" width="1540" height="1320" loading="eager" alt="คู่มือทะเบียนคุมเลขเอกสารเจ็ดขั้นตอน เปิดเมนู ดูแถบสรุป ค้นหาและกรอง ดูตาราง อ่านสถานะ เปิดรายการ และกดรีเฟรช"></a>'+
+      '<figcaption>ทะเบียนคุมเลขเอกสาร • คู่มือ 7 ขั้นตอน • คลิกภาพเพื่อเปิดขนาดเต็ม</figcaption></figure>'+
+     '<p class="kp-ag-infographic-hint">ตัวอย่างในภาพเป็นข้อมูลสมมติ ตัวเลขและสถานะจริงขึ้นอยู่กับทะเบียนกลางของโรงเรียน สิทธิ์ในการจัดการเลขขึ้นอยู่กับบทบาทของผู้ใช้ โปรดตรวจสอบสถานะก่อนนำเลขไปใช้</p>'+
     '</div>':
     '<div class="kp-ug-pending" role="status"><span class="kp-ug-pending-icon" aria-hidden="true">📖</span>'+
      '<h3>เตรียมพื้นที่สำหรับคู่มือหัวข้อนี้แล้ว</h3>'+

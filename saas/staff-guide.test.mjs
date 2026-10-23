@@ -40,7 +40,8 @@ test('step 1–4 infographics appear only under creation guide, with full-size l
  assert.doesNotMatch(records,/staff-guide-create/);
  assert.match(records,/staff-guide-records-1\.svg/);
  assert.match(records,/staff-guide-records-2\.svg/);
- assert.doesNotMatch(registry,/<img|staff-guide-create/);
+ assert.doesNotMatch(registry,/staff-guide-create/);
+ assert.match(registry,/staff-guide-registry\.svg/);
 });
 test('records guide publishes two full-width Thai infographics with independent enlargement links',()=>{
  const records=staffGuideHtml('records');
@@ -63,9 +64,32 @@ test('records guide publishes two full-width Thai infographics with independent 
  assert.equal((records.match(/target="_blank"/g)||[]).length>=2,true);
  assert.match(records,/width="1540" height="1290"/);
  assert.doesNotMatch(records,/ขณะนี้ยังไม่มีภาพประกอบ/);
- assert.match(other,/ขณะนี้ยังไม่มีภาพประกอบ/);
+ assert.match(other,/staff-guide-registry\.svg/);
  assert.match(read('build.mjs'),/staff-guide-records-1\.svg/);
  assert.match(read('build.mjs'),/staff-guide-records-2\.svg/);
+});
+test('number registry manual has accurate seven-step infographic and safe full-size link',()=>{
+ const registry=staffGuideHtml('registry'),create=staffGuideHtml('create'),records=staffGuideHtml('records');
+ assert.match(registry,/href="\/staff-guide-registry\.svg"/);
+ assert.match(registry,/src="\/staff-guide-registry\.svg"/);
+ assert.match(registry,/width="1540" height="1320"/);
+ assert.equal((registry.match(/class="kp-ug-figure"/g)||[]).length,1);
+ assert.match(registry,/target="_blank"/);
+ assert.match(registry,/rel="noopener noreferrer"/);
+ assert.doesNotMatch(create,/staff-guide-registry\.svg/);
+ assert.doesNotMatch(records,/staff-guide-registry\.svg/);
+ assert.doesNotMatch(registry,/ขณะนี้ยังไม่มีภาพประกอบ/);
+ const svg=read('staff-guide-registry.svg'),app=read('app.js');
+ assert.match(svg,/viewBox="0 0 1540 1320"/);
+ assert.match(svg,/ทะเบียนคุมเลขเอกสาร/);
+ for(const label of ['เลขทั้งหมด','ใช้แล้ว','จองเลข','ต้องตรวจสอบ','ทุกประเภท','ทุกปี','ทุกสถานะ','วันที่ลงทะเบียน','เปิดรายการ','รีเฟรช']){
+  assert.ok(svg.includes(label),'SVG label: '+label);
+  assert.ok(app.includes(label),'Actual registry code label: '+label);
+ }
+ assert.match(svg,/โรงเรียนตัวอย่าง/);
+ assert.doesNotMatch(svg,/<script|onload=|javascript:|โรงเรียนกาวิละวิทยาลัย/i);
+ assert.ok(svg.endsWith('</svg>'));
+ assert.match(read('build.mjs'),/staff-guide-registry\.svg/);
 });
 test('guide is available through regular and mobile navigation to every school role, including demo',()=>{
  const app=read('app.js');
@@ -107,7 +131,7 @@ test('both production hosts bundle user manual from the same assets and styles',
  const pkg=JSON.parse(read('package.json')),index=read('index.html'),css=read('admin-guide.css');
  assert.match(pkg.scripts.build,/staff-guide\.test\.mjs/);
  assert.match(index,/admin-guide\.css\?v=20261023-staff-guide-v2/);
- assert.match(index,/app\.js\?v=20261023-staff-guide-v3/);
+ assert.match(index,/app\.js\?v=20261023-staff-guide-v4/);
  assert.match(css,/\.kp-ug-pending/);
  assert.match(read('build.mjs'),/bundle:true/);
  assert.match(read('build.mjs'),/staff-guide-create-1\.svg/);
