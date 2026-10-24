@@ -50,6 +50,9 @@ test('equipment module provides all five functional pages, CRUD, policies, sourc
  for(const s of ['equipment_assets','asset_categories','asset_policies','asset-import-confirm','asset-pick-source','asset-print','asset-export','eq-asset-form'])assert.ok(ui.includes(s),s);
  assert.match(ui,/source_procurement_id:store\.source\.record\.id/);
  assert.match(ui,/source_item_index:store\.source\.index/);
+ assert.match(ui,/store\.source\.available\[i\]/);
+ assert.match(ui,/item\.accounting_class=store\.editing\.accounting_class/);
+ assert.match(ui,/asset-category-edit/);
  assert.match(ui,/\['received','completed'\]\.includes\(r\.state\)/);
  assert.match(app,/if\(state\.page==='assets'\|\|state\.page==='asset-guide'\)return equipmentModule\.view\(\)/);
  assert.match(app,/equipmentModule\.submit\(form\)/);

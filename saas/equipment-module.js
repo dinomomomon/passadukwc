@@ -8,7 +8,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
  const b=(name,action,cls='secondary',attrs='')=>'<button type="button" class="'+cls+'" data-action="'+action+'" '+attrs+'>'+name+'</button>';
  const f=(label,key,val='',type='text',attrs='')=>'<label class="eq-field"><span>'+e(label)+'</span><input class="input" name="'+key+'" type="'+type+'" value="'+e(String(val??''))+'" '+attrs+'></label>';
  const select=(label,key,opts,current='')=>'<label class="eq-field"><span>'+e(label)+'</span><select class="select" name="'+key+'">'+opts.map(([v,n])=>'<option value="'+e(String(v))+'" '+(String(v)===String(current)?'selected':'')+'>'+e(n)+'</option>').join('')+'</select></label>';
- const store={id:null,rows:[],cats:[],policy:{capitalization_threshold_satang:1000000,policy_confirmed:false},year:fiscal(),query:'',status:'all',editing:null,source:null,prefill:null,preview:[],errors:[],selected:null};
+ const store={id:null,rows:[],cats:[],policy:{capitalization_threshold_satang:1000000,policy_confirmed:false},year:fiscal(),query:'',status:'all',editing:null,source:null,prefill:null,preview:[],errors:[],selected:null,editCategory:null};
  const can=()=>state.demo||canWrite();
  const category=x=>store.cats.find(c=>c.id===x.category_id)?.name||'ไม่ระบุประเภท';
  const flags=()=>!store.policy.policy_confirmed?'<div class="eq-caution">โปรดให้แอดมินยืนยันเกณฑ์รับรู้สินทรัพย์และอายุการใช้งานตามนโยบายบัญชีต้นสังกัดก่อนนำรายงานค่าเสื่อมไปใช้อ้างอิง</div>':'';
@@ -47,7 +47,13 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
  function sourceOptions(){
   const opts=[];
   for(const r of state.records||[])if(!r.deleted_at&&r.kind==='purchase'&&['received','completed'].includes(r.state))
-   (r.items||[]).forEach((item,i)=>{if(Number(item.qty)>0)opts.push({key:r.id+'|'+i,record:r,item,index:i});});
+   (r.items||[]).forEach((item,i)=>{
+    const qty=Math.floor(Number(item.qty));
+    if(!Number.isSafeInteger(qty)||qty<1||qty>10000) return;
+    const used=new Set(store.rows.filter(x=>x.source_procurement_id===r.id&&x.source_item_index===i).map(x=>Number(x.source_unit_index)));
+    const available=[];for(let unit=1;unit<=qty&&available.length<100;unit++)if(!used.has(unit))available.push(unit);
+    if(available.length)opts.push({key:r.id+'|'+i,record:r,item,index:i,available,originalQuantity:qty});
+   });
   return opts;
  }
  function form(){
@@ -67,7 +73,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
  function importPage(){
   const options=sourceOptions();
   let html='<div class="eq-columns"><section class="card eq-card"><h2>นำเข้าจากงานจัดซื้อเดิม</h2><p class="muted">เลือกเฉพาะรายการที่ได้รับการตรวจรับแล้ว ระบบจะนำราคาต่อหน่วยและรายการมาเติมแบบฟอร์ม</p>'+
-    select('เลือกงานจัดซื้อ','eq_source',[['','เลือกรายการ'],...options.map(o=>[o.key,(o.record.document_number+'/'+o.record.fiscal_year)+' — '+o.item.name])],store.source?.key||'')+
+    select('เลือกงานจัดซื้อ','eq_source',[['','เลือกรายการ'],...options.map(o=>[o.key,(o.record.document_number+'/'+o.record.fiscal_year)+' — '+o.item.name+' (เหลือ '+o.available.length+' ชิ้นที่เลือกขึ้นทะเบียนได้)'])],store.source?.key||'')+
     b('ดึงรายการ','asset-pick-source')+'</section><section class="card eq-card"><h2>นำเข้า Excel / CSV</h2><p class="muted">รองรับ .xlsx, .csv และ .tsv ดูตัวอย่างและตรวจข้อมูลก่อนบันทึก</p>'+
     '<input type="file" class="input" id="eq-file" accept=".xlsx,.csv,.tsv" aria-label="ไฟล์ครุภัณฑ์">'+
     '<div class="eq-actions">'+b('ตรวจไฟล์','asset-preview-file')+b('ดาวน์โหลดแม่แบบ','asset-template')+'</div></section></div>';
@@ -111,11 +117,11 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
    select('การยืนยันนโยบาย','policy_confirmed',[['false','ยังไม่ได้ตรวจสอบ'],['true','ยืนยันว่าตรวจสอบนโยบายของต้นสังกัดแล้ว']],String(store.policy.policy_confirmed))+
    '</div><p class="hint">การเปลี่ยนเกณฑ์ไม่มีผลย้อนหลังต่อครุภัณฑ์ที่บันทึกแล้ว</p><button class="primary" type="submit">บันทึกนโยบาย</button></form></section>'+
    '<section class="card eq-card"><h2>ประเภทครุภัณฑ์</h2><div class="table-scroller"><table><thead><tr><th>ประเภท</th><th>รหัสนำหน้า</th><th>อายุแนะนำ (เดือน)</th></tr></thead><tbody>'+
-   store.cats.map(c=>'<tr><td>'+e(c.name)+'</td><td>'+e(c.code_prefix)+'</td><td>'+c.suggested_life_months+'</td></tr>').join('')+'</tbody></table></div>'+
-   '<form id="eq-category-form"><div class="eq-grid">'+f('ชื่อประเภท','name','','text','required maxlength="100"')+
-   f('คำนำหน้ารหัส','code_prefix','','text','required maxlength="24"')+
-   f('อายุแนะนำ (เดือน)','suggested_life_months',60,'number','min="1" max="600" required')+'</div>'+
-   '<p class="hint">อายุแนะนำใช้ช่วยกรอกฟอร์ม เจ้าหน้าที่ต้องตรวจความเหมาะสมก่อนบันทึกจริง</p><button type="submit" class="primary">เพิ่มประเภท</button></form></section>');
+   store.cats.map(c=>'<tr><td>'+e(c.name)+'</td><td>'+e(c.code_prefix)+'</td><td>'+c.suggested_life_months+'</td><td>'+b('แก้ไข','asset-category-edit','mini-btn','data-id="'+e(c.id)+'"')+'</td></tr>').join('')+'</tbody></table></div>'+
+   '<form id="eq-category-form"><h3>'+(store.editCategory?'แก้ไขประเภทครุภัณฑ์':'เพิ่มประเภทครุภัณฑ์')+'</h3><div class="eq-grid">'+f('ชื่อประเภท','name',store.editCategory?.name||'','text','required maxlength="100"')+
+   f('คำนำหน้ารหัส','code_prefix',store.editCategory?.code_prefix||'','text','required maxlength="24"')+
+   f('อายุแนะนำ (เดือน)','suggested_life_months',store.editCategory?.suggested_life_months||60,'number','min="1" max="600" required')+'</div>'+
+   '<p class="hint">อายุแนะนำใช้ช่วยกรอกฟอร์ม เจ้าหน้าที่ต้องตรวจความเหมาะสมก่อนบันทึกจริง</p><div class="eq-actions"><button type="submit" class="primary">'+(store.editCategory?'บันทึกแก้ไขประเภท':'เพิ่มประเภท')+'</button>'+(store.editCategory?b('ยกเลิก','asset-category-cancel'):'')+'</div></form></section>');
  }
  function guide(){
   shell('คู่มือระบบทะเบียนคุมครุภัณฑ์','คู่มือผู้ใช้งาน',heading('คู่มือระบบทะเบียนคุมครุภัณฑ์','อ้างอิงการทำงานจากฟอร์มจริงของโมดูล')+
@@ -133,6 +139,8 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
  }
  function reset(){store.editing=null;store.source=null;store.prefill=null;store.preview=[];store.errors=[];}
  async function go(action,el){
+  if(action==='asset-category-edit'){if(!isSchoolAdmin())throw Error('เฉพาะแอดมินโรงเรียน');store.editCategory=store.cats.find(c=>c.id===el.dataset.id)||null;view();return true;}
+  if(action==='asset-category-cancel'){store.editCategory=null;view();return true;}
   if(action==='asset-open'){store.selected=el.dataset.id;state.assetSection='detail';view();return true;}
   if(action==='asset-back'){state.assetSection='registry';view();return true;}
   if(action==='asset-new'){reset();state.assetSection='import';view();return true;}
@@ -157,7 +165,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
   if(action==='asset-pick-source'){
    if(!can())throw Error('ไม่มีสิทธิ์');const key=document.querySelector('[name="eq_source"]')?.value;
    const pick=sourceOptions().find(x=>x.key===key);if(!pick)throw Error('เลือกงานจัดซื้อที่ตรวจรับแล้วก่อน');
-   reset();const cat=store.cats[0],qty=Math.floor(Number(pick.item.qty));const copies=Math.min(100,qty);
+   reset();const cat=store.cats[0],copies=pick.available.length;
    store.source={...pick,copies};
    store.prefill={asset_code:(cat?.code_prefix||'คภ')+'-'+pick.record.document_number+'-'+(pick.index+1),name:pick.item.name,cost_satang:Number(pick.item.price_satang),salvage_satang:0,category_id:cat?.id||null,useful_life_months:cat?.suggested_life_months||60,acquired_on:today(),placed_in_service_on:today()};
    view();return true;
@@ -185,16 +193,19 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
    if(!isSchoolAdmin())throw Error('เฉพาะแอดมินโรงเรียน');
    const row={school_id:state.school.id,name:String(data.name||'').trim(),code_prefix:String(data.code_prefix||'').trim(),suggested_life_months:Number(data.suggested_life_months)};
    if(!row.name||!row.code_prefix||!Number.isInteger(row.suggested_life_months)||row.suggested_life_months<1||row.suggested_life_months>600)throw Error('ข้อมูลประเภทไม่ถูกต้อง');
-   if(state.demo)store.cats.push({...row,id:'cat-'+Date.now()});else{const {error}=await db.from('asset_categories').insert(row);if(error)throw Error(error.message);await load();}
-   notify('เพิ่มประเภทครุภัณฑ์สำเร็จ');return true;
+   if(state.demo){if(store.editCategory){const at=store.cats.findIndex(c=>c.id===store.editCategory.id);store.cats[at]={...row,id:store.editCategory.id};}else store.cats.push({...row,id:'cat-'+Date.now()});}
+   else{const response=store.editCategory?await db.from('asset_categories').update(row).eq('id',store.editCategory.id).eq('school_id',state.school.id):await db.from('asset_categories').insert(row);if(response.error)throw Error(response.error.message);await load();}
+   store.editCategory=null;notify('บันทึกประเภทครุภัณฑ์สำเร็จ');return true;
   }
   const item=assetInput(data,{threshold:store.policy.capitalization_threshold_satang,categories:store.cats});
+  // Edits must not silently reclassify old accounting records after a policy threshold change.
+  if(store.editing)item.accounting_class=store.editing.accounting_class;
   let batch=[item];
   if(!store.editing&&store.source){
    const qty=Number(data.copies||1);
    if(!Number.isInteger(qty)||qty<1||qty>store.source.copies)throw Error('จำนวนชิ้นไม่ถูกต้อง');
-   batch=Array.from({length:qty},(_,i)=>({...item,asset_code:qty===1?item.asset_code:item.asset_code+'-'+String(i+1).padStart(3,'0'),
-    source_procurement_id:store.source.record.id,source_item_index:store.source.index,source_unit_index:i+1}));
+   batch=Array.from({length:qty},(_,i)=>({...item,asset_code:store.source.originalQuantity===1?item.asset_code:item.asset_code+'-'+String(store.source.available[i]).padStart(3,'0'),
+    source_procurement_id:store.source.record.id,source_item_index:store.source.index,source_unit_index:store.source.available[i]}));
   }
   if(state.demo){if(store.editing){const index=store.rows.findIndex(x=>x.id===store.editing.id);store.rows[index]={...store.rows[index],...item};}
    else store.rows.unshift(...batch.map((r,i)=>({...r,id:'demo-item-'+Date.now()+'-'+i,school_id:'demo-school'})));
