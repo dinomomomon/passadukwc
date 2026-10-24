@@ -25,19 +25,16 @@ test('regular school users and demonstration mode cannot see school-admin-only f
  assert.equal(regular[2].items[0].action,'user-guide');
  assert.deepEqual(staffGuideIds,['create','records','registry']);
 });
-test('asset items are clearly marked future and cannot be confused with real procurement records',()=>{
+test('asset submenus now route to the live tenant-isolated module',()=>{
  assert.equal(assetTopics.length,6);
- assert.ok(assetTopics.every(x=>validAssetTopic(x.id)));
- assert.equal(validAssetTopic('made-up-action'),false);
- assert.ok(visibleSidebarGroups({schoolAdmin:true,admin:true})[1].items.every(x=>x.comingSoon));
+ assert.ok(assetTopics.every(t=>validAssetTopic(t.id)));
+ assert.equal(validAssetTopic('missing'),false);
+ assert.ok(visibleSidebarGroups({schoolAdmin:true,admin:true})[1].items.every(x=>!x.comingSoon));
  const app=read('app.js');
- assert.match(app,/function renderAssetModulePlaceholder\(\)/);
- assert.match(app,/อยู่ระหว่างการพัฒนา/);
- assert.match(app,/if\(action==='asset-section'\|\|action==='assets-settings'\)/);
+ assert.match(app,/equipmentModule\.view\(\)/);
+ assert.match(app,/await equipmentModule\.load\(\)/);
  assert.match(app,/section==='settings'&&!isSchoolAdmin\(\)/);
  assert.match(app,/if\(action==='asset-guide'\)/);
- assert.match(app,/state\.page='assets'/);
- assert.doesNotMatch(app.slice(app.indexOf('function renderAssetModulePlaceholder(){'),app.indexOf('function renderUniversalUserGuide(){')),/db\.from\(|db\.rpc\(/);
 });
 test('navigation remembers expanded groups and handles mobile drawer without changing core actions',()=>{
  const app=read('app.js'),css=read('brand-theme.css'),index=read('index.html');
@@ -63,7 +60,7 @@ test('admin guide has a fifth asset configuration topic, still school-admin gate
  assert.deepEqual(adminGuideIds,['school','numbers','templates','users','assets']);
  const markup=adminGuideHtml('assets');
  assert.match(markup,/การตั้งค่าทะเบียนคุมครุภัณฑ์/);
- assert.match(markup,/ยังไม่เปิด/);
+ assert.match(markup,/ตรวจเกณฑ์บัญชี/);
  assert.match(markup,/data-action="admin-guide-open" data-target="assets-settings"/);
  const app=read('app.js');
  assert.match(app,/if\(action==='admin-guide-section'\)\{\s*if\(!isSchoolAdmin\(\)\)/);

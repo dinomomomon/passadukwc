@@ -42,7 +42,7 @@ test('spreadsheet import validates required headers, duplicate codes, categories
  const ok=rowsToAssets([headers,item],[],1000000);
  assert.equal(ok.assets.length,1);assert.equal(ok.errors.length,0);
  const wrong=rowsToAssets([headers,item,item],[],1000000);assert.match(wrong.errors.join(''),/รหัสครุภัณฑ์ซ้ำ/);
- const missing=rowsToAssets([headers.slice(1),item],[],1000000);assert.match(missing.errors.join(''),/ไม่พบหัวคอลัมน์/);
+ assert.throws(()=>rowsToAssets([headers.slice(1),item],[],1000000),/ไม่พบหัวคอลัมน์/);
 });
 test('equipment module provides all five functional pages, CRUD, policies, source, Excel and A4',()=>{
  const ui=read('equipment-module.js'),app=read('app.js');
