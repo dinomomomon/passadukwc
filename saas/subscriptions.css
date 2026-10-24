@@ -1,0 +1,64 @@
+/* Kru Pasadu billing: school entitlement + owner annual renewal */
+.sub-banner{
+ display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+ border-radius:15px;padding:15px 19px;margin:0 0 19px;
+ border:1px solid #cadef9;background:#f1f7ff;
+ font-family:"Sarabun",Tahoma,sans-serif
+}
+.sub-banner strong{display:block;color:#13549b;font-size:15px;font-weight:800;line-height:1.55}
+.sub-banner p{margin:3px 0 0;font-size:12px;line-height:1.65;color:#55769d}
+.sub-banner .sub-expiry{
+ flex:0 0 auto;padding:7px 12px;border-radius:99px;border:1px solid #c4dbfc;background:white;
+ color:#2163a3;font-size:12px;font-weight:800
+}
+.sub-banner.sub-active{background:#f0f9f4;border-color:#c8ebd6}
+.sub-banner.sub-active strong{color:#11754a}
+.sub-banner.sub-active p{color:#4d7564}
+.sub-banner.sub-active .sub-expiry{border-color:#b5dfc6;color:#177550}
+.sub-banner.sub-trial{background:#fff8ee;border-color:#ffdfad}
+.sub-banner.sub-trial strong{color:#b15d07}
+.sub-banner.sub-trial p{color:#916f45}
+.sub-banner.sub-trial .sub-expiry{border-color:#ffdaa3;color:#ad5e08}
+.sub-banner.sub-expired,.sub-banner.sub-suspended{background:#fff1f1;border-color:#ffcdcd}
+.sub-banner.sub-expired strong,.sub-banner.sub-suspended strong{color:#aa2c30}
+.sub-banner.sub-expired p,.sub-banner.sub-suspended p{color:#985e61}
+.sub-contact{
+ appearance:none;background:#e96618;color:#fff;border:0;border-radius:10px;
+ padding:10px 17px;min-height:40px;cursor:pointer;font-size:13px;font-weight:800;
+ box-shadow:0 7px 17px rgba(222,91,27,.15)
+}
+.sub-contact:hover{background:#d35608}
+.sub-admin-panel{margin-top:19px}
+.sub-admin-panel .section-head{margin-bottom:16px}
+.sub-admin-panel .section-head h2{color:#174c95;font-size:20px;line-height:1.45}
+.sub-admin-panel .section-head p{margin:4px 0 0;font-size:12px;line-height:1.6}
+.sub-mini-stats{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 19px
+}
+.sub-mini-stats>div{
+ display:flex;justify-content:space-between;align-items:center;gap:8px;
+ padding:14px 15px;background:#f5f9ff;border:1px solid #e0ecfa;border-radius:13px;
+ color:#4f709c;font-size:13px;font-weight:700
+}
+.sub-mini-stats b{font-size:25px;line-height:1.1;color:#0e5ac1}
+.sub-state-chip{
+ display:inline-flex;align-items:center;padding:6px 10px;white-space:nowrap;
+ font-size:12px;line-height:1.4;font-weight:800;border-radius:99px;background:#e9f3ff;color:#155dbc
+}
+.sub-chip-trial{background:#fff2df;color:#a15b0a}
+.sub-chip-active{background:#e4f8ec;color:#147e49}
+.sub-chip-expired,.sub-chip-suspended{background:#ffeeee;color:#b12937}
+.sub-admin-panel .table-scroller{overflow-x:auto}
+.sub-admin-panel table{min-width:760px}
+.sub-admin-panel th{white-space:nowrap}
+.sub-admin-panel td{vertical-align:middle}
+.sub-admin-panel .sub-renew{font-size:12px;white-space:nowrap;min-height:35px;border-radius:9px;padding:7px 13px}
+.sub-note{font-size:12px;color:#63819d;line-height:1.6;margin:14px 0 0}
+@media(max-width:680px){
+ .sub-banner{padding:13px;align-items:flex-start;gap:9px}
+ .sub-banner strong{font-size:14px}
+ .sub-banner p{font-size:11px}
+ .sub-mini-stats{grid-template-columns:1fr;gap:8px}
+ .sub-mini-stats>div{padding:10px 13px}
+ .sub-mini-stats b{font-size:20px}
+}

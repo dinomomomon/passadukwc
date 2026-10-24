@@ -1,0 +1,56 @@
+import {build} from 'esbuild';
+import {readFile,mkdir,copyFile,writeFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import {resolve} from 'node:path';
+
+const staticAssets=[
+  'index.html','diagnostics.html','style.css','brand-theme.css',
+  'print-fix.css','official-print.css','print-responsive.css','print-readable.css',
+  'print-pagination.css','print-adaptive.css','print-signatures-responsive.css',
+  'auth-unified.css','marketing-pages.css','admin-guide.css','staff-management.css','government-forms.css','template-builder.css','notification-popup.css',
+  'config.js','print.js','kru-pasadu-icon.svg','garuda-memo.svg','admin-guide-school-infographic.svg','admin-guide-registry-infographic.svg','admin-guide-templates-1.svg','admin-guide-templates-2.svg','admin-guide-users-infographic.svg','staff-guide-create-1.svg','staff-guide-create-2.svg','staff-guide-records-1.svg','staff-guide-records-2.svg','staff-guide-registry.svg'
+];
+const root=process.cwd();
+await mkdir(resolve(root,'dist'),{recursive:true});
+for(const file of staticAssets){
+  await copyFile(resolve(root,file),resolve(root,'dist',file));
+}
+// Swap remote top-level SDK import for a local build-time dependency.
+// This keeps the original source compatible with direct static previews
+// but ships a browser app with NO runtime CDN imports in production.
+const source=await readFile(resolve(root,'app.js'),'utf8');
+if(/^\s*async\s*$/m.test(source)){
+  throw new Error('Standalone async identifier detected. Refusing to deploy a broken app.');
+}
+
+const marker="import {SUPABASE_URL,SUPABASE_KEY} from './config.js';";
+const offset=source.indexOf(marker);
+if(offset<0||!source.slice(0,offset).includes('loadSupabaseSdk')){
+  throw new Error('Expected dynamic Supabase loader source was not found');
+}
+const bundledSource="import {createClient} from '@supabase/supabase-js';\n"+source.slice(offset);
+await build({
+  stdin:{contents:bundledSource,resolveDir:root,sourcefile:'app.js',loader:'js'},
+  outfile:resolve(root,'dist','app.js'),
+  format:'esm',
+  platform:'browser',
+  target:'es2022',
+  bundle:true,
+  minify:false,
+  sourcemap:false,
+  legalComments:'none',
+  logLevel:'info',
+  define:{'process.env.NODE_ENV':'"production"'}
+});
+console.log('Built self-hosted Kru Pasadu browser app and',staticAssets.length,'static files');
+
+let gitCommit=process.env.CF_PAGES_COMMIT_SHA||process.env.VERCEL_GIT_COMMIT_SHA||process.env.GITHUB_SHA||'unknown';
+try {gitCommit=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim()||gitCommit;}catch{}
+await writeFile(resolve(root,'dist','build-info.json'),JSON.stringify({
+  application:'kru-pasadu',
+  build_commit:gitCommit,
+  built_at:new Date().toISOString(),
+  source_branch:'feature/kru-pasadu-v01',
+  release:'official-a4-forms-2026-10-20'
+},null,2)+'\n');
+console.log('Build info published for Cloudflare/Vercel version verification:',gitCommit);

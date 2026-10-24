@@ -1,0 +1,9 @@
+<div class="official-top">
+  <% if(hasGaruda){ %><img class="official-garuda" src="/garuda.png" alt="ตราครุฑ"><% } else { %><div class="official-garuda-missing">พื้นที่ตราครุฑ<br><small>รอไฟล์ที่ได้รับอนุญาต</small></div><% } %>
+  <h1>บันทึกข้อความ</h1>
+</div>
+<div class="official-info"><b>ส่วนราชการ</b> <%= record.school %></div>
+<div class="official-info official-cols"><span><b>ที่</b> <%= record.kind==='purchase'?'พด.':'พจ.' %> <%= record.number %>/<%= record.year %></span><span><b>วันที่</b> <%= dateTH(record.date) %></span></div>
+<div class="official-info"><b>เรื่อง</b> <%= subject %></div>
+<div class="official-line"></div>
+<div class="official-info"><b>เรียน</b> ผู้อำนวยการ<%= record.school %></div>

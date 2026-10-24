@@ -1,0 +1,17 @@
+{
+  "name": "kru-pasadu-web",
+  "version": "0.2.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node --check app.js && node --check print.js && node --check document-meta.js && node --test ./official-forms.test.mjs ./marketing-pages.test.mjs ./admin-guide.test.mjs ./record-display-status.test.mjs ./procurement-categories.test.mjs ./staff-guide.test.mjs ./officer-signers.test.mjs ./sidebar-navigation.test.mjs ./equipment-module.test.mjs && node build.mjs",
+    "deploy:cloudflare": "wrangler deploy"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.116.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "wrangler": "^4.34.0"
+  }
+}
