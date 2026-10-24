@@ -68,7 +68,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
    select('สถานะ','asset_status',Object.entries(st),x.asset_status||'active')+
    f('ห้อง / สถานที่ตั้ง','location',x.location||'')+f('ผู้รับผิดชอบ','responsible_person',x.responsible_person||'')+'</div>'+
    f('หมายเหตุ','notes',x.notes||'')+(store.source&&store.source.copies>1&&!store.editing?f('จำนวนที่ต้องการขึ้นทะเบียนแยกชิ้น','copies',store.source.copies,'number','min="1" max="100"'):'')+
-   '<p class="hint">รหัสครุภัณฑ์ต้องไม่ซ้ำในโรงเรียน ครุภัณฑ์หลายชิ้นจะได้รับรหัสแยกกัน</p><div class="eq-actions"><button class="primary" type="submit">บันทึกครุภัณฑ์</button>'+b('ยกเลิก','asset-cancel')+'</div></form>';
+   '<div class="eq-actions">'+(!store.editing?b('เสนอรหัสครุภัณฑ์ถัดไป','asset-suggest-code'):'')+'</div><p class="hint">รหัสครุภัณฑ์ต้องไม่ซ้ำในโรงเรียน ปุ่มเสนอรหัสช่วยกรอกโดยใช้ประเภทที่เลือก แต่ต้องตรวจสอบก่อนบันทึก</p><div class="eq-actions"><button class="primary" type="submit">บันทึกครุภัณฑ์</button>'+b('ยกเลิก','asset-cancel')+'</div></form>';
  }
  function importPage(){
   const options=sourceOptions();
@@ -139,6 +139,20 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
  }
  function reset(){store.editing=null;store.source=null;store.prefill=null;store.preview=[];store.errors=[];}
  async function go(action,el){
+  if(action==='asset-suggest-code'){
+   const form=document.getElementById('eq-asset-form');
+   if(!form)return true;
+   const cat=store.cats.find(c=>c.id===form.querySelector('[name="category_id"]')?.value);
+   const prefix=(cat?.code_prefix||'คภ').trim(),suffix='/'+fiscal();
+   const used=new Set(store.rows.map(r=>r.asset_code.toLocaleLowerCase()));
+   let n=1,proposal='';
+   while(n<=999999){proposal=prefix+'-'+String(n).padStart(3,'0')+suffix;
+    if(!used.has(proposal.toLocaleLowerCase()))break;n++;
+   }
+   if(n>999999)throw Error('รหัสแนะนำเต็มแล้ว กรุณาตั้งรหัสด้วยตนเอง');
+   const input=form.querySelector('[name="asset_code"]');if(input){input.value=proposal;input.focus();}
+   return true;
+  }
   if(action==='asset-category-edit'){if(!isSchoolAdmin())throw Error('เฉพาะแอดมินโรงเรียน');store.editCategory=store.cats.find(c=>c.id===el.dataset.id)||null;view();return true;}
   if(action==='asset-category-cancel'){store.editCategory=null;view();return true;}
   if(action==='asset-open'){store.selected=el.dataset.id;state.assetSection='detail';view();return true;}
@@ -224,5 +238,11 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
    '</tbody></table><p class="eq-print-foot">เอกสารจากระบบ KRU PASADU • โปรดตรวจสอบข้อมูลและเกณฑ์ค่าเสื่อมก่อนใช้อ้างอิงทางราชการ</p></section>').join('');
   const root=printRoot();if(!root)throw Error('ไม่พบพื้นที่พิมพ์เอกสาร');root.innerHTML=html;requestAnimationFrame(()=>window.print());
  }
- return {load,view,go,submit,reset};
+ function categoryChanged(selectElement){
+  if(state.page!=='assets'||state.assetSection!=='import'||store.editing)return;
+  const found=store.cats.find(c=>c.id===selectElement.value);
+  const life=document.querySelector('#eq-asset-form [name="useful_life_months"]');
+  if(found&&life&&(!life.dataset.userEdited||life.value==='60'))life.value=String(found.suggested_life_months);
+ }
+ return {load,view,go,submit,reset,categoryChanged};
 }

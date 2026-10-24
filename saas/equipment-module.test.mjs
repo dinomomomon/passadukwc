@@ -53,6 +53,9 @@ test('equipment module provides all five functional pages, CRUD, policies, sourc
  assert.match(ui,/store\.source\.available\[i\]/);
  assert.match(ui,/item\.accounting_class=store\.editing\.accounting_class/);
  assert.match(ui,/asset-category-edit/);
+ assert.match(ui,/asset-suggest-code/);
+ assert.match(ui,/function categoryChanged\(selectElement\)/);
+ assert.match(app,/equipmentModule\.categoryChanged\(ev\.target\)/);
  assert.match(ui,/\['received','completed'\]\.includes\(r\.state\)/);
  assert.match(app,/if\(state\.page==='assets'\|\|state\.page==='asset-guide'\)return equipmentModule\.view\(\)/);
  assert.match(app,/equipmentModule\.submit\(form\)/);
