@@ -14,23 +14,23 @@ const svgWebp=(filename)=>{
  return svg;
 };
 
-test('four admin subtopics: school, registry, templates, users; no separate signer or overview',()=>{
- assert.deepEqual(adminGuideIds,['school','numbers','templates','users']);
+test('five admin subtopics including future asset setup; no separate signer or overview',()=>{
+ assert.deepEqual(adminGuideIds,['school','numbers','templates','users','assets']);
  assert.deepEqual(adminGuideTopics.map(t=>t.title),[
-  'การตั้งค่าข้อมูลโรงเรียน','การตั้งค่าเลขทะเบียนคุม','แก้ไขแม่แบบเอกสาร','จัดการผู้ใช้งานและสิทธิ์'
+  'การตั้งค่าข้อมูลโรงเรียน','การตั้งค่าเลขทะเบียนคุม','แก้ไขแม่แบบเอกสาร','จัดการผู้ใช้งานและสิทธิ์','การตั้งค่าทะเบียนคุมครุภัณฑ์'
  ]);
- assert.equal(adminGuideTopics.length,4);
- assert.equal(adminGuideTopics.reduce((n,t)=>n+t.steps.length,0),17);
+ assert.equal(adminGuideTopics.length,5);
+ assert.equal(adminGuideTopics.reduce((n,t)=>n+t.steps.length,0),18);
  const first=adminGuideHtml();
  assert.match(first,/การตั้งค่าข้อมูลโรงเรียน/);
  assert.match(first,/src="\/admin-guide-school-infographic\.svg"/);
  assert.doesNotMatch(first,/ภาพรวมคู่มือ|ตั้งค่าผู้ลงนาม|data-section="overview"|kp-ag-topic-card/);
- assert.equal((first.match(/data-action="admin-guide-section"/g)||[]).length,5,'four topic tabs plus return to first');
+ assert.equal((first.match(/data-action="admin-guide-section"/g)||[]).length,6,'five topic tabs plus return to first');
  for(const topic of adminGuideTopics){
   const html=adminGuideHtml(topic.id);
   assert.match(html,new RegExp('data-section="'+topic.id+'"'));
   assert.match(html,new RegExp('data-target="'+topic.action+'"'));
-  assert.match(html,/\/ 04/);
+  assert.match(html,/\/ 05/);
   assert.doesNotMatch(html,/data-section="signers"|data-section="overview"|kp-ag-graphic|kp-ag-mini-sidebar/);
  }
  const bad=adminGuideHtml('signers');
@@ -72,7 +72,8 @@ test('new registry guide uses infographic based on four numbering controls in ac
 
 test('admin role checks and live navigation are unchanged, no registry data updated by guide',()=>{
  const app=read('app.js');
- assert.match(app,/if\(isSchoolAdmin\(\)\)items\.push\(\['admin-guide'/);
+ assert.match(app,/visibleAdminLinks\(opts\)/);
+  assert.match(app,/adminGuideTopics\.map\(topic=>/);
  assert.match(app,/if\(state\.page==='admin-guide'\)return renderAdminGuide\(\)/);
  assert.match(app,/function renderAdminGuide\(\)\{\s*if\(!isSchoolAdmin\(\)\)/);
  assert.match(app,/if\(action==='admin-guide'\)\{\s*if\(!isSchoolAdmin\(\)\)/);
@@ -100,7 +101,7 @@ test('infographic assets get built and displayed in responsive container on both
  assert.match(build,/'admin-guide-templates-2\.svg'/);
  assert.match(build,/'admin-guide-users-infographic\.svg'/);
  assert.match(index,/admin-guide\.css\?v=20261023-staff-guide-v2/);
- assert.match(index,/app\.js\?v=20261023-officer-auto-v1/);
+ assert.match(index,/app\.js\?v=20261024-grouped-nav-v1/);
  assert.doesNotMatch(publicPages,/\['guide','คู่มือการใช้งาน'\]/);
 });
 

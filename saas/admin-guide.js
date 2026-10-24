@@ -30,7 +30,10 @@ export const adminGuideTopics=[
   {heading:'เลือกบทบาทผู้ใช้งาน',desc:'กำหนดหน้าที่ในระบบให้ตรงงาน เช่น แอดมินโรงเรียน เจ้าหน้าที่พัสดุ หัวหน้าเจ้าหน้าที่ ผู้อำนวยการ การเงิน หรือผู้ตรวจรับ',focus:'หน้าที่ในระบบ',fields:[['หน้าที่ในระบบ','เจ้าหน้าที่พัสดุ'],['สิทธิ์อื่น','แอดมิน / หัวหน้า / ผอ. / การเงิน / ตรวจรับ']],button:'+ สร้างบัญชีและให้สิทธิ์ใช้งาน'},
   {heading:'แก้ไขหรือเปลี่ยนรหัสผ่าน',desc:'ในตารางสมาชิกกด แก้ไข เพื่อปรับชื่อ อีเมล หรือบทบาท และกด เปลี่ยนรหัสผ่าน เพื่อตั้งรหัสใหม่เมื่อจำเป็น',focus:'จัดการ',fields:[['รายชื่อผู้ใช้','นางสาวตัวอย่าง ผู้ใช้งาน'],['จัดการ','แก้ไข · เปลี่ยนรหัสผ่าน']],button:'บันทึกการแก้ไข'},
   {heading:'ปิดสิทธิ์ เปิดสิทธิ์ หรือลบผู้ใช้งาน',desc:'ปิดสิทธิ์เมื่อต้องระงับการเข้าใช้ เปิดสิทธิ์เมื่อต้องให้กลับมาใช้ และลบเพื่อถอนสิทธิ์ออกจากโรงเรียน โดยเก็บประวัติเอกสารไว้ ระบบไม่ให้แอดมินปิดสิทธิ์หรือลบบัญชีตนเอง',focus:'จัดการ',fields:[['สถานะ','ใช้งานได้'],['จัดการ','ปิดสิทธิ์ · เปิดสิทธิ์ · ลบ']],button:'จัดการสิทธิ์'}],
- note:'ลบบัญชีเป็นการถอนสิทธิ์ออกจากโรงเรียน ไม่ได้ลบประวัติเอกสารราชการ ควรส่งรหัสผ่านผ่านช่องทางส่วนตัวและให้ผู้ใช้เปลี่ยนรหัสหลังเข้าใช้'}
+ note:'ลบบัญชีเป็นการถอนสิทธิ์ออกจากโรงเรียน ไม่ได้ลบประวัติเอกสารราชการ ควรส่งรหัสผ่านผ่านช่องทางส่วนตัวและให้ผู้ใช้เปลี่ยนรหัสหลังเข้าใช้'},
+ {id:'assets',icon:'📦',title:'การตั้งค่าทะเบียนคุมครุภัณฑ์',subtitle:'หัวข้อที่เตรียมไว้สำหรับโมดูลครุภัณฑ์ในอนาคต',action:'assets-settings',target:'ทะเบียนครุภัณฑ์ → ตั้งค่าประเภทและรหัสครุภัณฑ์',
+ steps:[{heading:'เตรียมระบบทะเบียนคุมครุภัณฑ์',desc:'อยู่ระหว่างการพัฒนา เมนูนี้ยังไม่เปิดให้กำหนดรหัส ประเภทครุภัณฑ์ หรืออัตราค่าเสื่อมราคา เพื่อไม่ให้มีข้อมูลตัวอย่างปะปนกับข้อมูลราชการจริง'}],
+ note:'เมนูนี้ยังเป็นพื้นที่เตรียมคู่มือสำหรับแอดมิน ยังไม่มีการตั้งค่าครุภัณฑ์หรือการคำนวณค่าเสื่อมราคาจริง เมื่อโมดูลพร้อมใช้งานจะจัดทำคู่มือจากหน้าจอจริงและทบทวนหลักเกณฑ์บัญชีที่เกี่ยวข้อง'}
 ];
 export const adminGuideIds=adminGuideTopics.map(t=>t.id);
 const iconMark='◉';
@@ -84,7 +87,7 @@ export function adminGuideHtml(selected='school'){
   '<div class="kp-ag-step-list kp-ag-text-guide">'+current.steps.map((step,i)=>
    '<section class="kp-ag-step"><div class="kp-ag-step-header"><span class="kp-ag-step-no">'+(i+1)+'</span><div><h3>'+escape(step.heading)+'</h3><p>'+escape(step.desc)+'</p></div></div></section>').join('')+'</div>';
  const article='<article class="kp-ag-lesson"><header class="kp-ag-lesson-head"><span class="kp-ag-lesson-icon" aria-hidden="true">'+current.icon+'</span><div>'+
-  '<span class="kp-ag-eyebrow">คู่มือผู้ดูแลระบบ • '+String(adminGuideTopics.indexOf(current)+1).padStart(2,'0')+' / 04</span>'+
+  '<span class="kp-ag-eyebrow">คู่มือผู้ดูแลระบบ • '+String(adminGuideTopics.indexOf(current)+1).padStart(2,'0')+' / '+String(adminGuideTopics.length).padStart(2,'0')</span>'+
   '<h2>'+escape(current.title)+'</h2><p>'+escape(current.subtitle)+'</p></div>'+
   '<button type="button" data-action="admin-guide-open" data-target="'+escape(current.action)+'" class="kp-ag-live-button">เปิดเมนูจริง ↗</button></header>'+
   '<div class="kp-ag-target"><span>เมนูที่เกี่ยวข้อง</span><strong>เมนูด้านซ้าย → '+escape(current.target)+'</strong></div>'+
