@@ -211,7 +211,7 @@ function groupedNavHtml(){
  const opts={schoolAdmin:isSchoolAdmin(),admin:isAdmin()};
  const sections=visibleSidebarGroups(opts);
  const buildChild=it=>{
-  const active=state.page===it.action&&(!it.section||it.section===state.assetSection);
+  const active=(state.page===it.action&&(!it.section||it.section===state.assetSection))||(it.action==='asset-section'&&state.page==='assets'&&it.section===state.assetSection);
   const guideActive=it.action==='admin-guide-section'&&state.page==='admin-guide'&&it.section===state.adminGuideSection;
   return '<button type="button" class="kp-side-child '+(active||guideActive?'active ':'')+(it.comingSoon?'kp-side-future ':'')+
    '" data-action="'+e(it.action)+'"'+(it.section?' data-section="'+e(it.section)+'"':'')+
