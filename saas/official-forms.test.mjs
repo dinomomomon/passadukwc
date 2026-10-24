@@ -619,7 +619,9 @@ test('save/publish RPC, school-scoped RLS and immutable template version history
 test('admin-only template menu works without replacing official print masters',async()=>{
  const {readFileSync}=await import('node:fs');
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
- assert.match(app,/items\.push\(\['templates','แม่แบบเอกสาร'/);
+ const nav=readFileSync(new URL('./sidebar-navigation.js',import.meta.url),'utf8');
+ assert.match(nav,/id:'templates',label:'แม่แบบเอกสาร',action:'templates',adminOnly:true/);
+ assert.match(app,/visibleSidebarGroups\(opts\)/);
  assert.match(app,/if\(action==='templates'\)\{if\(!isSchoolAdmin\(\)\)/);
  assert.match(app,/school_document_template_versions/);
  assert.match(app,/applyDocumentTemplates\(buildDocuments\(/);

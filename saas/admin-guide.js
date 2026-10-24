@@ -87,7 +87,7 @@ export function adminGuideHtml(selected='school'){
   '<div class="kp-ag-step-list kp-ag-text-guide">'+current.steps.map((step,i)=>
    '<section class="kp-ag-step"><div class="kp-ag-step-header"><span class="kp-ag-step-no">'+(i+1)+'</span><div><h3>'+escape(step.heading)+'</h3><p>'+escape(step.desc)+'</p></div></div></section>').join('')+'</div>';
  const article='<article class="kp-ag-lesson"><header class="kp-ag-lesson-head"><span class="kp-ag-lesson-icon" aria-hidden="true">'+current.icon+'</span><div>'+
-  '<span class="kp-ag-eyebrow">คู่มือผู้ดูแลระบบ • '+String(adminGuideTopics.indexOf(current)+1).padStart(2,'0')+' / '+String(adminGuideTopics.length).padStart(2,'0')</span>'+
+  '<span class="kp-ag-eyebrow">คู่มือผู้ดูแลระบบ • '+String(adminGuideTopics.indexOf(current)+1).padStart(2,'0')+' / '+String(adminGuideTopics.length).padStart(2,'0')+'</span>'+
   '<h2>'+escape(current.title)+'</h2><p>'+escape(current.subtitle)+'</p></div>'+
   '<button type="button" data-action="admin-guide-open" data-target="'+escape(current.action)+'" class="kp-ag-live-button">เปิดเมนูจริง ↗</button></header>'+
   '<div class="kp-ag-target"><span>เมนูที่เกี่ยวข้อง</span><strong>เมนูด้านซ้าย → '+escape(current.target)+'</strong></div>'+
