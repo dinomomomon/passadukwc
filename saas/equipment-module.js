@@ -1,4 +1,4 @@
-import {depreciation,yearDepreciation,assetInput,cents,importHeaders,rowsToAssets,liveAssetBalances,fiscalYearBalances} from './asset-engine.js';
+import {depreciation,yearDepreciation,assetInput,importHeaders,rowsToAssets,liveAssetBalances,fiscalYearBalances} from './asset-engine.js';
 import {readSpreadsheet,saveCsvFile} from './asset-import.js';
 export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolAdmin,canWrite,printRoot}){
  const today=()=>new Date(Date.now()+7*3600000).toISOString().slice(0,10);
@@ -20,7 +20,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
    if(store.editing)asset.accounting_class=store.editing.accounting_class;
    const d=currentBalance(asset),perMonth=(asset.cost_satang-asset.salvage_satang)/asset.useful_life_months;
    if(!d.eligible)return '<div class="eq-auto-heading"><b>ผลประเมินอัตโนมัติ ณ '+e(dateLabel())+'</b></div>'+
-    '<p class="muted">ทะเบียนควบคุม ไม่คิดค่าเสื่อมทางบัญชีจากรายการนี้ (เกณฑ์ทุนของโรงเรียน '+cash(store.policy.capitalization_threshold_satang)+' บาท)</p>';
+    '<p class="muted">รายการนี้จัดอยู่ในทะเบียนควบคุม จึงไม่คำนวณค่าเสื่อมราคาทางบัญชี</p>';
    const amount=label=>'<span>'+label+'</span>';
    return '<div class="eq-auto-heading"><b>คำนวณค่าเสื่อมอัตโนมัติ ณ '+e(dateLabel())+'</b>'+
     '<small>วิธีเส้นตรง • อายุใช้งาน '+asset.useful_life_months+' เดือน</small></div>'+
@@ -43,9 +43,8 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
  const store={id:null,rows:[],cats:[],policy:{capitalization_threshold_satang:1000000,policy_confirmed:false},year:fiscal(),query:'',status:'all',editing:null,source:null,prefill:null,preview:[],errors:[],selected:null,editCategory:null};
  const can=()=>state.demo||canWrite();
  const category=x=>store.cats.find(c=>c.id===x.category_id)?.name||'ไม่ระบุประเภท';
- const flags=()=>!store.policy.policy_confirmed?'<div class="eq-caution">โปรดให้แอดมินยืนยันเกณฑ์รับรู้สินทรัพย์และอายุการใช้งานตามนโยบายบัญชีต้นสังกัดก่อนนำรายงานค่าเสื่อมไปใช้อ้างอิง</div>':'';
  const tabs=()=>'<nav class="eq-tabs">'+[['overview','ภาพรวม'],['registry','ทะเบียน'],['import','เพิ่ม / นำเข้า'],['depreciation','ค่าเสื่อม'],['report','รายงาน A4'],...(isSchoolAdmin()?[['settings','ตั้งค่า']]:[])].map(([s,l])=>b(l,'asset-section',state.assetSection===s?'eq-tab active':'eq-tab','data-section="'+s+'"')).join('')+'</nav>';
- const layout=(name,subtitle,html,actions='')=>shell(name,'ทะเบียนคุมครุภัณฑ์',heading(name,subtitle,actions)+tabs()+flags()+html);
+ const layout=(name,subtitle,html,actions='')=>shell(name,'ทะเบียนคุมครุภัณฑ์',heading(name,subtitle,actions)+tabs()+html);
  const demo=()=>[{id:'demo-equipment-1',school_id:'demo-school',asset_code:'คพ-001/2570',name:'เครื่องคอมพิวเตอร์ตัวอย่าง',cost_satang:2800000,salvage_satang:0,useful_life_months:60,acquired_on:'2026-10-01',placed_in_service_on:'2026-10-01',asset_status:'active',accounting_class:'capitalized',category_id:null,location:'ห้องตัวอย่าง',responsible_person:'ครูตัวอย่าง',serial_number:'',notes:'ข้อมูลสมมติ'}];
  async function load(){
   const sid=state.school?.id;if(!sid)throw Error('กรุณาเลือกโรงเรียนก่อน');
@@ -150,11 +149,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
  }
  function settings(){
   if(!isSchoolAdmin())return overview();
-  layout('ตั้งค่าประเภทและรหัสครุภัณฑ์','เฉพาะแอดมินโรงเรียน','<section class="card eq-card"><h2>นโยบายบัญชีของโรงเรียน</h2><form id="eq-policy-form"><div class="eq-grid">'+
-   f('เกณฑ์รับรู้สินทรัพย์ต่อชิ้น (บาท)','threshold_baht',cash(store.policy.capitalization_threshold_satang),'text','required')+
-   select('การยืนยันนโยบาย','policy_confirmed',[['false','ยังไม่ได้ตรวจสอบ'],['true','ยืนยันว่าตรวจสอบนโยบายของต้นสังกัดแล้ว']],String(store.policy.policy_confirmed))+
-   '</div><p class="hint">การเปลี่ยนเกณฑ์ไม่มีผลย้อนหลังต่อครุภัณฑ์ที่บันทึกแล้ว</p><button class="primary" type="submit">บันทึกนโยบาย</button></form></section>'+
-   '<section class="card eq-card"><h2>ประเภทครุภัณฑ์</h2><div class="table-scroller"><table><thead><tr><th>ประเภท</th><th>รหัสนำหน้า</th><th>อายุแนะนำ (เดือน)</th></tr></thead><tbody>'+
+  layout('ตั้งค่าประเภทและรหัสครุภัณฑ์','เพิ่มและแก้ไขประเภทครุภัณฑ์ได้โดยไม่ต้องตั้งค่าเกณฑ์บัญชีเอง','<section class="card eq-card"><h2>ประเภทครุภัณฑ์</h2><div class="table-scroller"><table><thead><tr><th>ประเภท</th><th>รหัสนำหน้า</th><th>อายุแนะนำ (เดือน)</th></tr></thead><tbody>'+
    store.cats.map(c=>'<tr><td>'+e(c.name)+'</td><td>'+e(c.code_prefix)+'</td><td>'+c.suggested_life_months+'</td><td>'+b('แก้ไข','asset-category-edit','mini-btn','data-id="'+e(c.id)+'"')+'</td></tr>').join('')+'</tbody></table></div>'+
    '<form id="eq-category-form"><h3>'+(store.editCategory?'แก้ไขประเภทครุภัณฑ์':'เพิ่มประเภทครุภัณฑ์')+'</h3><div class="eq-grid">'+f('ชื่อประเภท','name',store.editCategory?.name||'','text','required maxlength="100"')+
    f('คำนำหน้ารหัส','code_prefix',store.editCategory?.code_prefix||'','text','required maxlength="24"')+
@@ -168,7 +163,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
    '<li>เพิ่ม / นำเข้า: กรอกข้อมูลรายชิ้น ดึงจากรายการจัดซื้อที่ตรวจรับแล้ว หรือนำเข้า Excel แล้วตรวจตัวอย่างก่อนบันทึก</li>'+
    '<li>ค่าเสื่อม: ระบบคำนวณอัตโนมัติทันทีที่กรอกข้อมูล และแสดงยอดถึงวันนี้เมื่อเปิดทะเบียน โดยไม่ต้องกดคำนวณ เลือกปีงบประมาณย้อนหลังเพื่อดูยอดของปีนั้นได้</li>'+
    '<li>รายงาน A4: ตรวจรายงานก่อนสั่งพิมพ์หรือบันทึก PDF</li>'+
-   '<li>ตั้งค่า: แอดมินโรงเรียนกำหนดประเภท รหัส และเกณฑ์รับรู้สินทรัพย์</li></ol>'+
+   '<li>ตั้งค่า: แอดมินโรงเรียนกำหนดชื่อประเภท คำนำหน้ารหัส และอายุใช้งานแนะนำได้ โดยไม่ต้องตั้งค่าเกณฑ์บัญชีเอง</li></ol>'+
    '<p class="hint">คู่มือฉบับนี้เป็นข้อความตามหน้าจอจริง จะเพิ่มภาพประกอบหลังตรวจรับฟอร์มแล้ว</p></section>');
  }
  function view(){
@@ -231,16 +226,9 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
   return false;
  }
  async function submit(form){
-  if(!['eq-asset-form','eq-policy-form','eq-category-form'].includes(form.id))return false;
+  if(!['eq-asset-form','eq-category-form'].includes(form.id))return false;
   if(!can())throw Error('ไม่มีสิทธิ์จัดการครุภัณฑ์');
   const data=Object.fromEntries(new FormData(form));
-  if(form.id==='eq-policy-form'){
-   if(!isSchoolAdmin())throw Error('เฉพาะแอดมินโรงเรียน');
-   const amount=cents(data.threshold_baht||'0');
-   const row={school_id:state.school.id,capitalization_threshold_satang:amount,policy_confirmed:data.policy_confirmed==='true',updated_at:new Date().toISOString()};
-   if(state.demo)store.policy=row;else{const {error}=await db.from('asset_policies').upsert(row,{onConflict:'school_id'});if(error)throw Error(error.message);await load();}
-   notify('บันทึกเกณฑ์บัญชีสำเร็จ');return true;
-  }
   if(form.id==='eq-category-form'){
    if(!isSchoolAdmin())throw Error('เฉพาะแอดมินโรงเรียน');
    const row={school_id:state.school.id,name:String(data.name||'').trim(),code_prefix:String(data.code_prefix||'').trim(),suggested_life_months:Number(data.suggested_life_months)};

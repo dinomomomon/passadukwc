@@ -103,6 +103,21 @@ test('equipment module provides all five functional pages, CRUD, policies, sourc
  assert.match(app,/equipmentModule\.onChange\(ev\.target\)/);
  assert.match(app,/equipmentModule\.refreshIfDateChanged\(\)/);
 });
+test('school admin settings have no confusing accounting-policy form or acknowledgement step',()=>{
+ const ui=read('equipment-module.js');
+ assert.ok(ui.includes('ตั้งค่าประเภทและรหัสครุภัณฑ์'));
+ assert.ok(ui.includes('eq-category-form'));
+ assert.ok(ui.includes("db.from('asset_policies').select"),'Prior policy data remains readable so legacy accounting is unchanged');
+ assert.ok(ui.includes('threshold:store.policy.capitalization_threshold_satang'),'Automatic accounting split remains stable');
+ assert.doesNotMatch(ui,/eq-policy-form/);
+ assert.doesNotMatch(ui,/name="threshold_baht"/);
+ assert.doesNotMatch(ui,/โปรดให้แอดมินยืนยันเกณฑ์/);
+ assert.doesNotMatch(ui,/const flags=/);
+ assert.doesNotMatch(ui,/บันทึกเกณฑ์บัญชีสำเร็จ/);
+ const guide=read('admin-guide.js');
+ assert.doesNotMatch(guide,/ตรวจเกณฑ์บัญชี/);
+ assert.match(guide,/อายุใช้งานแนะนำ/);
+});
 test('migration is tenant-isolated, preserves procurement rows and captures audit history',()=>{
  const sql=read('../supabase/migrations/20261024013403_equipment_assets_register_20261024.sql');
  for(const name of ['equipment_assets','asset_categories','asset_policies','equipment_asset_history'])assert.match(sql,new RegExp('alter table public\\.'+name+' enable row level security'));

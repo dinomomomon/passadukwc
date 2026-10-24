@@ -20,7 +20,7 @@ test('five admin subtopics including future asset setup; no separate signer or o
   'การตั้งค่าข้อมูลโรงเรียน','การตั้งค่าเลขทะเบียนคุม','แก้ไขแม่แบบเอกสาร','จัดการผู้ใช้งานและสิทธิ์','การตั้งค่าทะเบียนคุมครุภัณฑ์'
  ]);
  assert.equal(adminGuideTopics.length,5);
- assert.equal(adminGuideTopics.reduce((n,t)=>n+t.steps.length,0),21);
+ assert.equal(adminGuideTopics.reduce((n,t)=>n+t.steps.length,0),20);
  const first=adminGuideHtml();
  assert.match(first,/การตั้งค่าข้อมูลโรงเรียน/);
  assert.match(first,/src="\/admin-guide-school-infographic\.svg"/);
@@ -101,7 +101,7 @@ test('infographic assets get built and displayed in responsive container on both
  assert.match(build,/'admin-guide-templates-2\.svg'/);
  assert.match(build,/'admin-guide-users-infographic\.svg'/);
  assert.match(index,/admin-guide\.css\?v=20261023-staff-guide-v2/);
- assert.match(index,/app\.js\?v=20261024-equipment-auto-v2/);
+ assert.match(index,/app\.js\?v=20261024-equipment-simple-v3/);
  assert.doesNotMatch(publicPages,/\['guide','คู่มือการใช้งาน'\]/);
 });
 
