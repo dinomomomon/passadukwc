@@ -51,8 +51,8 @@ test('navigation remembers expanded groups and handles mobile drawer without cha
  assert.match(css,/\.kp-sidebar-mobile-open/);
  assert.match(css,/\.kp-nav-overlay/);
  assert.match(css,/\.kp-side-children\[hidden\]/);
- assert.match(index,/app\.js\?v=20261024-grouped-nav-v1/);
- assert.match(index,/brand-theme\.css\?v=20261024-grouped-nav-v1/);
+ assert.match(index,/app\.js\?v=20261024-equipment-v1/);
+ assert.match(index,/brand-theme\.css\?v=20261024-equipment-v1/);
  for(const name of ["'create'","'records'","'registry'","'templates'","'user-guide'","'admin-guide'"]){
   assert.ok(app.includes(name),'Existing action preserved: '+name);
  }

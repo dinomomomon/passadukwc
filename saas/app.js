@@ -35,6 +35,7 @@ import {publicPageIds,publicPageHtml,mountPublicDocument,filterPublicContent} fr
 import {adminGuideHtml,adminGuideIds,adminGuideTopics} from './admin-guide.js';
 import {staffGuideHtml,staffGuideTopics,staffGuideIds} from './staff-guide.js';
 import {assetTopics,navGroupIds,visibleSidebarGroups,visibleAdminLinks,groupForPage,validAssetTopic} from './sidebar-navigation.js';
+import {createEquipmentModule} from './equipment-module.js';
 import {procurementDisplayStatus} from './record-display-status.js';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 const app=document.getElementById('app');
@@ -421,6 +422,10 @@ function officialRegistry(){
 
 
 const templateEditor=createTemplateEditor({db,state,shell,heading,btn,buildDocuments,notify});
+const equipmentModule=createEquipmentModule({db,state,shell,heading,e,notify,
+ isSchoolAdmin,canWrite:()=>!!state.user&&state.memberships.some(m=>
+ m.school_id===state.school?.id&&['school_admin','procurement_officer','procurement_head'].includes(m.role)),
+ printRoot:()=>document.getElementById('print-area')});
 function liveTemplateLayouts(record){return activeTemplateLayouts(state.schoolTemplates||{},state.templateVersions||{},record);}
 async function ensurePinnedTemplateVersions(record){
  if(state.demo||!record||record.state==='draft')return;
@@ -840,7 +845,7 @@ function render(){
  if(state.page.startsWith('public-')&&publicPageIds.includes(state.page.slice(7))){
   publicMarketingPage(state.page.slice(7));return;
  }
- if(!state.user&&!state.demo){if(state.page==='auth')auth();else if(state.page==='verify-email')verificationPending();else landing();return;}if(state.page==='user-guide'&&!state.school&&!state.demo){renderUniversalUserGuide();return;}if(state.user&&!state.owner&&!state.school&&!state.demo){waitAccess();return;}if(state.owner&&!state.school&&!state.demo){owner();return;}if(!state.school){state.school=demoSchool;}if(state.page==='records')return records();if(state.page==='registry')return officialRegistry();if(state.page==='templates')return templateEditor.view();if(state.page==='create')return form();if(state.page==='detail')return detail();if(state.page==='docmeta')return editDocumentMeta();if(state.page==='preview')return preview();if(state.page==='members')return members();if(state.page==='settings')return settings();if(state.page==='admin-guide')return renderAdminGuide();if(state.page==='user-guide')return renderStaffGuide();if(state.page==='assets'||state.page==='asset-guide')return renderAssetModulePlaceholder();if(state.page==='owner')return owner();dashboard();}
+ if(!state.user&&!state.demo){if(state.page==='auth')auth();else if(state.page==='verify-email')verificationPending();else landing();return;}if(state.page==='user-guide'&&!state.school&&!state.demo){renderUniversalUserGuide();return;}if(state.user&&!state.owner&&!state.school&&!state.demo){waitAccess();return;}if(state.owner&&!state.school&&!state.demo){owner();return;}if(!state.school){state.school=demoSchool;}if(state.page==='records')return records();if(state.page==='registry')return officialRegistry();if(state.page==='templates')return templateEditor.view();if(state.page==='create')return form();if(state.page==='detail')return detail();if(state.page==='docmeta')return editDocumentMeta();if(state.page==='preview')return preview();if(state.page==='members')return members();if(state.page==='settings')return settings();if(state.page==='admin-guide')return renderAdminGuide();if(state.page==='user-guide')return renderStaffGuide();if(state.page==='assets'||state.page==='asset-guide')return equipmentModule.view();if(state.page==='owner')return owner();dashboard();}
 const adminGuideTopicsFind=id=>adminGuideTopics.find(x=>x.id===id);
 function renderAdminGuide(){
  if(!isSchoolAdmin()){state.page='dashboard';notify('คู่มือนี้สำหรับแอดมินโรงเรียนเท่านั้น',true);return dashboard();}
@@ -855,20 +860,6 @@ function renderStaffGuide(){
  const selected=staffGuideIds.includes(state.staffGuideSection)?state.staffGuideSection:'create';
  shell('คู่มือระบบจัดซื้อจัดจ้าง','สำหรับผู้ใช้งานทุกบทบาท',
   heading('คู่มือระบบจัดซื้อจัดจ้าง','เลือกอ่านวิธีใช้งาน 3 หัวข้อจากรายการด้านซ้าย')+staffGuideHtml(selected));
-}
-function renderAssetModulePlaceholder(){
- const guide=state.page==='asset-guide';
- const topic=assetTopics.find(t=>t.id===state.assetSection)||assetTopics[0];
- const title=guide?'คู่มือระบบทะเบียนคุมครุภัณฑ์':topic.label;
- const description=guide?'จะจัดทำคู่มือนี้จากหน้าจอระบบทะเบียนครุภัณฑ์จริงหลังจากพัฒนาโมดูลสำเร็จ':
-  'โมดูลนี้กำลังอยู่ในขั้นพัฒนา ยังไม่มีการบันทึกครุภัณฑ์หรือคำนวณค่าเสื่อมราคาจริงจากหน้านี้';
- shell(title,'ระบบทะเบียนคุมครุภัณฑ์',
-  heading(title,guide?'คู่มือผู้ใช้งานระบบทะเบียนคุมครุภัณฑ์':'ส่วนหนึ่งของระบบทะเบียนครุภัณฑ์')+
-  '<section class="card kp-asset-soon" role="status"><div class="kp-asset-soon-icon">'+i('building')+'</div>'+
-  '<h2>อยู่ระหว่างการพัฒนา</h2><p>'+e(description)+'</p>'+
-  '<p class="hint">เมนูนี้เป็นโครงสร้างสำหรับโมดูลใหม่เท่านั้น ระบบจัดซื้อจัดจ้างและทะเบียนคุมเลขเดิมไม่เปลี่ยนแปลง และยังไม่มีการแก้ไขฐานข้อมูลจากหน้านี้</p>'+
-  '<div class="kp-asset-soon-actions">'+btn('กลับไปภาพรวมจัดซื้อจัดจ้าง','dashboard','secondary')+
-  btn('คู่มือระบบจัดซื้อจัดจ้าง','user-guide','secondary')+'</div></section>');
 }
 function renderUniversalUserGuide(){
  // Schoolless platform owners and pending accounts may view instructions but cannot
@@ -906,9 +897,12 @@ async function loadOwner(){
   }
 }
 async function loadRecords(){if(!state.school||state.demo)return;const {data,error}=await db.from('procurements').select('*').eq('school_id',state.school.id).is('deleted_at',null).order('created_at',{ascending:false}).limit(300);if(error){state.error=error.message;return;}state.records=data||[];}
-async function startDemo(){state.demo=true;state.user=null;state.school=demoSchool;state.schoolTemplates={};state.templateVersions={};state.records=[...demoRecords];state.owner=false;state.page='dashboard';render();}
-async function signOut(){if(state.demo){state.demo=false;state.school=null;state.profile=null;state.page='landing';state.records=[];render();return;}const {error}=await db.auth.signOut();if(error)return notify('ออกจากระบบไม่สำเร็จ: '+error.message,true);state.session=null;state.user=null;state.profile=null;state.school=null;state.schoolTemplates={};state.templateVersions={};state.owner=false;state.page='landing';render();}
+async function startDemo(){equipmentModule.reset();state.demo=true;state.user=null;state.school=demoSchool;state.schoolTemplates={};state.templateVersions={};state.records=[...demoRecords];state.owner=false;state.page='dashboard';render();}
+async function signOut(){equipmentModule.reset();if(state.demo){state.demo=false;state.school=null;state.profile=null;state.page='landing';state.records=[];render();return;}const {error}=await db.auth.signOut();if(error)return notify('ออกจากระบบไม่สำเร็จ: '+error.message,true);state.session=null;state.user=null;state.profile=null;state.school=null;state.schoolTemplates={};state.templateVersions={};state.owner=false;state.page='landing';render();}
 async function go(action,el){
+ if(action.startsWith('asset-')&&action!=='asset-section'&&action!=='asset-guide'&&action!=='assets-settings'){
+ if(await equipmentModule.go(action,el))return;
+ }
  if(action==='nav-toggle'){
  const key=String(el?.dataset?.group||'');
  if(![...navGroupIds,adminNavGroupId].includes(key))return;
@@ -930,11 +924,11 @@ if(action==='asset-section'||action==='assets-settings'){
  const section=action==='assets-settings'?'settings':String(el?.dataset?.section||'overview');
  if(!validAssetTopic(section))return notify('ไม่พบหัวข้อทะเบียนครุภัณฑ์',true);
  if(section==='settings'&&!isSchoolAdmin())return notify('การตั้งค่าครุภัณฑ์สำหรับแอดมินโรงเรียนเท่านั้น',true);
- state.assetSection=section;state.page='assets';activateNavGroup('assets');render();return;
+ state.assetSection=section;state.page='assets';activateNavGroup('assets');await equipmentModule.load();render();return;
 }
 if(action==='asset-guide'){
  if(!state.user&&!state.demo)return;
- state.page='asset-guide';activateNavGroup('guides');render();return;
+ state.page='asset-guide';activateNavGroup('guides');await equipmentModule.load();render();return;
 }
 
  if(action==='officer-add'||action==='officer-remove'){
@@ -1159,7 +1153,7 @@ if(action==='open'||action==='open-edit'){
   return owner();
 }if(action==='approve-school'){if(!confirm('อนุมัติคำขอเปิดโรงเรียนนี้?'))return;const {error}=await db.rpc('platform_approve_request',{p_request_id:el.dataset.id});if(error)return notify(error.message,true);await loadOwner();state.flash='อนุมัติโรงเรียนแล้ว';return owner();}if(action==='owner'){await loadOwner();state.page='owner';return render();}if(action==='members'){if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้นที่เข้าเมนูจัดการผู้ใช้งานได้',true);await loadMembers();state.page='members';return render();}if(action==='subscription-help'){return notify('สิทธิ์ทดลองหรือสมาชิกหมดอายุแล้ว กรุณาติดต่อเจ้าของแพลตฟอร์มครูพัสดุ (LINE จะเพิ่มภายหลัง)',true);}if(action==='create'){if(!state.demo){try{await refreshSubscription();}catch(ex){return notify('ตรวจสอบสิทธิ์ไม่สำเร็จ: '+ex.message,true);}if(!canCreate())return notify('ครบโควตาหรือหมดอายุแล้ว กรุณาติดต่อเจ้าของแพลตฟอร์ม',true);}state.editingRecordId=null;state.wizardStep=1;state.items=[{name:'',qty:'1',unit:'',price:''}];state.draft={};state.page='create';return render();}if(action==='records'){if(!state.demo)await loadRecords();state.page='records';return render();}if(action==='settings'){state.page='settings';return render();}if(action==='remove-school-logo'){if(!isAdmin())return notify('ไม่มีสิทธิ์ลบโลโก้โรงเรียน',true);if(!confirm('ต้องการนำโลโก้โรงเรียนออกจากหน้าเว็บใช่หรือไม่?'))return;if(state.demo){state.demoLogoUrl='';state.flash='นำโลโก้ตัวอย่างออกแล้ว';return render();}const old=state.school.logo_path;if(!old)return;const {data,error}=await db.from('schools').update({logo_path:''}).eq('id',state.school.id).select('*').single();if(error)return notify(error.message,true);state.school=data;await db.storage.from('school-logos').remove([old]);state.flash='นำโลโก้โรงเรียนออกแล้ว';return render();}if(action==='edit-record'){const rec=state.currentRecord;if(!canEditMainRecord(rec))return notify('แก้ไขได้เฉพาะรายการฉบับร่างที่มีสิทธิ์',true);state.editingRecordId=rec.id;state.wizardStep=1;state.items=(rec.items||[]).map(x=>({name:x.name,qty:String(x.qty),unit:x.unit,price:(Number(x.price_satang)/100).toFixed(2)}));state.draft={...rec,...Object.fromEntries(Object.entries(rec.document_meta||{}).map(([k,v])=>['doc_'+k,v]))};state.page='create';return render();}if(action==='cancel-edit'){state.editingRecordId=null;state.page='detail';return render();}if(action==='doc-meta'){if(!canEditDocumentMeta(state.currentRecord))return notify('ไม่มีสิทธิ์แก้ไขข้อมูลเอกสารนี้',true);state.page='docmeta';return render();}if(action==='detail'){state.page='detail';return render();}if(action==='dashboard'){state.page='dashboard';return render();}}
 function collectDraft(){const f=document.querySelector('#procurement-form');if(!f)return;state.draft=Object.fromEntries(new FormData(f));document.querySelectorAll('[data-item]').forEach(el=>{const n=Number(el.dataset.item),key=el.dataset.key;if(state.items[n])state.items[n][key]=el.value;});}
-async function handleForm(form){const f=Object.fromEntries(new FormData(form));if(form.id==='auth-form'){
+async function handleForm(form){if(form.id.startsWith('eq-')){if(await equipmentModule.submit(form))return;}const f=Object.fromEntries(new FormData(form));if(form.id==='auth-form'){
   const email=String(f.email||'').trim(), password=String(f.password||'');
   state.authEmail=email;
   if(!email||!password)return notify('กรุณากรอกอีเมลและรหัสผ่านให้ครบ',true);

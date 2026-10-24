@@ -1,6 +1,4 @@
-/* A single source of truth for grouped side navigation.
- * All asset workflows are intentionally placeholders until the new module is built.
- * Permission checks remain in app.js; this model only controls menu visibility. */
+/* Grouped navigation for procurement and school-scoped equipment registration. Permission checks remain server-side in Supabase RLS. */
 export const assetTopics=[
  {id:'overview',label:'ภาพรวมครุภัณฑ์'},
  {id:'registry',label:'ทะเบียนครุภัณฑ์'},
@@ -18,10 +16,10 @@ export const sidebarGroups=[
   {id:'guide-shortcut',label:'คู่มือการจัดซื้อจัดจ้าง (ทางลัด)',action:'user-guide',shortcut:true},
   {id:'templates',label:'แม่แบบเอกสาร',action:'templates',adminOnly:true}
  ]},
- {id:'assets',label:'ทะเบียนครุภัณฑ์',icon:'package',items:assetTopics.map(item=>({...item,action:'asset-section',section:item.id,comingSoon:true}))},
+ {id:'assets',label:'ทะเบียนครุภัณฑ์',icon:'package',items:assetTopics.map(item=>({...item,action:'asset-section',section:item.id,comingSoon:false}))},
  {id:'guides',label:'คู่มือผู้ใช้งาน',icon:'book',items:[
   {id:'procurement-guide',label:'คู่มือระบบจัดซื้อจัดจ้าง',action:'user-guide'},
-  {id:'assets-guide',label:'คู่มือระบบทะเบียนคุมครุภัณฑ์',action:'asset-guide',comingSoon:true}
+  {id:'assets-guide',label:'คู่มือระบบทะเบียนคุมครุภัณฑ์',action:'asset-guide'}
  ]}
 ];
 export const adminNavLinks=[
