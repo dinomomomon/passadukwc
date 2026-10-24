@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {depreciation,yearDepreciation,assetInput,cents,parseCsv,rowsToAssets,shiftMonths} from './asset-engine.js';
+import {depreciation,yearDepreciation,assetInput,cents,parseCsv,rowsToAssets,shiftMonths,liveAssetBalances,fiscalYearBalances,currentFiscalYearBe} from './asset-engine.js';
 const read=p=>readFileSync(new URL('./'+p,import.meta.url),'utf8');
 const base={asset_code:'คพ-001/2570',name:'คอมพิวเตอร์',acquired_on:'2026-10-01',placed_in_service_on:'2026-10-01',cost_baht:'30,000.00',salvage_baht:'0',useful_life_months:'60',asset_status:'active'};
 test('currency parsing preserves integer satang and disallows imprecise inputs',()=>{
@@ -25,6 +25,36 @@ test('straight-line annual and total accumulated depreciation use real dates and
  const fy=yearDepreciation(a,2570);
  assert.equal(fy.year_satang+yearDepreciation(a,2571).year_satang,3000000);
 });
+test('automatic daily depreciation is prorated through today and does not pre-book next September',()=>{
+ const asset=assetInput({...base,useful_life_months:'12',salvage_baht:'1,000'},{threshold:1000000});
+ assert.equal(currentFiscalYearBe('2026-09-30'),2569);
+ assert.equal(currentFiscalYearBe('2026-10-01'),2570);
+ const asOf='2026-10-24',live=liveAssetBalances(asset,asOf);
+ assert.equal(live.fiscal_year_be,2570);
+ assert.equal(live.depreciation_satang,depreciation(asset,asOf).depreciation_satang);
+ assert.ok(live.year_satang>0);
+ assert.ok(live.year_satang<yearDepreciation(asset,2570).year_satang);
+ assert.equal(live.net_satang+live.depreciation_satang,asset.cost_satang);
+ assert.equal(live.year_is_partial,true);
+ const earlier=fiscalYearBalances(asset,2569,asOf);
+ assert.equal(earlier.year_satang,0);
+ const future=fiscalYearBalances(asset,2571,asOf);
+ assert.equal(future.year_is_future,true);
+ assert.equal(future.year_satang,0);
+ const completed=fiscalYearBalances(asset,2570,'2027-10-20');
+ assert.equal(completed.year_is_partial,false);
+ assert.equal(completed.year_satang,yearDepreciation(asset,2570).year_satang);
+});
+test('automatic balance respects salvage minimum, zero before service, and nondepreciating control items',()=>{
+ const asset=assetInput({...base,useful_life_months:'12',salvage_baht:'999.99'},{threshold:1000000});
+ assert.equal(liveAssetBalances(asset,'2026-09-30').depreciation_satang,0);
+ assert.equal(liveAssetBalances(asset,'2030-10-01').net_satang,99999);
+ assert.equal(fiscalYearBalances(asset,2575,'2030-10-01').year_satang,0);
+ const controlled={...asset,accounting_class:'controlled'};
+ assert.equal(liveAssetBalances(controlled,'2026-12-31').eligible,false);
+ assert.equal(liveAssetBalances(controlled,'2026-12-31').year_satang,0);
+ assert.throws(()=>liveAssetBalances(asset,'invalid'),/วันที่/);
+});
 test('controlled and disposed assets are not represented as depreciable balances',()=>{
  let x=assetInput({...base,cost_baht:'8,000'}, {threshold:1000000});
  assert.equal(depreciation(x,'2027-10-01').eligible,false);
@@ -46,7 +76,7 @@ test('spreadsheet import validates required headers, duplicate codes, categories
 });
 test('equipment module provides all five functional pages, CRUD, policies, source, Excel and A4',()=>{
  const ui=read('equipment-module.js'),app=read('app.js');
- for(const s of ['ภาพรวมครุภัณฑ์','ทะเบียนครุภัณฑ์','เพิ่ม / นำเข้าครุภัณฑ์','คำนวณค่าเสื่อมราคา','รายงานทะเบียนครุภัณฑ์ A4','ตั้งค่าประเภทและรหัสครุภัณฑ์'])assert.ok(ui.includes(s),s);
+ for(const s of ['ภาพรวมครุภัณฑ์','ทะเบียนครุภัณฑ์','เพิ่ม / นำเข้าครุภัณฑ์','ค่าเสื่อมราคาอัตโนมัติ','รายงานทะเบียนครุภัณฑ์ A4','ตั้งค่าประเภทและรหัสครุภัณฑ์'])assert.ok(ui.includes(s),s);
  for(const s of ['equipment_assets','asset_categories','asset_policies','asset-import-confirm','asset-pick-source','asset-print','asset-export','eq-asset-form'])assert.ok(ui.includes(s),s);
  assert.match(ui,/source_procurement_id:store\.source\.record\.id/);
  assert.match(ui,/source_item_index:store\.source\.index/);
@@ -60,6 +90,18 @@ test('equipment module provides all five functional pages, CRUD, policies, sourc
  assert.match(app,/if\(state\.page==='assets'\|\|state\.page==='asset-guide'\)return equipmentModule\.view\(\)/);
  assert.match(app,/equipmentModule\.submit\(form\)/);
  assert.match(app,/await equipmentModule\.load\(\)/);
+ assert.match(ui,/function previewAssetMarkup\(draft\)/);
+ assert.match(ui,/id="eq-depreciation-preview"/);
+ assert.match(ui,/liveInputPreview\(\)/);
+ assert.match(ui,/fiscalYearBalances\(r,store\.year,today\(\)\)/);
+ assert.match(ui,/ค่าเสื่อมสะสมอัตโนมัติ/);
+ assert.match(ui,/computedCells\(a\)/);
+ assert.match(ui,/function refreshIfDateChanged\(\)/);
+ assert.match(ui,/เปลี่ยนปีแล้วแสดงผลโดยอัตโนมัติ/);
+ assert.doesNotMatch(ui,/b\('เลือกปีงบประมาณ','asset-year'\)/);
+ assert.match(app,/equipmentModule\.onInput\(el\)/);
+ assert.match(app,/equipmentModule\.onChange\(ev\.target\)/);
+ assert.match(app,/equipmentModule\.refreshIfDateChanged\(\)/);
 });
 test('migration is tenant-isolated, preserves procurement rows and captures audit history',()=>{
  const sql=read('../supabase/migrations/20261024013403_equipment_assets_register_20261024.sql');

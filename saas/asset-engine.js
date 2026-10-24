@@ -21,6 +21,32 @@ export function yearDepreciation(asset,yearBe){
  const a=depreciation(asset,end),b=depreciation(asset,prev);
  return {year_satang:Math.max(0,a.depreciation_satang-b.depreciation_satang),accumulated_satang:a.depreciation_satang,net_satang:a.net_satang,eligible:a.eligible};
 }
+// Read-time computed balances: no cron, stored totals or manual calculation button.
+// In-progress fiscal years use the actual as-of date, not next September's projected balance.
+export function currentFiscalYearBe(asOf){
+ const ms=toUtcDate(asOf);if(ms===null)throw Error('วันที่คำนวณค่าเสื่อมไม่ถูกต้อง');
+ const d=new Date(ms);
+ return d.getUTCFullYear()+543+(d.getUTCMonth()>=9?1:0);
+}
+export function fiscalYearBalances(asset,yearBe,asOf){
+ const year=Number(yearBe);
+ if(!Number.isInteger(year)||year<2500||year>2700)throw Error('ปีงบประมาณไม่ถูกต้อง');
+ if(toUtcDate(asOf)===null)throw Error('วันที่คำนวณค่าเสื่อมไม่ถูกต้อง');
+ const fiscalEnd=(year-543)+'-09-30',previousEnd=(year-544)+'-09-30';
+ // Date-scope to selected fiscal year; this prevents future depreciation from appearing as actuals.
+ const until=asOf<fiscalEnd?asOf:fiscalEnd;
+ const balance=depreciation(asset,until),begin=depreciation(asset,previousEnd);
+ const fyStart=(year-544)+'-10-01';
+ const future=asOf<fyStart,partial=asOf<fiscalEnd&&!future;
+ return {
+  ...balance,year_satang:future||!balance.eligible?0:Math.max(0,balance.depreciation_satang-begin.depreciation_satang),
+  fiscal_year_be:year,as_of:until,year_is_partial:partial,year_is_future:future
+ };
+}
+export function liveAssetBalances(asset,asOf){
+ const fiscalYear=currentFiscalYearBe(asOf);
+ return fiscalYearBalances(asset,fiscalYear,asOf);
+}
 export const cents=v=>{const raw=String(v??'').trim().replace(/,/g,'');if(!/^\d{1,11}(\.\d{1,2})?$/.test(raw))throw Error('จำนวนเงินต้องเป็นตัวเลขบวก ทศนิยมไม่เกิน 2 ตำแหน่ง');const [a,b='']=raw.split('.');const sat=Number(a)*100+Number((b+'00').slice(0,2));if(!Number.isSafeInteger(sat))throw Error('จำนวนเงินสูงเกินขอบเขต');return sat;};
 export function assetInput(data,{threshold=1000000,categories=[]}={}){
  const v=k=>String(data[k]??'').trim(),cost=cents(v('cost_baht')),salvage=cents(v('salvage_baht')||'0');

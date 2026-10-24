@@ -101,7 +101,7 @@ test('infographic assets get built and displayed in responsive container on both
  assert.match(build,/'admin-guide-templates-2\.svg'/);
  assert.match(build,/'admin-guide-users-infographic\.svg'/);
  assert.match(index,/admin-guide\.css\?v=20261023-staff-guide-v2/);
- assert.match(index,/app\.js\?v=20261024-equipment-v1/);
+ assert.match(index,/app\.js\?v=20261024-equipment-auto-v2/);
  assert.doesNotMatch(publicPages,/\['guide','คู่มือการใช้งาน'\]/);
 });
 

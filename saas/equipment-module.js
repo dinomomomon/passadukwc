@@ -1,9 +1,41 @@
-import {depreciation,yearDepreciation,assetInput,cents,importHeaders,rowsToAssets} from './asset-engine.js';
+import {depreciation,yearDepreciation,assetInput,cents,importHeaders,rowsToAssets,liveAssetBalances,fiscalYearBalances} from './asset-engine.js';
 import {readSpreadsheet,saveCsvFile} from './asset-import.js';
 export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolAdmin,canWrite,printRoot}){
  const today=()=>new Date(Date.now()+7*3600000).toISOString().slice(0,10);
  const fiscal=()=>{const d=new Date(Date.now()+7*3600000);return d.getUTCFullYear()+543+(d.getUTCMonth()>=9?1:0);};
  const cash=n=>(Number(n||0)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const safeDate=()=>today();
+ const currentBalance=asset=>liveAssetBalances(asset,safeDate());
+ const accountingLabel=asset=>asset.accounting_class==='capitalized'?'คิดค่าเสื่อมอัตโนมัติ':'ทะเบียนควบคุม (ไม่คิดค่าเสื่อม)';
+ const dateLabel=()=>new Date(safeDate()+'T12:00:00+07:00').toLocaleDateString('th-TH',{timeZone:'Asia/Bangkok',day:'numeric',month:'long',year:'numeric'});
+ const computedCells=asset=>{
+  const d=currentBalance(asset);
+  return '<td class="amount">'+(d.eligible?cash(d.depreciation_satang):'<span class="muted">ไม่คิด</span>')+'</td>'+
+   '<td class="amount">'+(d.eligible?cash(d.net_satang):'<span class="muted">ไม่คิด</span>')+'</td>';
+ };
+ function previewAssetMarkup(draft){
+  try{
+   const cleaned={...draft,asset_code:'PREVIEW',name:'PREVIEW'};
+   const asset=assetInput(cleaned,{threshold:store.policy.capitalization_threshold_satang,categories:store.cats});
+   if(store.editing)asset.accounting_class=store.editing.accounting_class;
+   const d=currentBalance(asset),perMonth=(asset.cost_satang-asset.salvage_satang)/asset.useful_life_months;
+   if(!d.eligible)return '<div class="eq-auto-heading"><b>ผลประเมินอัตโนมัติ ณ '+e(dateLabel())+'</b></div>'+
+    '<p class="muted">ทะเบียนควบคุม ไม่คิดค่าเสื่อมทางบัญชีจากรายการนี้ (เกณฑ์ทุนของโรงเรียน '+cash(store.policy.capitalization_threshold_satang)+' บาท)</p>';
+   const amount=label=>'<span>'+label+'</span>';
+   return '<div class="eq-auto-heading"><b>คำนวณค่าเสื่อมอัตโนมัติ ณ '+e(dateLabel())+'</b>'+
+    '<small>วิธีเส้นตรง • อายุใช้งาน '+asset.useful_life_months+' เดือน</small></div>'+
+    '<div class="eq-auto-grid"><div>'+amount('ค่าเสื่อมเฉลี่ยต่อเดือน')+'<strong>'+cash(Math.round(perMonth))+' บาท</strong></div>'+
+    '<div>'+amount('ค่าเสื่อมปีงบประมาณ '+d.fiscal_year_be+' ถึงวันนี้')+'<strong>'+cash(d.year_satang)+' บาท</strong></div>'+
+    '<div>'+amount('ค่าเสื่อมสะสม')+'<strong>'+cash(d.depreciation_satang)+' บาท</strong></div>'+
+    '<div>'+amount('มูลค่าตามบัญชี')+'<strong>'+cash(d.net_satang)+' บาท</strong></div></div>';
+  }catch{return '<p class="muted">กรอกวันที่พร้อมใช้งาน ราคาทุน และอายุใช้งาน ระบบจะแสดงค่าเสื่อมโดยอัตโนมัติ</p>';}
+ }
+ function liveInputPreview(){
+  if(state.page!=='assets'||state.assetSection!=='import')return;
+  const form=document.getElementById('eq-asset-form'),root=document.getElementById('eq-depreciation-preview');
+  if(form&&root)root.innerHTML=previewAssetMarkup(Object.fromEntries(new FormData(form)));
+ }
+
  const st={active:'ใช้งานปกติ',repair:'ส่งซ่อม',transferred:'โอนย้าย',disposed:'จำหน่าย',lost:'สูญหาย'};
  const b=(name,action,cls='secondary',attrs='')=>'<button type="button" class="'+cls+'" data-action="'+action+'" '+attrs+'>'+name+'</button>';
  const f=(label,key,val='',type='text',attrs='')=>'<label class="eq-field"><span>'+e(label)+'</span><input class="input" name="'+key+'" type="'+type+'" value="'+e(String(val??''))+'" '+attrs+'></label>';
@@ -31,13 +63,14 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
   store.rows=rows;
  }
  function table(items,showAction=true){
-  return '<div class="table-scroller eq-table"><table><thead><tr><th>เลขครุภัณฑ์</th><th>ชื่อครุภัณฑ์</th><th>สถานที่ / ผู้รับผิดชอบ</th><th>ราคาทุน (บาท)</th><th>สถานะ</th>'+(showAction?'<th></th>':'')+'</tr></thead><tbody>'+
-   (items.length?items.map(a=>'<tr><td><b>'+e(a.asset_code)+'</b></td><td>'+e(a.name)+'<small>'+e(category(a))+'</small></td><td>'+e(a.location||'-')+'<small>'+e(a.responsible_person||'')+'</small></td><td class="amount">'+cash(a.cost_satang)+'</td><td>'+e(st[a.asset_status]||'ใช้งานปกติ')+'</td>'+(showAction?'<td>'+b('เปิดดู','asset-open','mini-btn','data-id="'+e(a.id)+'"')+'</td>':'')+'</tr>').join(''):'<tr><td colspan="6" class="empty">ยังไม่มีครุภัณฑ์</td></tr>')+'</tbody></table></div>';
+  return '<div class="table-scroller eq-table"><p class="eq-asof-note">ค่าเสื่อมสะสมและมูลค่าตามบัญชีคำนวณอัตโนมัติ ณ '+e(dateLabel())+'</p><table><thead><tr><th>เลขครุภัณฑ์</th><th>ชื่อครุภัณฑ์</th><th>สถานที่ / ผู้รับผิดชอบ</th><th>ราคาทุน (บาท)</th><th>ค่าเสื่อมสะสม (บาท)</th><th>มูลค่าตามบัญชี (บาท)</th><th>สถานะ</th>'+(showAction?'<th></th>':'')+'</tr></thead><tbody>'+
+   (items.length?items.map(a=>'<tr><td><b>'+e(a.asset_code)+'</b></td><td>'+e(a.name)+'<small>'+e(category(a))+'</small></td><td>'+e(a.location||'-')+'<small>'+e(a.responsible_person||'')+'</small></td><td class="amount">'+cash(a.cost_satang)+'</td>'+computedCells(a)+'<td>'+e(st[a.asset_status]||'ใช้งานปกติ')+'</td>'+(showAction?'<td>'+b('เปิดดู','asset-open','mini-btn','data-id="'+e(a.id)+'"')+'</td>':'')+'</tr>').join(''):'<tr><td colspan="'+(showAction?8:7)+'" class="empty">ยังไม่มีครุภัณฑ์</td></tr>')+'</tbody></table></div>';
  }
  function metrics(){
   const active=store.rows.filter(a=>!['disposed','lost'].includes(a.asset_status)),book=active.filter(a=>a.accounting_class==='capitalized');
-  const price=active.reduce((t,a)=>t+Number(a.cost_satang),0),net=book.reduce((t,a)=>t+depreciation(a,today()).net_satang,0);
-  return '<div class="eq-stats">'+[['ครุภัณฑ์ทั้งหมด',store.rows.length,'ชิ้น'],['ทุนครุภัณฑ์ที่ถือครอง',cash(price),'บาท'],['มูลค่าบัญชีสินทรัพย์',cash(net),'บาท'],['ส่งซ่อม / สูญหาย',store.rows.filter(a=>['repair','lost'].includes(a.asset_status)).length,'รายการ']].map(([k,v,u])=>'<div class="eq-stat"><span>'+k+'</span><strong>'+v+'</strong><small>'+u+'</small></div>').join('')+'</div>';
+  const price=active.reduce((t,a)=>t+Number(a.cost_satang),0),net=book.reduce((t,a)=>t+currentBalance(a).net_satang,0);
+  const cumulative=book.reduce((t,a)=>t+currentBalance(a).depreciation_satang,0);
+  return '<div class="eq-stats">'+[['ครุภัณฑ์ทั้งหมด',store.rows.length,'ชิ้น'],['ทุนครุภัณฑ์ที่ถือครอง',cash(price),'บาท'],['ค่าเสื่อมสะสมอัตโนมัติ',cash(cumulative),'บาท ณ วันนี้'],['มูลค่าบัญชีสินทรัพย์',cash(net),'บาท'],['ส่งซ่อม / สูญหาย',store.rows.filter(a=>['repair','lost'].includes(a.asset_status)).length,'รายการ']].map(([k,v,u])=>'<div class="eq-stat"><span>'+k+'</span><strong>'+v+'</strong><small>'+u+'</small></div>').join('')+'</div>';
  }
  function overview(){layout('ภาพรวมครุภัณฑ์','สรุปทะเบียนครุภัณฑ์ในโรงเรียน',metrics()+'<section class="card eq-card"><div class="section-head"><h2>รายการล่าสุด</h2>'+b('ดูทะเบียน →','asset-section','secondary','data-section="registry"')+'</div>'+table(store.rows.slice(0,8))+'</section>',can()?b('+ เพิ่มครุภัณฑ์','asset-new','primary'):'');}
  function registry(){
@@ -58,7 +91,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
  }
  function form(){
   const x=store.editing||store.prefill||{},cats=[['','ไม่ระบุประเภท'],...store.cats.map(c=>[c.id,c.name+' ('+c.code_prefix+')'])];
-  return '<form id="eq-asset-form" class="card eq-card"><h2>'+(store.editing?'แก้ไขทะเบียนครุภัณฑ์':'เพิ่มครุภัณฑ์รายชิ้น')+'</h2><div class="eq-grid">'+
+  return '<form id="eq-asset-form" class="card eq-card"><h2>'+(store.editing?'แก้ไขทะเบียนครุภัณฑ์':'เพิ่มครุภัณฑ์รายชิ้น')+'</h2><p class="muted">ระบุราคาทุน วันที่พร้อมใช้งาน และอายุใช้งาน ระบบจะคำนวณค่าเสื่อมให้ทันที ไม่ต้องกดคำนวณ</p><div class="eq-grid">'+
    f('รหัสครุภัณฑ์ *','asset_code',x.asset_code||'','text','required maxlength="80"')+f('ชื่อครุภัณฑ์ *','name',x.name||'','text','required maxlength="250"')+
    select('ประเภทครุภัณฑ์','category_id',cats,x.category_id||'')+f('Serial Number','serial_number',x.serial_number||'')+
    f('วันที่ได้มา *','acquired_on',x.acquired_on||today(),'date','required')+f('วันที่พร้อมใช้งาน *','placed_in_service_on',x.placed_in_service_on||today(),'date','required')+
@@ -68,6 +101,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
    select('สถานะ','asset_status',Object.entries(st),x.asset_status||'active')+
    f('ห้อง / สถานที่ตั้ง','location',x.location||'')+f('ผู้รับผิดชอบ','responsible_person',x.responsible_person||'')+'</div>'+
    f('หมายเหตุ','notes',x.notes||'')+(store.source&&store.source.copies>1&&!store.editing?f('จำนวนที่ต้องการขึ้นทะเบียนแยกชิ้น','copies',store.source.copies,'number','min="1" max="100"'):'')+
+   '<section id="eq-depreciation-preview" class="eq-auto-preview" role="status" aria-live="polite">'+previewAssetMarkup({asset_code:x.asset_code||'',name:x.name||'',category_id:x.category_id||'',cost_baht:x.cost_satang!=null?cash(x.cost_satang):'',salvage_baht:x.salvage_satang!=null?cash(x.salvage_satang):'0',acquired_on:x.acquired_on||today(),placed_in_service_on:x.placed_in_service_on||today(),useful_life_months:x.useful_life_months||60,asset_status:x.asset_status||'active'})+'</section>'+
    '<div class="eq-actions">'+(!store.editing?b('เสนอรหัสครุภัณฑ์ถัดไป','asset-suggest-code'):'')+'</div><p class="hint">รหัสครุภัณฑ์ต้องไม่ซ้ำในโรงเรียน ปุ่มเสนอรหัสช่วยกรอกโดยใช้ประเภทที่เลือก แต่ต้องตรวจสอบก่อนบันทึก</p><div class="eq-actions"><button class="primary" type="submit">บันทึกครุภัณฑ์</button>'+b('ยกเลิก','asset-cancel')+'</div></form>';
  }
  function importPage(){
@@ -84,22 +118,26 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
  }
  function detail(){
   const r=store.rows.find(a=>a.id===store.selected);if(!r){state.assetSection='registry';return registry();}
-  const d=depreciation(r,today()),show=(l,v)=>'<div class="eq-detail"><span>'+l+'</span><b>'+e(String(v??'-'))+'</b></div>';
+  const d=currentBalance(r),show=(l,v)=>'<div class="eq-detail"><span>'+l+'</span><b>'+e(String(v??'-'))+'</b></div>';
   layout('รายละเอียดครุภัณฑ์','ครุภัณฑ์รายตัว','<section class="card eq-card"><h2>'+e(r.name)+'</h2><div class="eq-detail-grid">'+
    show('รหัส',r.asset_code)+show('ประเภท',category(r))+show('Serial Number',r.serial_number)+show('สถานะ',st[r.asset_status])+
    show('วันที่ได้มา',r.acquired_on)+show('วันที่พร้อมใช้งาน',r.placed_in_service_on)+show('ราคาทุน',cash(r.cost_satang)+' บาท')+
    show('อายุใช้งาน',r.useful_life_months+' เดือน')+show('สถานที่ตั้ง',r.location)+show('ผู้รับผิดชอบ',r.responsible_person)+
    show('ประเภทบัญชี',r.accounting_class==='capitalized'?'สินทรัพย์ที่รับรู้':'ทะเบียนควบคุม')+
-   show('ค่าเสื่อมสะสม',d.eligible?cash(d.depreciation_satang)+' บาท':'ไม่คำนวณ')+
-   show('มูลค่าตามบัญชี',d.eligible?cash(d.net_satang)+' บาท':'ไม่คำนวณ')+show('หมายเหตุ',r.notes)+'</div>'+
+   show('ค่าเสื่อมปีงบประมาณ '+d.fiscal_year_be+' ถึงวันนี้',d.eligible?cash(d.year_satang)+' บาท':'ไม่คิดค่าเสื่อม')+
+   show('ค่าเสื่อมสะสม ณ '+dateLabel(),d.eligible?cash(d.depreciation_satang)+' บาท':'ไม่คิดค่าเสื่อม')+
+   show('มูลค่าตามบัญชี ณ '+dateLabel(),d.eligible?cash(d.net_satang)+' บาท':'ไม่คิดค่าเสื่อม')+show('หมายเหตุ',r.notes)+'</div>'+
    '<div class="eq-actions">'+(can()?b('แก้ไข','asset-edit','primary','data-id="'+e(r.id)+'"'):'')+b('กลับทะเบียน','asset-back')+'</div></section>');
  }
- function yearSelect(){return '<div class="eq-actions">'+f('ปีงบประมาณ พ.ศ.','eq_year',store.year,'number','min="2500" max="2700"')+b('เลือกปีงบประมาณ','asset-year')+'</div>';}
+ function yearSelect(){return '<div class="eq-actions">'+f('ปีงบประมาณ พ.ศ.','eq_year',store.year,'number','min="2500" max="2700"')+'<span class="eq-asof-note">เปลี่ยนปีแล้วแสดงผลโดยอัตโนมัติ ไม่ต้องกดคำนวณ</span></div>';}
  function depPage(){
-  const all=store.rows.map(r=>({r,d:yearDepreciation(r,store.year)})),eligible=all.filter(x=>x.d.eligible);
+  const all=store.rows.map(r=>({r,d:fiscalYearBalances(r,store.year,today())})),eligible=all.filter(x=>x.d.eligible);
+  const fiscalEnd=(store.year-543)+'-09-30',cutoff=today()<fiscalEnd?today():fiscalEnd;
+  const caption=store.year>fiscal()?'ปีงบประมาณในอนาคต ยังไม่มีค่าเสื่อมเกิดขึ้น':store.year===fiscal()?'ปีงบประมาณปัจจุบัน คำนวณถึงวันนี้':'ปีงบประมาณที่ผ่านมา คำนวณถึงสิ้นปี';
   const total=key=>cash(eligible.reduce((a,x)=>a+x.d[key],0));
-  layout('คำนวณค่าเสื่อมราคา','วิธีเส้นตรงตามวันที่พร้อมใช้งานและอายุที่กำหนด','<section class="card eq-card">'+yearSelect()+
-   '<p class="hint">คำนวณตามวันตั้งแต่พร้อมใช้งานจนถึงสิ้นสุดอายุใช้ประโยชน์ แสดงผลสำหรับปีงบประมาณสิ้นสุด 30 กันยายน (รายการจำหน่ายหรือทะเบียนควบคุมไม่ถูกรวมค่าเสื่อม)</p>'+
+  layout('ค่าเสื่อมราคาอัตโนมัติ','ระบบคำนวณยอดสะสมและค่าเสื่อมแต่ละปีให้เอง โดยไม่ต้องกดคำนวณ','<section class="card eq-card">'+yearSelect()+
+   '<p class="eq-asof-note"><b>'+e(caption)+'</b> • ข้อมูล ณ '+e(cutoff)+'</p>'+
+   '<p class="hint">คำนวณวิธีเส้นตรงโดยอัตโนมัติตั้งแต่วันที่พร้อมใช้งานจนถึงวันที่เลือก (ไม่เกินสิ้นปีงบประมาณ) รายการทะเบียนควบคุมและรายการจำหน่ายไม่นำมาคิดค่าเสื่อมทางบัญชี</p>'+
    '<div class="eq-stats">'+[['ค่าเสื่อมปีนี้',total('year_satang')],['ค่าเสื่อมสะสม',total('accumulated_satang')],['มูลค่าตามบัญชี',total('net_satang')]].map(x=>'<div class="eq-stat"><span>'+x[0]+'</span><strong>'+x[1]+'</strong><small>บาท</small></div>').join('')+'</div>'+
    '<div class="table-scroller"><table><thead><tr><th>รหัส</th><th>รายการ</th><th>ทุน</th><th>ค่าเสื่อมปีนี้</th><th>สะสม</th><th>มูลค่าสุทธิ</th></tr></thead><tbody>'+
    all.slice(0,300).map(({r,d})=>'<tr><td>'+e(r.asset_code)+'</td><td>'+e(r.name)+'</td><td>'+cash(r.cost_satang)+'</td><td>'+(d.eligible?cash(d.year_satang):'—')+'</td><td>'+(d.eligible?cash(d.accumulated_satang):'—')+'</td><td>'+(d.eligible?cash(d.net_satang):'—')+'</td></tr>').join('')+'</tbody></table></div>'+
@@ -128,7 +166,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
    '<section class="card eq-card"><ol class="eq-help">'+
    '<li>ภาพรวม: ดูจำนวนและมูลค่าครุภัณฑ์ทั้งหมด</li><li>ทะเบียน: ค้นหา เปิดดูรายละเอียด และแก้ไขตามสิทธิ์</li>'+
    '<li>เพิ่ม / นำเข้า: กรอกข้อมูลรายชิ้น ดึงจากรายการจัดซื้อที่ตรวจรับแล้ว หรือนำเข้า Excel แล้วตรวจตัวอย่างก่อนบันทึก</li>'+
-   '<li>ค่าเสื่อม: เลือกปีงบประมาณ คำนวณตามวันพร้อมใช้งานและอายุที่กำหนด</li>'+
+   '<li>ค่าเสื่อม: ระบบคำนวณอัตโนมัติทันทีที่กรอกข้อมูล และแสดงยอดถึงวันนี้เมื่อเปิดทะเบียน โดยไม่ต้องกดคำนวณ เลือกปีงบประมาณย้อนหลังเพื่อดูยอดของปีนั้นได้</li>'+
    '<li>รายงาน A4: ตรวจรายงานก่อนสั่งพิมพ์หรือบันทึก PDF</li>'+
    '<li>ตั้งค่า: แอดมินโรงเรียนกำหนดประเภท รหัส และเกณฑ์รับรู้สินทรัพย์</li></ol>'+
    '<p class="hint">คู่มือฉบับนี้เป็นข้อความตามหน้าจอจริง จะเพิ่มภาพประกอบหลังตรวจรับฟอร์มแล้ว</p></section>');
@@ -186,7 +224,7 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
   }
   if(action==='asset-export'){
    const rows=[['รหัส','ชื่อ','ประเภท','ทุน(บาท)','วันที่ได้มา','วันที่พร้อมใช้งาน','สถานที่','ผู้รับผิดชอบ','สถานะ','ค่าเสื่อมสะสม','มูลค่าบัญชี']];
-   for(const a of store.rows){const d=depreciation(a,(store.year-543)+'-09-30');rows.push([a.asset_code,a.name,category(a),cash(a.cost_satang),a.acquired_on,a.placed_in_service_on,a.location,a.responsible_person,st[a.asset_status],d.eligible?cash(d.depreciation_satang):'',d.eligible?cash(d.net_satang):'']);}
+   for(const a of store.rows){const d=fiscalYearBalances(a,store.year,today());rows.push([a.asset_code,a.name,category(a),cash(a.cost_satang),a.acquired_on,a.placed_in_service_on,a.location,a.responsible_person,st[a.asset_status],d.eligible?cash(d.depreciation_satang):'',d.eligible?cash(d.net_satang):'']);}
    saveCsvFile('kru-pasadu-equipment-'+store.year+'.csv',rows);return true;
   }
   if(action==='asset-print'){print();return true;}
@@ -233,8 +271,8 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
  function print(){
   const rows=store.rows,pages=[];for(let i=0;i<rows.length;i+=19)pages.push(rows.slice(i,i+19));if(!pages.length)pages.push([]);
   const html=pages.map((items,ix)=>'<section class="paper-page eq-print-page"><h1>ทะเบียนคุมครุภัณฑ์</h1><p><b>'+e(state.school?.name||'โรงเรียน')+'</b> • ปีงบประมาณ พ.ศ. '+store.year+' • หน้า '+(ix+1)+'/'+pages.length+'</p>'+
-   '<table class="eq-print-table"><thead><tr><th>ลำดับ</th><th>รหัส / ชื่อครุภัณฑ์</th><th>วันที่ได้มา</th><th>ทุน</th><th>ค่าเสื่อมสะสม</th><th>มูลค่าบัญชี</th><th>สถานที่</th></tr></thead><tbody>'+
-   items.map((a,i)=>{const d=depreciation(a,(store.year-543)+'-09-30');return '<tr><td>'+(ix*19+i+1)+'</td><td>'+e(a.asset_code)+'<div>'+e(a.name)+'</div></td><td>'+e(a.acquired_on)+'</td><td>'+cash(a.cost_satang)+'</td><td>'+(d.eligible?cash(d.depreciation_satang):'-')+'</td><td>'+(d.eligible?cash(d.net_satang):'-')+'</td><td>'+e(a.location||'-')+'</td></tr>';}).join('')+
+   '<p>ยอดค่าเสื่อมคำนวณอัตโนมัติถึง '+e(today()<(store.year-543)+'-09-30'?today():(store.year-543)+'-09-30')+'</p><table class="eq-print-table"><thead><tr><th>ลำดับ</th><th>รหัส / ชื่อครุภัณฑ์</th><th>วันที่ได้มา</th><th>ทุน</th><th>ค่าเสื่อมสะสม</th><th>มูลค่าบัญชี</th><th>สถานที่</th></tr></thead><tbody>'+
+   items.map((a,i)=>{const d=fiscalYearBalances(a,store.year,today());return '<tr><td>'+(ix*19+i+1)+'</td><td>'+e(a.asset_code)+'<div>'+e(a.name)+'</div></td><td>'+e(a.acquired_on)+'</td><td>'+cash(a.cost_satang)+'</td><td>'+(d.eligible?cash(d.depreciation_satang):'-')+'</td><td>'+(d.eligible?cash(d.net_satang):'-')+'</td><td>'+e(a.location||'-')+'</td></tr>';}).join('')+
    '</tbody></table><p class="eq-print-foot">เอกสารจากระบบ KRU PASADU • โปรดตรวจสอบข้อมูลและเกณฑ์ค่าเสื่อมก่อนใช้อ้างอิงทางราชการ</p></section>').join('');
   const root=printRoot();if(!root)throw Error('ไม่พบพื้นที่พิมพ์เอกสาร');root.innerHTML=html;requestAnimationFrame(()=>window.print());
  }
@@ -243,6 +281,26 @@ export function createEquipmentModule({db,state,shell,heading,e,notify,isSchoolA
   const found=store.cats.find(c=>c.id===selectElement.value);
   const life=document.querySelector('#eq-asset-form [name="useful_life_months"]');
   if(found&&life&&(!life.dataset.userEdited||life.value==='60'))life.value=String(found.suggested_life_months);
+  liveInputPreview();
  }
- return {load,view,go,submit,reset,categoryChanged};
+ function onInput(target){
+  if(state.page!=='assets')return;
+  if(state.assetSection==='import'&&target?.closest?.('#eq-asset-form'))liveInputPreview();
+ }
+ function onChange(target){
+  if(state.page!=='assets')return;
+  if(target?.name==='eq_year'){
+   const year=Number(target.value);
+   if(!Number.isInteger(year)||year<2500||year>2700){notify('กรุณาระบุปีงบประมาณ พ.ศ. 2500–2700',true);return;}
+   store.year=year;autoView();return;
+  }
+  if(state.assetSection==='import'&&target?.closest?.('#eq-asset-form'))liveInputPreview();
+ }
+ let shownDate='';
+ function autoView(){shownDate=today();return view();}
+ function refreshIfDateChanged(){
+  if(state.page==='assets'&&state.assetSection!=='import'&&shownDate&&shownDate!==today()){autoView();return true;}
+  return false;
+ }
+ return {load,view:autoView,go,submit,reset,categoryChanged,onInput,onChange,refreshIfDateChanged};
 }

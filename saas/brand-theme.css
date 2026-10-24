@@ -895,3 +895,17 @@ table td {
 @media(max-width:1120px){.eq-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.eq-columns,.eq-grid,.eq-detail-grid{grid-template-columns:1fr}.eq-filters{display:grid;grid-template-columns:1fr}.eq-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.eq-stat{padding:12px}.eq-stat strong{font-size:19px}}
 @media print{.eq-print-page,.eq-print-table{color:#111!important;box-shadow:none!important}.eq-print-page{page-break-after:always;break-after:page}.eq-print-page:last-child{page-break-after:auto;break-after:auto}}
+
+/* Auto-computed equipment balances; no manual Calculate button or stored daily totals. */
+.eq-asof-note{font-size:12px;color:#536c93;margin:7px 0 12px;line-height:1.6}
+.eq-table table{min-width:1050px}
+.eq-auto-preview{border-radius:14px;border:1px solid #b8d8fc;background:linear-gradient(145deg,#f1f8ff,#fff);padding:17px 19px;margin:17px 0 10px}
+.eq-auto-heading{display:flex;justify-content:space-between;flex-wrap:wrap;align-items:center;gap:8px;color:#124887;margin-bottom:10px}
+.eq-auto-heading b{font-size:14px}
+.eq-auto-heading small{font-size:11px;color:#5879a5}
+.eq-auto-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.eq-auto-grid>div{padding:12px;background:#fff;border:1px solid #d9e8fc;border-radius:10px;display:flex;flex-direction:column;gap:6px}
+.eq-auto-grid span{font-size:11px;color:#59749c}
+.eq-auto-grid strong{font-size:16px;color:#0b54b6;overflow-wrap:anywhere}
+@media(max-width:1100px){.eq-auto-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.eq-auto-grid{grid-template-columns:1fr}}

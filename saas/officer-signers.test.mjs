@@ -78,8 +78,8 @@ test('issued report uses immutable record signer, not newly configured school de
 test('bundle and UI cache cover new officer roster module',()=>{
  const pkg=JSON.parse(read('package.json')),index=read('index.html'),css=read('brand-theme.css');
  assert.match(pkg.scripts.build,/officer-signers\.test\.mjs/);
- assert.match(index,/app\.js\?v=20261024-equipment-v1/);
- assert.match(index,/brand-theme\.css\?v=20261024-equipment-v1/);
+ assert.match(index,/app\.js\?v=20261024-equipment-auto-v2/);
+ assert.match(index,/brand-theme\.css\?v=20261024-equipment-auto-v2/);
  assert.match(css,/\.kp-officer-row/);
  assert.match(read('app.js'),/from '\.\/officer-signers\.js'/);
 });
