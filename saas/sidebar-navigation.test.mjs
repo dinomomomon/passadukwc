@@ -60,7 +60,8 @@ test('admin guide has a fifth asset configuration topic, still school-admin gate
  assert.deepEqual(adminGuideIds,['school','numbers','templates','users','assets']);
  const markup=adminGuideHtml('assets');
  assert.match(markup,/การตั้งค่าทะเบียนคุมครุภัณฑ์/);
- assert.match(markup,/ตรวจเกณฑ์บัญชี/);
+ assert.match(markup,/อายุใช้งานแนะนำ/);
+ assert.doesNotMatch(markup,/ตรวจเกณฑ์บัญชี/);
  assert.match(markup,/data-action="admin-guide-open" data-target="assets-settings"/);
  const app=read('app.js');
  assert.match(app,/if\(action==='admin-guide-section'\)\{\s*if\(!isSchoolAdmin\(\)\)/);
