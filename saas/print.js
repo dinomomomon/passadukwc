@@ -73,7 +73,7 @@ function directorSign(r,s,actions,dateValue=''){return '<div class="director-sig
  signatureBlock(director(r,s),'',true,{kind:'director',schoolName:s.name||'โรงเรียน',dateValue})+'</div>';}
 function signRow(r,s,dateValue=''){return '<div class="sign-grid">'+sign(officer(r,s),'เจ้าหน้าที่',true,'',dateValue)+sign(head(r,s),'หัวหน้าเจ้าหน้าที่',true,'',dateValue)+'</div>';}
 function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const numberKey=cls==='gov-approval'?'approval_memo_number':cls==='gov-payment'?'payment_memo_number':'memo_number';const prefix=m.memo_prefix||s.memo_prefix;const no=numberKey==='memo_number'?renderMemoReference(prefix,m[numberKey]):(normalizeMemoNumber(m[numberKey],prefix)||'........../........');
- // Only the payment memo's printed date is left for the finance unit.
+ // Payment memo heading date may be selected explicitly; otherwise it remains blank.
  // Its assigned official number remains automatic, including for old records.
  const headingDate=cls==='gov-payment'?(m.payment_document_date?'<span class="memo-value">'+thaiDate(m.payment_document_date)+'</span>':'<span class="memo-value kp-payment-date-writein" aria-label="เว้นวันที่ให้ฝ่ายการเงินเขียนเอง"></span>'):'<span class="memo-value">'+thaiDate(r.document_date)+'</span>';
  return '<section class="paper-page official gov-doc memo-page '+cls+'"><div class="doc-sheet-body">'+
