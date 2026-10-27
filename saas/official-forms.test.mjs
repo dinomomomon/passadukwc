@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildDocuments, thaiBahtText,normalizeMemoPrefix,normalizeMemoNumber,renderMemoReference } from './print.js';
-import {docMetaInputs, docMetaValue,documentInfoFields} from './document-meta.js';
+import {docMetaInputs, docMetaValue,documentInfoFields,signatureDateFields} from './document-meta.js';
 const school={name:'โรงเรียนกาวิละวิทยาลัย',district:'อำเภอเมืองเชียงใหม่',province:'เชียงใหม่',memo_prefix:'พว.',officer_name:'เจ้าหน้าที่จริง',head_name:'หัวหน้าพัสดุจริง',director_name:'ผู้อำนวยการจริง',finance_name:'การเงินจริง'};
 const sample={kind:'purchase',title:'ซื้อวัสดุสำนักงาน',reason:'ใช้ในกิจกรรมภายในโรงเรียน',department:'กลุ่มบริหารงานวิชาการ',budget_source:'กิจกรรมพัฒนาผู้เรียน',document_number:1,fiscal_year:2570,document_date:'2026-10-20',vendor_name:'ร้านค้าตัวอย่าง',due_date:'2026-10-25',inspector_name:'ผู้ตรวจรับจริง',items:[{name:'ของที่ระลึก',qty:1,unit:'ชุด',price_satang:20000}],total_satang:20000,signers:{officer:'เจ้าหน้าที่จริง',head:'หัวหน้าพัสดุจริง',director:'ผู้อำนวยการจริง'},document_meta:{memo_number:'25/2569',inspector_position:'ครู',order_number:'ส.1',order_date:'2026-10-20',invoice_number:'001'}};
 test('government print set has six purchasing and five hiring documents',()=>{
@@ -34,7 +34,7 @@ test('optional evidence fields do not get invented and are escaped',()=>{
  assert.match(html,/................................../);
 });
 test('metadata form covers all backend-approved fields',()=>{
- assert.equal(documentInfoFields.length,27);
+ assert.equal(documentInfoFields.length,27+signatureDateFields.length);
  const html=docMetaInputs({memo_number:'1/2570'});
  assert.match(html,/name="doc_memo_number"/);
  assert.match(html,/value="1\/2570"/);
