@@ -226,7 +226,7 @@ test('all assigned reference fields are visible as read-only and prefix is chose
  for(const key of ['memo_number','approval_memo_number','payment_memo_number'])assert.match(html,new RegExp('name="doc_'+key+'"'));
  assert.doesNotMatch(html,/name="doc_memo_prefix"/);
  assert.match(html,/ที่ — รายงานผลการพิจารณาฯ/);
- assert.match(html,/ฝ่ายการเงินเขียนเอง/);
+ assert.match(html,/วันที่หัวหนังสือเบิกจ่ายและวันที่ลงนามเลือกได้/);
 });
 test('memo prefix cannot accidentally contain numbers when printing (real duplicated screenshot)',()=>{
  assert.equal(normalizeMemoPrefix('พว 1/2569'),'พว');
