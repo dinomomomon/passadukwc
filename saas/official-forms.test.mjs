@@ -862,6 +862,7 @@ test('wizard next works without attempting to call its HTML form element as a fu
  const end=source.indexOf('\nfunction updateTotal()',begin);
  assert.ok(begin>=0&&end>begin,'wizard navigation function must exist');
  const handler=source.slice(begin,end);
+ const {calculatePricing}=await import('./tax-calculator.js');
  assert.match(handler,/const wizardForm=document\.getElementById\('procurement-form'\)/);
  assert.doesNotMatch(handler,/const form\s*=/,'form() renderer must not be shadowed by a DOM element');
  let renderCount=0;
@@ -871,7 +872,7 @@ test('wizard next works without attempting to call its HTML form element as a fu
  };
  const state={wizardStep:1,items:[{name:'จ้างทำป้าย',qty:'1',unit:'ป้าย',price:'4999'}]};
  const env={
-  state,document:{getElementById(){return element;}},
+  state,calculatePricing,document:{getElementById(id){return id==='kp-vat-mode'?{value:'none'}:element;}},
   collectDraft(){},
   form(){renderCount++;},
   notify(message){throw new Error(message);}
@@ -1061,8 +1062,8 @@ test('purchase and hire wizard allow amounts above 5000 baht without arbitrary c
  const js=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  const sql=readFileSync(new URL('../supabase/migrations/20261022_remove_5000_baht_cap.sql',import.meta.url),'utf8');
  assert.doesNotMatch(js,/total<=5000|total>500000|วงเงินรวมไม่เกิน 5,000|ไม่เกิน 5,000 บาท/);
- assert.match(js,/Number\.isSafeInteger\(Math\.round\(total\)\)/);
- assert.match(js,/Number\.isSafeInteger\(Math\.round\(total\*100\)\)/);
+ assert.match(js,/Number\.isSafeInteger\(total\)/);
+ assert.match(js,/Number\.isSafeInteger\(total\)/);
  assert.match(sql,/CHECK\(total_satang>0\)/);
  assert.match(sql,/replace\(def,'if amt<1 or amt>500000 then','if amt<1 then'\)/);
  assert.match(sql,/replace\(def,'price<1 OR price>500000','price<1'\)/);

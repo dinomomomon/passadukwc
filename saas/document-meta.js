@@ -105,7 +105,7 @@ export function docMetaValue(obj={},existing={}){
   if(registryNumbers.has(key))continue; // Registry owns allocation and corrections
   let normalized=String(value??'').trim();
   if(key==='memo_prefix')normalized=normalizeMemoPrefix(normalized);
-  if(key==='vat_mode'&&normalized&&!['included','added','none','mixed'].includes(normalized))throw Error('ประเภท VAT ไม่ถูกต้อง');
+  if(key==='vat_mode'&&normalized&&!['legacy','included','added','none','mixed'].includes(normalized))throw Error('ประเภท VAT ไม่ถูกต้อง');
   if(financeKeys.has(key)&&normalized&&(!/^(?:0|[1-9][0-9]*)(?:\.[0-9]{1,2})?$/.test(normalized)||Number(normalized)>1e10))throw Error('ยอดเงินต้องไม่ติดลบและมีทศนิยมไม่เกินสองตำแหน่ง');
   if(orderNumericKeys.has(key)&&normalized&&(!Number.isFinite(Number(normalized))||Number(normalized)<0||Number(normalized)>1000000))throw Error('จำนวนวันหรือค่าปรับต้องเป็นตัวเลขที่ไม่ติดลบ');
    if(signingDateKeys.has(key)&&normalized){const dt=new Date(normalized+'T00:00:00Z');if(!/^\d{4}-\d{2}-\d{2}$/.test(normalized)||!Number.isFinite(dt.getTime())||dt.toISOString().slice(0,10)!==normalized)throw Error('กรุณาเลือกวันที่ลงนามที่ถูกต้องจากปฏิทิน');}
