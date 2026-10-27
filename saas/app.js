@@ -478,6 +478,9 @@ function form(){
   '<div class="kp-item-cell"><label for="kp-item-'+k+'-price">ราคาต่อหน่วย (บาท)</label><input id="kp-item-'+k+'-price" class="input" data-item="'+k+'" data-key="price" type="number" inputmode="decimal" min=".01" step=".01" aria-label="ราคาต่อหน่วยรายการที่ '+(k+1)+'" placeholder="0.00" value="'+e(x.price)+'">'+(chosenVat==='mixed'?'<label>VAT รายการนี้</label><select class="select" data-item="'+k+'" data-key="vat_treatment" required><option value="">— เลือก VAT —</option>'+[['included','รวม VAT 7%'],['added','บวก VAT 7%'],['none','ไม่คิด VAT']].map(([v,t])=>'<option value="'+v+'" '+(x.vat_treatment===v?'selected':'')+'>'+t+'</option>').join('')+'</select>':'')+'</div>'+
   '<button type="button" class="mini-btn kp-item-remove" data-action="remove-item" data-id="'+k+'" aria-label="ลบรายการที่ '+(k+1)+'" title="ลบรายการที่ '+(k+1)+'">×</button></div>').join('');
  const meta={...d,doc_memo_prefix:d.doc_memo_prefix||state.school.memo_prefix||''};
+ if(['included','added','none','mixed'].includes(chosenVat)){
+  try{const pricing=calculatePricing(state.items,chosenVat);meta.doc_vat_baht=formatSatang(pricing.vat_satang);}catch(_){}
+ }
  const labels=['ข้อมูลหลัก','รายการพัสดุ','ผู้ขายและผู้ตรวจรับ','เลขหนังสือ / ตรวจสอบ'];
  const steps='<nav class="kp-wizard-nav" aria-label="ขั้นตอนกรอกข้อมูล">'+labels.map((label,i)=>'<span class="kp-wizard-step '+(step===i+1?'is-active':step>i+1?'is-done':'')+'" data-wizard-indicator="'+(i+1)+'">'+(i+1)+'. '+e(label)+'</span>').join('')+'</nav>';
  const panel=(number,title,inner)=>'<section class="card kp-wizard-panel" data-wizard-panel="'+number+'" style="'+(step===number?'':'display:none')+'"><h2>'+title+'</h2>'+inner+'</section>';

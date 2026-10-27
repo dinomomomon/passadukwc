@@ -54,5 +54,6 @@ test('finance panels are shared in purchase and hire, VAT selections on second w
  assert.match(app,/id="kp-vat-mode"/);
  assert.match(app,/data-key="vat_treatment"/);
  assert.match(app,/entered_price_satang\?\?x\.price_satang/);
+ assert.match(app,/meta\.doc_vat_baht=formatSatang\(pricing\.vat_satang\)/);
  assert.match(app,/calculatePricing\(state\.items,taxMode\)/);
 });
