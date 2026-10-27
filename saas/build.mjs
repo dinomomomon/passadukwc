@@ -6,7 +6,7 @@ import {resolve} from 'node:path';
 const staticAssets=[
   'index.html','diagnostics.html','style.css','brand-theme.css',
   'print-fix.css','official-print.css','print-responsive.css','print-readable.css',
-  'print-pagination.css','print-adaptive.css','print-signatures-responsive.css',
+  'print-pagination.css','print-adaptive.css','print-signatures-responsive.css','order-forms.css',
   'auth-unified.css','marketing-pages.css','admin-guide.css','staff-management.css','government-forms.css','template-builder.css','notification-popup.css',
   'config.js','print.js','kru-pasadu-icon.svg','garuda-memo.svg','admin-guide-school-infographic.svg','admin-guide-registry-infographic.svg','admin-guide-templates-1.svg','admin-guide-templates-2.svg','admin-guide-users-infographic.svg','staff-guide-create-1.svg','staff-guide-create-2.svg','staff-guide-records-1.svg','staff-guide-records-2.svg','staff-guide-registry.svg'
 ];

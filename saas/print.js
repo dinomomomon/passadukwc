@@ -203,6 +203,65 @@ function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v
  '<div><p>ได้รับพัสดุครบถ้วนถูกต้องแล้ว</p>'+sign(receiver,'ผู้รับของ',true,'',signingDate(r,'sign_requisition_date'))+'</div></div>';
  return page('ใบเบิกพัสดุ',top+signatures,'gov-requisition');}).join('');
 }
+
+/* A4 ใบสั่งซื้อ / ใบสั่งจ้าง. All filled information comes from the saved
+ record and actual order data; blanks remain blank until entered. */
+function orderForm(r,s,buy){
+ const m=meta(r),title=buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง',party=buy?'ผู้ขาย':'ผู้รับจ้าง',item=buy?'พัสดุ':'งานจ้าง';
+ const chunks=pageChunks(r.items,officialPageSize(r)),schoolName=e(s.name||'โรงเรียน');
+ return chunks.map((part,pageIndex)=>{
+  const last=pageIndex===chunks.length-1;
+  const header='<div class="order-heading"><img class="order-garuda" src="/garuda-memo.svg" alt="ตราครุฑ"><h2 class="print-title">'+title+'</h2></div>'+
+   '<div class="order-parties"><div class="order-vendor">'+
+   '<div>'+party+' '+v(r.vendor_name)+'</div>'+
+   '<div>ที่อยู่ '+v(r.vendor_address)+'</div>'+
+   '<div>เลขประจำตัวผู้เสียภาษี '+v(m.order_vendor_tax_id)+'</div>'+
+   '<div>เลขที่บัญชีเงินฝากธนาคาร '+v(m.order_bank_account_number)+'</div>'+
+   '<div>ชื่อบัญชี '+v(m.order_bank_account_name)+'</div>'+
+   '<div>ธนาคาร '+v(m.order_bank_name)+'</div></div><div class="order-school">'+
+   '<div>'+title+' เลขที่ '+v(m.order_number)+'</div>'+
+   '<div>วันที่ '+(m.order_date?thaiDate(m.order_date):blank)+'</div>'+
+   '<div>ส่วนราชการ '+schoolName+'</div>'+
+   '<div>ที่อยู่ '+schoolAddress(s)+'</div></div></div>'+
+   '<p class="order-introduction">ตามที่ '+v(r.vendor_name)+' ได้เสนอราคาให้ต่อ '+schoolName+
+   ' ซึ่งได้รับราคาและตกลง'+(buy?'ซื้อ':'จ้าง')+' ตามรายการดังต่อไปนี้</p>'+
+   (chunks.length>1?'<p class="order-continuation">หน้าที่ '+(pageIndex+1)+'/'+chunks.length+'</p>':'');
+  const rows=part.items.map((x,i)=>'<tr class="gov-data-row"><td class="center">'+(part.offset+i+1)+'</td>'+
+   '<td>'+e(x.name)+'</td><td class="center">'+e(x.qty)+'</td><td class="center">'+e(x.unit)+'</td>'+
+   '<td class="right">'+cash(x.price_satang)+'</td><td class="right">'+cash(Math.round(Number(x.qty)*Number(x.price_satang)))+'</td></tr>').join('');
+  const table='<table class="official-table official-table-ruled gov-items gov-order-table">'+
+   '<colgroup><col class="col-order"><col class="col-description"><col class="col-quantity"><col class="col-unit"><col class="col-price"><col class="col-total"></colgroup>'+
+   '<thead><tr><th>ลำดับ</th><th>รายละเอียดและคุณลักษณะ</th><th>จำนวน</th><th>หน่วย</th><th>ราคาต่อหน่วย</th><th>จำนวนเงิน</th></tr></thead>'+
+   '<tbody>'+rows+'<tr class="table-filler" style="height:'+fillerHeight(part.items,80,5.6)+'mm">'+Array.from({length:6},()=>'<td>&nbsp;</td>').join('')+'</tr></tbody></table>';
+  let footer='';
+  if(last){
+   const totals='<div class="order-below-table"><div class="order-amount-words">('+e(thaiBahtText(r.total_satang))+')</div>'+
+    '<table class="order-totals"><tbody><tr><th>รวมเป็นเงิน</th><td>'+basePriceAmount(r)+'</td></tr>'+
+    '<tr><th>ภาษีมูลค่าเพิ่ม</th><td>'+moneyField(m,'vat_baht')+'</td></tr>'+
+    '<tr><th>รวมเป็นเงินทั้งสิ้น</th><td>'+cash(r.total_satang)+'</td></tr></tbody></table></div>';
+   const days=v(m.order_delivery_days),location=v(m.order_delivery_location),warranty=v(m.order_warranty);
+   const percent=v(m.order_penalty_percent,'0.2'),minBaht=v(m.order_penalty_min_baht,'100');
+   const terms='<div class="order-terms-title">การสั่ง'+(buy?'ซื้อ':'จ้าง')+' อยู่ภายใต้เงื่อนไขต่อไปนี้</div><ol class="order-terms">'+
+    '<li>กำหนดส่งมอบ'+item+'ภายใน '+days+' วัน นับถัดจากวันที่'+party+'ได้รับ'+title+'</li>'+
+    '<li>ครบกำหนดส่งมอบ'+item+'ภายในวันที่ '+(r.due_date?thaiDate(r.due_date):blank)+'</li>'+
+    '<li>สถานที่ส่งมอบ '+location+'</li>'+
+    '<li>ระยะเวลารับประกัน'+(buy?'สินค้า':'งานจ้าง')+' '+warranty+'</li>'+
+    '<li>สงวนสิทธิ์ค่าปรับกรณีส่งมอบเกินกำหนด โดยคิดค่าปรับเป็นรายวันในอัตราร้อยละ '+percent+
+    ' ของราคา'+(buy?'สิ่งของ':'งานจ้าง')+'ที่ยังไม่ได้รับมอบ แต่จะต้องไม่ต่ำกว่าวันละ '+minBaht+' บาท</li>'+
+    '<li>'+schoolName+'สงวนสิทธิ์ที่จะไม่รับมอบ ถ้าปรากฏว่า'+item+'นั้นมีลักษณะไม่ตรงตามรายการที่ระบุไว้ใน'+title+
+    ' กรณีนี้'+party+'จะต้องดำเนินการแก้ไขหรือเปลี่ยนใหม่ให้ถูกต้องตาม'+title+'ทุกประการ</li></ol>';
+   const signature=(name,role,position,date)=>'<div class="order-signature"><div>ลงชื่อ <span class="order-sign-rule"></span> '+role+'</div>'+
+    '<div class="order-signer-name">('+name+')</div><div class="order-signer-role">'+position+'</div>'+
+    '<div class="order-signer-date">'+(date?thaiDate(date):blank)+'</div></div>';
+   const signed='<div class="order-signatures">'+
+    signature(head(r,s),'ผู้สั่ง'+(buy?'ซื้อ':'จ้าง'),'หัวหน้าเจ้าหน้าที่',m.order_school_sign_date)+
+    signature(v(m.order_vendor_signer_name),'ผู้รับ'+title,v(m.order_vendor_signer_position,'ผู้จัดการ/ผู้รับมอบอำนาจ'),m.order_vendor_sign_date)+'</div>';
+   footer=totals+terms+signed;
+  }
+  return '<section class="paper-page official gov-doc gov-order"><div class="doc-sheet-body">'+header+table+footer+'</div></section>';
+ }).join('');
+}
+
 export function buildDocuments(r,s){const buy=r.kind==='purchase';return [
- purchaseRequest(r,s,buy),annex(r,s,buy),approval(r,s,buy),acceptance(r,s,buy),payment(r,s,buy)
+ purchaseRequest(r,s,buy),annex(r,s,buy),approval(r,s,buy),orderForm(r,s,buy),acceptance(r,s,buy),payment(r,s,buy)
  ].concat(buy?[requisition(r,s)]:[]).join('');}

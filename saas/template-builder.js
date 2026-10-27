@@ -1,5 +1,5 @@
 /**
- * Per-school official document templates. The six government master forms
+ * Per-school official document templates. The seven government master forms
  * remain the source of truth for dynamic values, legal text and signatures.
  * User edits are typed JSON patches: no arbitrary user HTML or JavaScript.
  */
@@ -8,6 +8,7 @@ export const TEMPLATE_PAGES=[
  {key:'request',name:'รายงานขอซื้อ / ขอจ้าง',css:'gov-request'},
  {key:'annex',name:'รายละเอียดพัสดุ / งานจ้างแนบท้าย',css:'gov-annex'},
  {key:'approval',name:'รายงานผลการพิจารณาและขออนุมัติสั่งซื้อ / จ้าง',css:'gov-approval'},
+ {key:'order',name:'ใบสั่งซื้อ / ใบสั่งจ้าง',css:'gov-order'},
  {key:'acceptance',name:'ใบตรวจรับพัสดุ / งานจ้าง',css:'gov-acceptance'},
  {key:'payment',name:'ทราบผลและขออนุมัติเบิกจ่าย',css:'gov-payment'},
  {key:'requisition',name:'ใบเบิกพัสดุ',css:'gov-requisition'}
