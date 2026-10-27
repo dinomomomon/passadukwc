@@ -16,15 +16,15 @@ test('date entry validates, persists and can be cleared',()=>{
  assert.equal(docMetaValue({doc_sign_acceptance_date:''},m).sign_acceptance_date,undefined);
  for(const x of ['2026-02-30','2026-13-01','27/10/2026'])assert.throws(()=>docMetaValue({doc_sign_request_date:x}),/วันที่ลงนาม/);
 });
-test('print all six forms with selected signature dates, preserving header document date',()=>{
+test('print all seven forms with selected signature dates, preserving header document date',()=>{
  const html=buildDocuments({...r,document_meta:dates},school),pages=html.split(/(?=<section class="paper-page)/).filter(x=>x.includes('class="paper-page'));
- assert.equal(pages.length,6);
- [['27 ตุลาคม 2569',3],['28 ตุลาคม 2569',2],['29 ตุลาคม 2569',3],['30 ตุลาคม 2569',4],['1 พฤศจิกายน 2569',2],['2 พฤศจิกายน 2569',4]].forEach(([date,n],i)=>assert.equal(pages[i].split('class="kp-signature-date-value">'+date+'</span>').length-1,n,'sheet '+(i+1)));
- assert.match(pages[4],/class="memo-value">31 ตุลาคม 2569<\/span>/);
+ assert.equal(pages.length,7);
+ [['27 ตุลาคม 2569',3],['28 ตุลาคม 2569',2],['29 ตุลาคม 2569',3],['',0],['30 ตุลาคม 2569',4],['1 พฤศจิกายน 2569',2],['2 พฤศจิกายน 2569',4]].forEach(([date,n],i)=>assert.equal(pages[i].split('class="kp-signature-date-value">'+date+'</span>').length-1,n,'sheet '+(i+1)));
+ assert.match(pages[5],/class="memo-value">31 ตุลาคม 2569<\/span>/);
  assert.match(pages[0],/class="memo-value">26 ตุลาคม 2569<\/span>/);
 });
 test('unknown later-stage signature dates remain blank',()=>{
  const pages=buildDocuments(r,school).split(/(?=<section class="paper-page)/).filter(x=>x.includes('class="paper-page'));
- for(const index of [3,4,5])assert.doesNotMatch(pages[index],/kp-signature-date-value/);
- assert.match(pages[4],/kp-payment-date-writein/);
+ for(const index of [3,4,5,6])assert.doesNotMatch(pages[index],/kp-signature-date-value/);
+ assert.match(pages[5],/kp-payment-date-writein/);
 });

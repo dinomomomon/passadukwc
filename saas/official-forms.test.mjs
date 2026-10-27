@@ -4,10 +4,10 @@ import { buildDocuments, thaiBahtText,normalizeMemoPrefix,normalizeMemoNumber,re
 import {docMetaInputs, docMetaValue,documentInfoFields,signatureDateFields} from './document-meta.js';
 const school={name:'โรงเรียนกาวิละวิทยาลัย',district:'อำเภอเมืองเชียงใหม่',province:'เชียงใหม่',memo_prefix:'พว.',officer_name:'เจ้าหน้าที่จริง',head_name:'หัวหน้าพัสดุจริง',director_name:'ผู้อำนวยการจริง',finance_name:'การเงินจริง'};
 const sample={kind:'purchase',title:'ซื้อวัสดุสำนักงาน',reason:'ใช้ในกิจกรรมภายในโรงเรียน',department:'กลุ่มบริหารงานวิชาการ',budget_source:'กิจกรรมพัฒนาผู้เรียน',document_number:1,fiscal_year:2570,document_date:'2026-10-20',vendor_name:'ร้านค้าตัวอย่าง',due_date:'2026-10-25',inspector_name:'ผู้ตรวจรับจริง',items:[{name:'ของที่ระลึก',qty:1,unit:'ชุด',price_satang:20000}],total_satang:20000,signers:{officer:'เจ้าหน้าที่จริง',head:'หัวหน้าพัสดุจริง',director:'ผู้อำนวยการจริง'},document_meta:{memo_number:'25/2569',inspector_position:'ครู',order_number:'ส.1',order_date:'2026-10-20',invoice_number:'001'}};
-test('government print set has six purchasing and five hiring documents',()=>{
+test('government print set has seven purchasing and six hiring documents',()=>{
  const a=buildDocuments(sample,school),b=buildDocuments({...sample,kind:'hire'},school);
- assert.equal((a.match(/<section class="paper-page/g)||[]).length,6);
- assert.equal((b.match(/<section class="paper-page/g)||[]).length,5);
+ assert.equal((a.match(/<section class="paper-page/g)||[]).length,7);
+ assert.equal((b.match(/<section class="paper-page/g)||[]).length,6);
  assert.match(a,/ใบเบิกพัสดุ/);assert.doesNotMatch(b,/ใบเบิกพัสดุ/);
 });
 test('source form sections, roles and legal citations present',()=>{
@@ -1074,15 +1074,15 @@ test('first three request/annex/approval documents inherit memo header date unde
  const docDate='2026-10-01';
  const docs=buildDocuments({...sample,document_date:docDate,document_meta:{...sample.document_meta,memo_prefix:'พว.'}},school)
   .split(/(?=<section class="paper-page)/);
- assert.equal(docs.length,6);
+ assert.equal(docs.length,7);
  const expected='วันที่ <span class="kp-signature-date-value">1 ตุลาคม 2569</span>';
  assert.equal((docs[0].match(/kp-signature-date-value/g)||[]).length,3,'request officer, head, director');
  assert.equal((docs[1].match(/kp-signature-date-value/g)||[]).length,2,'annex officer and head');
  assert.equal((docs[2].match(/kp-signature-date-value/g)||[]).length,3,'approval officer, head and director');
  for(const doc of docs.slice(0,3))assert.ok(doc.includes(expected));
- assert.doesNotMatch(docs[3],/kp-signature-date-value/,'receipt signatures rely on actual inspection evidence');
- assert.doesNotMatch(docs[4],/kp-signature-date-value/,'payment signatures are not pre-certified by request date');
- assert.doesNotMatch(docs[5],/kp-signature-date-value/,'requisition dates must not default to the request date');
+ assert.doesNotMatch(docs[4],/kp-signature-date-value/,'receipt signatures rely on actual inspection evidence');
+ assert.doesNotMatch(docs[5],/kp-signature-date-value/,'payment signatures are not pre-certified by request date');
+ assert.doesNotMatch(docs[6],/kp-signature-date-value/,'requisition dates must not default to the request date');
  const {readFileSync}=await import('node:fs');
  const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
  assert.match(css,/\.signature-date \.kp-signature-date-value/);
@@ -1127,7 +1127,7 @@ test('payment memo keeps its auto-issued number but always leaves DATE blank eve
    payment_memo_number:'999/2569'
   }};
   const pages=buildDocuments(record,school).split(/(?=<section class="paper-page)/);
-  const request=pages[0],approval=pages[2],payment=pages[4];
+  const request=pages[0],approval=pages[2],payment=pages[5];
   assert.match(request,/<strong>ที่<\/strong><span class="memo-value">พว\. 11\/2569<\/span>/);
   assert.match(approval,/<strong>ที่<\/strong><span class="memo-value">12\/2569<\/span>/);
   assert.match(payment,/<strong>ที่<\/strong><span class="memo-value">999\/2569<\/span>/,'historic payment numbers stay visible');
