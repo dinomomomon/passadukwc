@@ -19,12 +19,33 @@
 .gov-order .gov-order-table th{font-weight:700!important;text-align:center;font-size:12.5pt!important;white-space:nowrap}
 .gov-order .gov-order-table tr.gov-data-row td{border-top:0!important;border-bottom:0!important}
 .gov-order .gov-order-table .table-filler td{border-top:0!important;border-bottom:1px solid #222!important}
-.gov-order .order-below-table{display:grid;grid-template-columns:minmax(0,1fr) 42%;margin:0}
-.gov-order .order-amount-words{text-align:center;font-size:var(--doc-size);padding:1mm 1mm 0}
-.gov-order .order-totals{border-collapse:collapse;width:100%;font:400 var(--doc-size)/1.11 "TH Sarabun New",Sarabun,sans-serif}
-.gov-order .order-totals th,.gov-order .order-totals td{border:1px solid #222;font-weight:400;padding:.4mm 1mm}
-.gov-order .order-totals th{width:65%;text-align:center}
-.gov-order .order-totals td{text-align:right}
+/* The original form has one continuous six-column grid; totals must use
+   the same fixed table width and borders, never an independent table/grid. */
+.gov-order .gov-order-table tr.order-totals td,
+.gov-order .gov-order-table tr.order-total-row td{
+ border:1px solid #222!important;
+ vertical-align:middle!important;
+ font-weight:400!important;
+ padding:.4mm 1mm!important;
+}
+.gov-order .gov-order-table td.order-amount-words{
+ text-align:center!important;
+ vertical-align:middle!important;
+ white-space:normal;
+ overflow-wrap:break-word;
+ padding:1mm 1.2mm!important;
+}
+.gov-order .gov-order-table td.order-total-label{
+ text-align:right!important;
+ padding-right:2mm!important;
+ white-space:nowrap;
+}
+.gov-order .gov-order-table td.order-total-value{
+ text-align:right!important;
+ padding-right:1mm!important;
+ white-space:nowrap;
+ font-variant-numeric:tabular-nums;
+}
 .gov-order .order-terms-title{font-weight:700;margin:2mm 0 .8mm}
 .gov-order .order-terms{margin:0 0 1mm!important;padding-left:7mm!important;list-style:decimal outside}
 .gov-order .order-terms li{font:400 var(--doc-size)/1.12 "TH Sarabun New",Sarabun,sans-serif;margin:.3mm 0!important;padding-left:.5mm!important}

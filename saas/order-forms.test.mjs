@@ -21,6 +21,37 @@ test('purchase and hire orders follow both uploaded school reference forms',()=>
   assert.match(html,/class="order-totals"/);
  }
 });
+test('purchase and hire order totals remain INSIDE the original six-column A4 table',()=>{
+ for(const kind of ['purchase','hire']){
+  const html=extract(buildDocuments({...rec,kind},school));
+  const table=html.match(/<table class="official-table official-table-ruled gov-items gov-order-table">([\s\S]*?)<\/table>/);
+  assert.ok(table,'order table is present');
+  assert.equal((html.match(/<table\b/g)||[]).length,1,'no second table extending past the page edge');
+  assert.match(table[1],/class="order-totals"/);
+  assert.match(table[1],/rowspan="3" colspan="2" class="order-amount-words"/);
+  assert.equal((table[1].match(/colspan="3" class="order-total-label"/g)||[]).length,3);
+  assert.equal((table[1].match(/class="order-total-value right"/g)||[]).length,3);
+  assert.match(table[1],/class="order-total-value right">4,000\.00/);
+  assert.doesNotMatch(html,/order-below-table|<table class="order-totals"/);
+ }
+});
+test('only the FINAL order page includes totals when items flow to multiple A4 pages',()=>{
+ const items=Array.from({length:25},(_,i)=>({name:'รายการ '+(i+1),qty:1,unit:'ชิ้น',price_satang:10000}));
+ for(const kind of ['purchase','hire']){
+  const pages=[...buildDocuments({...rec,kind,items,total_satang:250000},school).matchAll(/<section class="paper-page official gov-doc gov-order">([\s\S]*?)<\/section>/g)];
+  assert.equal(pages.length,3);
+  assert.equal(pages[0][1].includes('class="order-totals"'),false);
+  assert.equal(pages[1][1].includes('class="order-totals"'),false);
+  assert.equal(pages[2][1].includes('class="order-totals"'),true);
+  assert.equal((pages[2][1].match(/<table\b/g)||[]).length,1);
+ }
+});
+test('A4 totals CSS cannot create an overflowing independent grid/table',async()=>{
+ const css=await readFile(new URL('./order-forms.css',import.meta.url),'utf8');
+ assert.match(css,/\.gov-order \.gov-order-table td\.order-total-value/);
+ assert.match(css,/\.gov-order \.gov-order-table td\.order-total-label/);
+ assert.doesNotMatch(css,/order-below-table|grid-template-columns:minmax\(0,1fr\) 42%/);
+});
 test('orders use stored item prices, amounts and dates, not assumed seller details',()=>{
  const html=extract(buildDocuments({...rec,document_meta:{order_number:'184/2569',order_date:'2026-10-27',vat_baht:'261.68',order_vendor_tax_id:'1234567890123'}},school));
  assert.match(html,/184\/2569/);

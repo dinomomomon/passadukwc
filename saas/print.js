@@ -232,16 +232,21 @@ function orderForm(r,s,buy){
   const rows=part.items.map((x,i)=>'<tr class="gov-data-row"><td class="center">'+(part.offset+i+1)+'</td>'+
    '<td>'+e(x.name)+'</td><td class="center">'+e(x.qty)+'</td><td class="center">'+e(x.unit)+'</td>'+
    '<td class="right">'+cash(x.price_satang)+'</td><td class="right">'+cash(Math.round(Number(x.qty)*Number(x.price_satang)))+'</td></tr>').join('');
+  // Keep totals inside the *same* six-column table as the order items.
+  // Column spans match the original government order: the money in words
+  // occupies columns 1-2; labels span columns 3-5; amounts use column 6.
+  // A separate grid/table used to overrun the A4 right margin in print.
+  const totals=last?
+   '<tr class="order-totals"><td rowspan="3" colspan="2" class="order-amount-words">('+e(thaiBahtText(r.total_satang))+')</td>'+
+   '<td colspan="3" class="order-total-label">รวมเป็นเงิน</td><td class="order-total-value right">'+basePriceAmount(r)+'</td></tr>'+
+   '<tr class="order-total-row"><td colspan="3" class="order-total-label">ภาษีมูลค่าเพิ่ม</td><td class="order-total-value right">'+vatDisplay(r)+'</td></tr>'+
+   '<tr class="order-total-row"><td colspan="3" class="order-total-label">รวมเป็นเงินทั้งสิ้น</td><td class="order-total-value right">'+cash(r.total_satang)+'</td></tr>':'';
   const table='<table class="official-table official-table-ruled gov-items gov-order-table">'+
    '<colgroup><col class="col-order"><col class="col-description"><col class="col-quantity"><col class="col-unit"><col class="col-price"><col class="col-total"></colgroup>'+
    '<thead><tr><th>ลำดับ</th><th>รายละเอียดและคุณลักษณะ</th><th>จำนวน</th><th>หน่วย</th><th>ราคาต่อหน่วย</th><th>จำนวนเงิน</th></tr></thead>'+
-   '<tbody>'+rows+'<tr class="table-filler" style="height:'+fillerHeight(part.items,80,5.6)+'mm">'+Array.from({length:6},()=>'<td>&nbsp;</td>').join('')+'</tr></tbody></table>';
+   '<tbody>'+rows+'<tr class="table-filler" style="height:'+fillerHeight(part.items,80,5.6)+'mm">'+Array.from({length:6},()=>'<td>&nbsp;</td>').join('')+'</tr>'+totals+'</tbody></table>';
   let footer='';
   if(last){
-   const totals='<div class="order-below-table"><div class="order-amount-words">('+e(thaiBahtText(r.total_satang))+')</div>'+
-    '<table class="order-totals"><tbody><tr><th>รวมเป็นเงิน</th><td>'+basePriceAmount(r)+'</td></tr>'+
-    '<tr><th>ภาษีมูลค่าเพิ่ม</th><td>'+vatDisplay(r)+'</td></tr>'+
-    '<tr><th>รวมเป็นเงินทั้งสิ้น</th><td>'+cash(r.total_satang)+'</td></tr></tbody></table></div>';
    const days=v(m.order_delivery_days),location=v(m.order_delivery_location),warranty=v(m.order_warranty);
    const percent=v(m.order_penalty_percent,'0.2'),minBaht=v(m.order_penalty_min_baht,'100');
    const terms='<div class="order-terms-title">การสั่ง'+(buy?'ซื้อ':'จ้าง')+' อยู่ภายใต้เงื่อนไขต่อไปนี้</div><ol class="order-terms">'+
@@ -259,7 +264,7 @@ function orderForm(r,s,buy){
    const signed='<div class="order-signatures">'+
     signature(head(r,s),'ผู้สั่ง'+(buy?'ซื้อ':'จ้าง'),'หัวหน้าเจ้าหน้าที่',m.order_school_sign_date)+
     signature(v(m.order_vendor_signer_name),'ผู้รับ'+title,v(m.order_vendor_signer_position,'ผู้จัดการ/ผู้รับมอบอำนาจ'),m.order_vendor_sign_date)+'</div>';
-   footer=totals+terms+signed;
+   footer=terms+signed;
   }
   return '<section class="paper-page official gov-doc gov-order"><div class="doc-sheet-body">'+header+table+footer+'</div></section>';
  }).join('');
