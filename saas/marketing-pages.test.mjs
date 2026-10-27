@@ -66,12 +66,12 @@ test('real preview is produced by official renderer from fictional record only',
  assert.match(module,/srcdoc=/);
  assert.match(module,/ข้อมูลสมมติสำหรับแสดงตัวอย่าง/);
  assert.doesNotMatch(module,/state\.records|db\.from\('procurements'\)/);
- // Independently verify the renderer remains capable of rendering the six purchase forms.
+ // Independently verify the renderer remains capable of rendering the seven purchase forms.
  const example={kind:'purchase',title:'ทดสอบ',reason:'ทดสอบ',document_date:'2026-10-20',
   document_number:1,fiscal_year:2570,items:[{name:'วัสดุตัวอย่าง',qty:1,unit:'ชิ้น',price_satang:5000}],
   total_satang:5000,document_meta:{}};
  const out=buildDocuments(example,{name:'โรงเรียนตัวอย่าง'});
- assert.equal((out.match(/<section class="paper-page/g)||[]).length,6);
+ assert.equal((out.match(/<section class="paper-page/g)||[]).length,7);
 });
 test('marketing assets are included in build, cached safely, and preserve internal app route/auth',()=>{
  const build=readFileSync(new URL('./build.mjs',import.meta.url),'utf8');

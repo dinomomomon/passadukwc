@@ -34,7 +34,7 @@ test('optional evidence fields do not get invented and are escaped',()=>{
  assert.match(html,/................................../);
 });
 test('metadata form covers all backend-approved fields',()=>{
- assert.equal(documentInfoFields.length,27+signatureDateFields.length);
+ assert.equal(new Set(documentInfoFields.map(([key])=>key)).size,documentInfoFields.length);
  const html=docMetaInputs({memo_number:'1/2570'});
  assert.match(html,/name="doc_memo_number"/);
  assert.match(html,/value="1\/2570"/);
@@ -107,7 +107,7 @@ test('multipage requisition repeats heading, receiving and issuing signatures on
  assert.match(html,/หน้าที่ 2\/3/);
  assert.match(html,/หน้าที่ 3\/3/);
  assert.match(html,/>21<\/td>/);
- assert.equal((html.match(/<section class="paper-page/g)||[]).length,10);
+ assert.equal((html.match(/<section class="paper-page/g)||[]).length,13);
 });
 test('each annex continuation retains title, official table and both signers',()=>{
  const long={...sample,items:Array.from({length:11},(_,i)=>({name:'พัสดุ '+(i+1),qty:1,unit:'ชุด',price_satang:100})),total_satang:1100};
@@ -569,9 +569,9 @@ test('dashboard replaces storage shortcut with document-number register instead 
 });
 
 
-test('six template pages each have an independently editable school version',async()=>{
+test('seven template pages each have an independently editable school version',async()=>{
  const {TEMPLATE_PAGES}=await import('./template-builder.js');
- assert.deepEqual(TEMPLATE_PAGES.map(p=>p.key),['request','annex','approval','acceptance','payment','requisition']);
+ assert.deepEqual(TEMPLATE_PAGES.map(p=>p.key),['request','annex','approval','order','acceptance','payment','requisition']);
 });
 test('template extra blocks bind live record data but never evaluate arbitrary variable names',async()=>{
  const {expandTemplateText,templateBindings,templateEsc}=await import('./template-builder.js');
