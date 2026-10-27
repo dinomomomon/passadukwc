@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0969E8"><meta name="description" content="ครูพัสดุ - ระบบจัดซื้อจัดจ้างออนไลน์สำหรับโรงเรียน">
+<title>ครูพัสดุ | KRU PASADU</title>
+<link rel="canonical" href="https://kru-pasadu.vercel.app/">
+<script>
+(function(){
+  // Remove attribution parameters only; never strip auth/recovery query or hash.
+  try{
+    var url=new URL(location.href),changed=false;
+    ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid'].forEach(function(key){
+      if(url.searchParams.has(key)){url.searchParams.delete(key);changed=true;}
+    });
+    if(changed)history.replaceState(history.state,'',url.pathname+url.search+url.hash);
+  }catch(ignore){}
+  var timeoutId;
+  try{sessionStorage.removeItem('kru_boot_stage');}catch(ignore){}
+  function bootHint(){
+    var stage='';
+    try{stage=sessionStorage.getItem('kru_boot_stage')||'';}catch(ignore){}
+    if(!stage)return 'โมดูลแอปยังไม่เริ่มทำงาน อาจมีข้อผิดพลาดในการรัน JavaScript หรือส่วนขยาย Chrome บล็อกสคริปต์';
+    var labels={
+      'client-ready':'เริ่มไลบรารีบัญชีแล้ว แต่ยังไม่เริ่มตรวจสอบเซสชัน',
+      'auth-reading-session':'กำลังรอ Supabase ตรวจสอบเซสชันของโปรไฟล์ Chrome',
+      'auth-loading-roles':'กำลังโหลดสิทธิ์บัญชีและข้อมูลโรงเรียน',
+      'ui-rendering':'กำลังวาดหน้าจอหลังโหลดสิทธิ์',
+      'ui-ready':'โหลดหน้าแอปสำเร็จแล้ว',
+      'ui-error':'เกิดข้อผิดพลาดขณะตรวจสอบบัญชี',
+      'ui-recovery':'เข้าสู่หน้ากู้คืนแล้ว'
+    };
+    return labels[stage]||'ขั้นตอนล่าสุด: '+stage;
+  }
+  function showRecovery(message){
+    var app=document.getElementById('app');
+    if(!app||!app.querySelector('.loading-screen'))return;
+    app.innerHTML='<main class="startup-failure" role="alert" aria-live="assertive">'+
+      '<img src="/kru-pasadu-icon.svg" width="82" height="82" alt="โลโก้ครูพัสดุ">'+
+      '<h1>เปิดครูพัสดุไม่สำเร็จ</h1>'+
+      '<p>'+message+'</p><p><strong>ผลตรวจการเริ่มระบบ:</strong> '+bootHint()+'</p>'+
+      '<div class="startup-actions"><button type="button" id="kru-try-again">ลองเปิดใหม่</button>'+
+      '<button type="button" id="kru-repair-auth">ล้างเซสชันบัญชี (ขั้นแรก)</button>'+
+      '<a class="startup-diagnostics-link" href="/diagnostics.html">ตรวจสอบสาเหตุใน Chrome</a></div>'+
+      '<small>หากเคยลองล้างเซสชันแล้วไม่สำเร็จ ให้กด “ตรวจสอบสาเหตุใน Chrome” การล้างข้อมูลเว็บไซต์ทั้งหมดต้องทำผ่านการตั้งค่า Chrome และอาจลบแบบร่างที่ไม่ได้บันทึก</small>'+
+      '</main>';
+    document.getElementById('kru-try-again').addEventListener('click',function(){location.reload();});
+    document.getElementById('kru-repair-auth').addEventListener('click',function(){
+      if(!confirm('ต้องการล้างเฉพาะข้อมูลเข้าสู่ระบบครูพัสดุที่เก็บใน Chrome เครื่องนี้หรือไม่? คุณจะต้องกรอกอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบใหม่ แต่เอกสารที่บันทึกบนเซิร์ฟเวอร์จะไม่ถูกลบ'))return;
+      try{
+        localStorage.removeItem('sb-xwtynagykjqhlzmkitrx-auth-token');
+        sessionStorage.removeItem('sb-xwtynagykjqhlzmkitrx-auth-token');
+        location.assign('/');
+      }catch(error){
+        alert('Chrome ไม่อนุญาตให้เข้าถึงข้อมูลบัญชี กรุณาลองในหน้าต่างไม่ระบุตัวตน หรือล้างข้อมูลเว็บไซต์เฉพาะ kru-pasadu.vercel.app จากการตั้งค่า Chrome');
+      }
+    });
+  }
+  // Starts immediately, not after DOMContentLoaded (CSS can delay that event).
+  timeoutId=setTimeout(function(){
+    showRecovery('การเปิดระบบใช้เวลานานกว่าปกติ กรุณาเปิดหน้าตรวจสอบเพื่อแยกว่าเกิดจากไฟล์เว็บไซต์ เครือข่าย หรือข้อมูลใน Chrome');
+  },30000);
+  window.addEventListener('error',function(evt){
+    var from=String(evt.filename||evt.target&&evt.target.src||'');
+    if(from.indexOf('/app.js')!==-1){
+      clearTimeout(timeoutId);
+      showRecovery('ตรวจพบข้อผิดพลาดขณะโหลดหรือเรียกใช้ไฟล์ JavaScript ของครูพัสดุ กรุณาเปิดหน้าตรวจสอบและส่งผลกลับมา');
+    }
+  });
+  window.addEventListener('unhandledrejection',function(evt){
+    // Do not expose errors or token material in the user-facing UI.
+    if(document.querySelector('.loading-screen')){
+      clearTimeout(timeoutId);
+      showRecovery('การเริ่มระบบหยุดทำงานจากข้อผิดพลาดใน JavaScript กรุณาเปิดหน้าตรวจสอบสาเหตุ');
+    }
+  });
+  window.addEventListener('kru:ready',function(){clearTimeout(timeoutId);},{once:true});
+  window.addEventListener('kru:dependency-error',function(){
+    clearTimeout(timeoutId);
+    showRecovery('Chrome โหลดส่วนเชื่อมต่อระบบบัญชีจากเครือข่ายไม่สำเร็จ กรุณาลองใหม่ หรือปิดส่วนขยายที่อาจบล็อก CDN');
+  },{once:true});
+})();
+</script>
+<link rel="icon" type="image/svg+xml" href="/kru-pasadu-icon.svg">
+<link rel="apple-touch-icon" href="/kru-pasadu-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/brand-theme.css?v=20261024-equipment-simple-v3">
+<link rel="stylesheet" href="/marketing-pages.css?v=20261022-guide-complete-v1">
+<link rel="stylesheet" href="/admin-guide.css?v=20261023-staff-guide-v2">
+<link rel="stylesheet" href="/print-fix.css">
+<link rel="stylesheet" href="/official-print.css">
+<link rel="stylesheet" href="/print-responsive.css">
+<link rel="stylesheet" href="/print-readable.css">
+<link rel="stylesheet" href="/print-pagination.css">
+<link rel="stylesheet" href="/print-adaptive.css">
+<link rel="stylesheet" href="/print-signatures-responsive.css">
+<style id="kru-account-styles">
+/* ครูพัสดุ – staff identity + clear logout (UI only, never printed) */
+#app .topbar{gap:18px}
+#app .top-school{flex:1;min-width:0}
+#app .top-actions{display:flex;align-items:center;flex-shrink:0;gap:10px}
+#app .account-identity{
+  border:1px solid #D6E5FA;border-radius:13px;
+  display:flex;align-items:center;gap:10px;
+  padding:7px 11px;background:#F5F9FF;
+  color:#173B75;max-width:350px;min-width:0;text-align:left;
+  box-shadow:0 2px 8px rgba(16,88,181,.04);
+  cursor:pointer;transition:background .15s,border-color .15s;
+}
+#app button.account-identity:hover{border-color:#8DBDF6;background:#EAF3FF}
+#app .account-identity-demo{cursor:default}
+#app .account-user-icon{display:grid;place-items:center;flex:0 0 33px;width:33px;height:33px;border-radius:10px;background:#DDEBFF;color:#1265D2}
+#app .account-user-details{display:flex;flex-direction:column;gap:1px;min-width:0}
+#app .account-user-details strong{
+  display:block;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:#123E85;font-size:14px;font-weight:800;line-height:1.3
+}
+#app .account-user-details small{display:block;color:#5B7596;font-size:11px;font-weight:600;line-height:1.4}
+#app .account-pencil{color:#0C66D5;border-left:1px solid #C9DDF5;padding-left:10px;font-size:11px;font-weight:700;white-space:nowrap}
+#app .logout-button{
+  flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  gap:9px;white-space:nowrap;min-height:42px;
+  border:1px solid #FFC58D;border-radius:11px;
+  background:#FFF1E2;color:#9E4B05;
+  padding:10px 15px;font-size:14px;font-weight:800;
+  box-shadow:none;cursor:pointer;transition:background .15s,border-color .15s;
+}
+#app .logout-button:hover{background:#FFE3C4;border-color:#F5AA61;color:#853D04}
+#app .logout-button svg{width:18px;height:18px;flex-shrink:0}
+#app .account-identity:focus-visible,#app .logout-button:focus-visible{outline:3px solid #FF9C38;outline-offset:2px}
+#app .profile-dialog{
+  border:1px solid #D4E4F9;border-radius:20px;
+  padding:0;width:min(92vw,510px);max-height:90vh;
+  background:white;color:#183A69;
+  box-shadow:0 24px 74px rgba(9,48,117,.28);
+}
+#app .profile-dialog::backdrop{background:rgba(7,26,66,.53);backdrop-filter:blur(3px)}
+#app .profile-panel{padding:28px}
+#app .profile-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:7px}
+#app .profile-panel-head h2{font-size:22px;line-height:1.4;margin:0;color:#143E79}
+#app .profile-panel p{font-size:13px;line-height:1.6;margin-bottom:19px}
+#app .profile-close{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:9px;background:#EFF4FC;color:#4F6D93;font-size:23px;cursor:pointer}
+#app .profile-close:hover{background:#E0EFFF}
+#app .profile-controls{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;padding-top:8px}
+@media(max-width:1050px){
+  #app .top-actions .tag{display:none}
+  #app .account-identity{max-width:280px}
+  #app .account-user-details strong{max-width:150px}
+  #app .account-pencil{display:none}
+}
+@media(max-width:800px){
+  #app .topbar{gap:8px}
+  #app .top-school .school-logo{display:none}
+  #app .top-actions{gap:6px}
+  #app .account-identity{padding:5px 7px;gap:6px}
+  #app .account-user-icon{flex-basis:28px;width:28px;height:28px}
+  #app .account-user-details strong{font-size:12px;max-width:130px}
+  #app .account-user-details small{font-size:10px}
+  #app .logout-button{font-size:12px;min-height:36px;padding:7px 10px;gap:5px}
+}
+@media(max-width:570px){
+  #app .topbar{padding:0 9px}
+  #app .top-school h2{font-size:12px}
+  #app .top-school p{display:none}
+  #app .account-identity{max-width:150px;padding:5px}
+  #app .account-user-details strong{max-width:105px;font-size:11px}
+  #app .account-user-details small{font-size:9px}
+  #app .account-user-icon{display:none}
+  #app .logout-button{padding:7px 8px;font-size:11px}
+  #app .logout-button svg{width:15px;height:15px}
+  #app .profile-panel{padding:20px}
+}
+@media(max-width:390px){
+  #app .top-school{display:none}
+  #app .top-actions{width:100%;justify-content:space-between}
+  #app .account-identity{max-width:210px}
+  #app .account-user-details strong{max-width:160px}
+  #app .logout-button{font-size:12px}
+}
+@media print{
+  #app .account-identity,#app .logout-button,#app .profile-dialog{display:none!important}
+}
+
+/* Thai-language sign-up verification fallback (only when Supabase requires email confirmation). */
+#app .verify-illustration{
+  display:grid;place-items:center;width:54px;height:54px;border-radius:16px;
+  background:#E6F5F0;color:#12856F;margin-bottom:20px;
+  box-shadow:inset 0 0 0 1px #CBEBE0;
+}
+#app .verify-illustration svg{width:28px;height:28px}
+#app .verify-email-box{
+  display:flex;flex-direction:column;gap:4px;
+  padding:14px 17px;background:#EFF5FF;border:1px solid #D5E5FB;
+  border-radius:12px;margin:18px 0;color:#5A7290
+}
+#app .verify-email-box span{font-size:12px}
+#app .verify-email-box strong{color:#0E54AE;font-size:15px;overflow-wrap:anywhere}
+#app .verify-steps{padding:4px 0 11px}
+#app .verify-steps p{font-size:13px;line-height:1.75;color:#415B79;margin:0 0 8px}
+#app .verify-steps b{color:#115FC7}
+#app .verify-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:18px}
+#app .verify-actions button{flex:1 1 170px}
+
+</style>
+<link rel="stylesheet" href="/auth-unified.css">
+<style id="kru-auth-polish-styles">
+/* ครูพัสดุ – แบบ A: โลโก้กึ่งกลางเหนือฟอร์ม, อักษรไทยไม่ชนกัน
+   Overrides auth-unified.css only. Does not affect A4 documents or dashboard. */
+
+.kp-auth-screen{
+  font-family:"Sarabun",Tahoma,system-ui,sans-serif;
+}
+.kp-auth-screen *, .kp-auth-screen *::before, .kp-auth-screen *::after{
+  box-sizing:border-box;
+}
+.kp-auth-screen button,
+.kp-auth-screen input {
+  font-family:"Sarabun",Tahoma,system-ui,sans-serif;
+}
+
+/* Sales hero – leave enough vertical room for Thai ascenders/descenders. */
+.kp-auth-intro{
+  padding-block:clamp(34px,5vh,64px);
+  overflow:hidden;
+}
+.kp-auth-content{max-width:730px}
+.kp-auth-brand{margin-bottom:27px}
+.kp-auth-brand strong{font-size:27px;line-height:1.48;letter-spacing:0}
+.kp-auth-brand small{font-size:13px;line-height:1.5}
+.kp-auth-eyebrow{font-size:12px;line-height:1.5;padding-block:9px}
+.kp-auth-intro h1{
+  font-family:"Sarabun",Tahoma,sans-serif;
+  font-size:clamp(32px,3vw,46px);
+  line-height:1.48;
+  font-weight:800;
+  letter-spacing:0;
+  word-break:keep-all;
+  margin:16px 0 14px;
+  text-wrap:pretty;
+}
+.kp-auth-intro h1 em{
+  display:inline-block;
+  line-height:inherit;
+}
+.kp-auth-lead{
+  font-size:15px;
+  line-height:1.85;
+  letter-spacing:0;
+  margin-bottom:22px;
+}
+.kp-pipeline{padding:19px 21px 18px;margin-bottom:17px}
+.kp-pipeline-title{font-size:13px;line-height:1.6;margin-bottom:15px}
+.kp-pipeline-node b{font-size:12px;line-height:1.55}
+.kp-pipeline-node small{font-size:11px;line-height:1.5}
+.kp-benefits{gap:12px}
+.kp-benefit{padding:16px}
+.kp-benefit h3{font-size:14px;line-height:1.55;margin:8px 0 4px}
+.kp-benefit p{font-size:12px;line-height:1.7}
+.kp-intro-note{font-size:11px;line-height:1.7;margin-top:17px}
+
+/* Brand lives OUTSIDE the form card; both form tabs share the same logo. */
+.kp-auth-right{
+  align-items:center;
+  padding:25px clamp(18px,3vw,44px);
+  overflow:visible;
+}
+.kp-auth-right-inner{
+  width:min(100%,500px);
+  margin:auto;
+  padding:4px 0;
+}
+.kp-auth-identity{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  gap:0;
+  margin:0 auto 23px;
+  padding:4px 12px 0;
+}
+.kp-auth-identity-image{
+  display:block;
+  width:116px;
+  height:116px;
+  max-width:100%;
+  object-fit:contain;
+  padding:7px;
+  background:#fff;
+  border:1px solid #e0eafa;
+  border-radius:29px;
+  box-shadow:0 12px 33px rgba(9,72,169,.14);
+}
+.kp-auth-identity-name{
+  margin-top:10px;
+  font-family:"Sarabun",Tahoma,sans-serif;
+  font-size:30px;
+  line-height:1.55;
+  font-weight:800;
+  letter-spacing:0;
+  color:#0d479e;
+}
+.kp-auth-identity-tagline{
+  font-family:"Sarabun",Tahoma,sans-serif;
+  font-size:14px;
+  line-height:1.6;
+  color:#ef7d0b;
+  font-weight:700;
+  letter-spacing:0;
+}
+.kp-login-card{
+  width:100%;
+  max-width:none;
+  padding:25px 30px 25px;
+  border-radius:23px;
+  box-shadow:0 16px 47px rgba(17,74,154,.105);
+}
+.kp-login-mark{display:none}
+.kp-form-heading{
+  text-align:center;
+  padding-bottom:16px;
+  margin-bottom:17px;
+  border-bottom:1px solid #e5edf9;
+}
+.kp-login-card h2{
+  font-family:"Sarabun",Tahoma,sans-serif;
+  margin:0 0 3px;
+  color:#0d3f85;
+  font-size:25px;
+  line-height:1.52;
+  font-weight:800;
+  letter-spacing:0;
+}
+.kp-login-subtitle{
+  font-family:"Sarabun",Tahoma,sans-serif;
+  font-size:13px;
+  line-height:1.8;
+  color:#667e9f;
+  margin:0;
+  letter-spacing:0;
+}
+.kp-auth-tabs{
+  margin:0 0 20px;
+  padding:5px;
+  border-radius:12px;
+}
+.kp-auth-tab{
+  font-size:14px;
+  line-height:1.58;
+  padding:9px 7px;
+}
+.kp-login-form{gap:13px}
+.kp-field{gap:6px}
+.kp-field>label{font-size:13px;line-height:1.55}
+.kp-field input{
+  min-height:47px;
+  font-size:14px;
+  line-height:1.5;
+  padding-block:10px;
+}
+.kp-password-wrap input{padding-right:79px}
+.kp-eye{font-size:12px;line-height:1.4}
+.kp-auth-row{margin:2px 0 0}
+.kp-remember,.kp-inline-link{font-size:12px;line-height:1.6}
+.kp-main-button{min-height:49px;line-height:1.5}
+.kp-divider{margin:16px 0 12px;line-height:1.6}
+.kp-demo-button{font-size:13px;line-height:1.6}
+.kp-auth-footnote{font-size:11px;line-height:1.75;margin-top:12px}
+.kp-password-note{line-height:1.65}
+
+/* Laptops with a shorter viewport: preserve logo but save vertical space. */
+@media(min-width:941px) and (max-height:820px){
+  .kp-auth-identity{margin-bottom:12px}
+  .kp-auth-identity-image{width:96px;height:96px;border-radius:23px}
+  .kp-auth-identity-name{font-size:26px;margin-top:5px}
+  .kp-auth-identity-tagline{font-size:13px}
+  .kp-login-card{padding:19px 27px}
+  .kp-form-heading{padding-bottom:10px;margin-bottom:12px}
+  .kp-auth-tabs{margin-bottom:15px}
+  .kp-login-form{gap:11px}
+  .kp-auth-intro{padding-block:28px}
+  .kp-auth-intro h1{font-size:clamp(30px,3vw,43px)}
+}
+
+@media(max-width:1170px){
+  .kp-benefit{padding:12px 14px}
+  .kp-benefit h3{margin:0 0 4px}
+}
+
+@media(max-width:940px){
+  .kp-auth-right{padding:30px 16px 48px}
+  .kp-auth-right-inner{width:min(100%,520px)}
+  .kp-auth-identity-image{width:100px;height:100px;border-radius:25px}
+  .kp-auth-identity-name{font-size:27px}
+  .kp-auth-intro{padding:33px 28px}
+  .kp-auth-intro h1{font-size:clamp(30px,4.5vw,39px);line-height:1.5}
+  .kp-auth-lead{font-size:14px}
+}
+
+@media(max-width:610px){
+  .kp-auth-intro{padding:23px 19px}
+  .kp-auth-brand{margin-bottom:17px}
+  .kp-auth-brand strong{font-size:23px}
+  .kp-auth-intro h1{font-size:30px;line-height:1.52;margin:13px 0}
+  .kp-auth-lead{line-height:1.8;margin-bottom:18px}
+  .kp-pipeline{padding:14px}
+  .kp-pipeline-node b{font-size:10px}
+  .kp-pipeline-node small{font-size:9px}
+  .kp-auth-right{padding:20px 12px 35px}
+  .kp-auth-identity{margin-bottom:15px}
+  .kp-auth-identity-image{width:86px;height:86px;border-radius:22px}
+  .kp-auth-identity-name{font-size:25px;line-height:1.5;margin-top:6px}
+  .kp-auth-identity-tagline{font-size:13px}
+  .kp-login-card{padding:21px 17px;border-radius:18px}
+  .kp-form-heading{padding-bottom:14px;margin-bottom:15px}
+  .kp-login-card h2{font-size:23px;line-height:1.5}
+  .kp-login-subtitle{font-size:12px;line-height:1.7}
+  .kp-auth-tab{font-size:13px;line-height:1.55}
+  .kp-field input{font-size:14px}
+}
+
+</style>
+<style id="kru-subscriptions-styles">
+/* Kru Pasadu billing: school entitlement + owner annual renewal */
+.sub-banner{
+ display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+ border-radius:15px;padding:15px 19px;margin:0 0 19px;
+ border:1px solid #cadef9;background:#f1f7ff;
+ font-family:"Sarabun",Tahoma,sans-serif
+}
+.sub-banner strong{display:block;color:#13549b;font-size:15px;font-weight:800;line-height:1.55}
+.sub-banner p{margin:3px 0 0;font-size:12px;line-height:1.65;color:#55769d}
+.sub-banner .sub-expiry{
+ flex:0 0 auto;padding:7px 12px;border-radius:99px;border:1px solid #c4dbfc;background:white;
+ color:#2163a3;font-size:12px;font-weight:800
+}
+.sub-banner.sub-active{background:#f0f9f4;border-color:#c8ebd6}
+.sub-banner.sub-active strong{color:#11754a}
+.sub-banner.sub-active p{color:#4d7564}
+.sub-banner.sub-active .sub-expiry{border-color:#b5dfc6;color:#177550}
+.sub-banner.sub-trial{background:#fff8ee;border-color:#ffdfad}
+.sub-banner.sub-trial strong{color:#b15d07}
+.sub-banner.sub-trial p{color:#916f45}
+.sub-banner.sub-trial .sub-expiry{border-color:#ffdaa3;color:#ad5e08}
+.sub-banner.sub-expired,.sub-banner.sub-suspended{background:#fff1f1;border-color:#ffcdcd}
+.sub-banner.sub-expired strong,.sub-banner.sub-suspended strong{color:#aa2c30}
+.sub-banner.sub-expired p,.sub-banner.sub-suspended p{color:#985e61}
+.sub-contact{
+ appearance:none;background:#e96618;color:#fff;border:0;border-radius:10px;
+ padding:10px 17px;min-height:40px;cursor:pointer;font-size:13px;font-weight:800;
+ box-shadow:0 7px 17px rgba(222,91,27,.15)
+}
+.sub-contact:hover{background:#d35608}
+.sub-admin-panel{margin-top:19px}
+.sub-admin-panel .section-head{margin-bottom:16px}
+.sub-admin-panel .section-head h2{color:#174c95;font-size:20px;line-height:1.45}
+.sub-admin-panel .section-head p{margin:4px 0 0;font-size:12px;line-height:1.6}
+.sub-mini-stats{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 19px
+}
+.sub-mini-stats>div{
+ display:flex;justify-content:space-between;align-items:center;gap:8px;
+ padding:14px 15px;background:#f5f9ff;border:1px solid #e0ecfa;border-radius:13px;
+ color:#4f709c;font-size:13px;font-weight:700
+}
+.sub-mini-stats b{font-size:25px;line-height:1.1;color:#0e5ac1}
+.sub-state-chip{
+ display:inline-flex;align-items:center;padding:6px 10px;white-space:nowrap;
+ font-size:12px;line-height:1.4;font-weight:800;border-radius:99px;background:#e9f3ff;color:#155dbc
+}
+.sub-chip-trial{background:#fff2df;color:#a15b0a}
+.sub-chip-active{background:#e4f8ec;color:#147e49}
+.sub-chip-expired,.sub-chip-suspended{background:#ffeeee;color:#b12937}
+.sub-admin-panel .table-scroller{overflow-x:auto}
+.sub-admin-panel table{min-width:760px}
+.sub-admin-panel th{white-space:nowrap}
+.sub-admin-panel td{vertical-align:middle}
+.sub-admin-panel .sub-renew{font-size:12px;white-space:nowrap;min-height:35px;border-radius:9px;padding:7px 13px}
+.sub-note{font-size:12px;color:#63819d;line-height:1.6;margin:14px 0 0}
+@media(max-width:680px){
+ .sub-banner{padding:13px;align-items:flex-start;gap:9px}
+ .sub-banner strong{font-size:14px}
+ .sub-banner p{font-size:11px}
+ .sub-mini-stats{grid-template-columns:1fr;gap:8px}
+ .sub-mini-stats>div{padding:10px 13px}
+ .sub-mini-stats b{font-size:20px}
+}
+
+</style>
+<style>
+.startup-failure{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:28px;font-family:"Sarabun",Tahoma,sans-serif;color:#123F86;background:#f4f8ff}
+.startup-failure>img{border-radius:19px;box-shadow:0 8px 20px rgba(15,96,210,.12)}
+.startup-failure h1{font-size:26px;line-height:1.45;margin:3px 0 0}
+.startup-failure p{max-width:520px;font-size:15px;line-height:1.8;color:#58749A;margin:0}
+.startup-failure button{border:none;border-radius:12px;padding:14px 23px;background:#0969e8;color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+.startup-failure small{max-width:460px;font-size:12px;line-height:1.7;color:#7990aa}
+
+.startup-failure .startup-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px}
+.startup-failure .startup-actions button:last-child{background:#fff;color:#1558b5;border:1px solid #cadefa}
+.startup-failure small{max-width:570px}
+  .startup-failure .startup-diagnostics-link{display:inline-flex;align-items:center;justify-content:center;border-radius:11px;padding:12px 17px;text-decoration:none;font:700 13px "Sarabun",Tahoma,sans-serif;color:#174ea6;border:1px solid #bad5fa;background:#f4f8ff}
+</style>
+<link rel="stylesheet" href="/staff-management.css?v=20261020-1">
+<link rel="stylesheet" href="/government-forms.css?v=20261022-payment-date-only-v2">
+<link rel="stylesheet" href="/order-forms.css?v=20261027-aligned-totals-v2">
+<link rel="stylesheet" href="/template-builder.css?v=20261021-manual-a4-headings-v4">
+<link rel="stylesheet" href="/notification-popup.css?v=20261021-ui-feedback-v1">
+</head>
+<body><div id="app"><main class="loading-screen"><img src="/kru-pasadu-icon.svg" width="84" height="84" alt="โลโก้ครูพัสดุ" class="loading-brand-logo"><p>กำลังเปิดครูพัสดุ...</p><a href="/diagnostics.html" style="display:block;margin-top:12px;font-size:12px;color:#5480b8;text-decoration:underline">ตรวจสอบปัญหา Chrome</a></main></div>
+<div id="print-area" aria-hidden="true"></div>
+<script type="module" src="/app.js?v=20261024-equipment-simple-v3"></script></body></html>

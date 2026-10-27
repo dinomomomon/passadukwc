@@ -1,0 +1,85 @@
+/* ครูพัสดุ — independently adaptive narrative and signature fonts.
+   Controls the amount of text that can fit on an A4 sheet without dropping
+   names, roles, approval choices or signature lines onto another page.
+   Loaded after print-adaptive.css so the two controls are independent. */
+.paper-page.official[data-density="comfortable"]{
+  --doc-size:15pt; --doc-leading:1.39; --doc-gap:1.9mm; --doc-list-gap:1.2mm;
+}
+.paper-page.official[data-density="balanced"]{
+  --doc-size:14.5pt; --doc-leading:1.35; --doc-gap:1.55mm; --doc-list-gap:.95mm;
+}
+.paper-page.official[data-density="fitted"]{
+  --doc-size:14pt; --doc-leading:1.33; --doc-gap:1.3mm; --doc-list-gap:.8mm;
+}
+.paper-page.official[data-density="compact"]{
+  --doc-size:13.5pt; --doc-leading:1.31; --doc-gap:1.05mm; --doc-list-gap:.6mm;
+}
+.paper-page.official[data-density="minimum"]{
+  --doc-size:13pt; --doc-leading:1.29; --doc-gap:.85mm; --doc-list-gap:.55mm;
+}
+.paper-page.official[data-density="extra"]{
+  --doc-size:12.5pt; --doc-leading:1.29; --doc-gap:.7mm; --doc-list-gap:.4mm;
+}
+/* Signature dimensions are not coupled to data-density.
+   The director's approval choices stay attached to the director's signature.
+   Font never drops below 12pt for approval blocks. */
+.paper-page.official[data-sign-density="normal"]{
+  --doc-sign-size:13.7pt; --doc-sign-gap:6mm; --doc-approval-size:11.8pt;
+}
+.paper-page.official[data-sign-density="balanced"]{
+  --doc-sign-size:13.2pt; --doc-sign-gap:4.9mm; --doc-approval-size:11.5pt;
+}
+.paper-page.official[data-sign-density="compact"]{
+  --doc-sign-size:12.6pt; --doc-sign-gap:3.8mm; --doc-approval-size:11.2pt;
+}
+.paper-page.official[data-sign-density="minimum"]{
+  --doc-sign-size:12pt; --doc-sign-gap:3mm; --doc-approval-size:11pt;
+}
+.paper-page.official .signature-card,
+.paper-page.official .signature-writing,
+.paper-page.official .signature-date,
+.paper-page.official .signature-name,
+.paper-page.official .signature-role,
+.paper-page.official .inspector-sign {
+  font-size:var(--doc-sign-size);
+}
+.paper-page.official .signature-card {
+  gap:.3mm;
+  line-height:1.27;
+  padding:0;
+}
+.paper-page.official .signature-writing,
+.paper-page.official .signature-date { line-height:1.27; }
+.paper-page.official .memo-signatures {
+  row-gap:var(--doc-sign-gap);
+  margin-top:var(--doc-sign-gap);
+}
+.paper-page.official .approval-options,
+.paper-page.official .director-sign .approval-options{
+  font-size:var(--doc-approval-size);
+  line-height:1.28;
+}
+.paper-page.official .memo-signatures>.director-sign {
+  margin:0; break-inside:avoid; page-break-inside:avoid;
+}
+.paper-page.official .memo-signatures>.director-sign .signature-card {
+  break-inside:avoid; page-break-inside:avoid;
+}
+.paper-page.official .memo-signatures .sign-grid>.signature-card,
+.paper-page.official .memo-signatures>.sign-grid>.signature-card {
+  break-inside:avoid;page-break-inside:avoid;
+}
+.paper-page.official .sign-grid-four { gap:var(--doc-sign-gap); }
+.paper-page.official .signature-rule { width:34mm;max-width:70%; }
+.paper-page.official .date-rule { width:23mm;max-width:64%; }
+@media print {
+  #print-area .paper-page.official {
+    overflow:hidden!important; /* no silent overflow after JS verifies fit */
+  }
+  #print-area .paper-page.official .memo-signatures,
+  #print-area .paper-page.official .sign-grid,
+  #print-area .paper-page.official .director-sign {
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+}

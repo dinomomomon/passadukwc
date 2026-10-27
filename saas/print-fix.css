@@ -1,0 +1,205 @@
+/* KRU PASADU A4 print repair v0.2
+   Keeps a single short form on each A4 page, with full ruled columns.
+   Avoids changing app theme or introducing school logos into government papers. */
+
+.paper-page.official {
+  width: 210mm;
+  height: 296mm;
+  min-height: 0;
+  padding: 12mm 16mm 11mm;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: #fff;
+  color: #111;
+  font: 15pt/1.28 "TH Sarabun New", "Sarabun", "Noto Sans Thai", Tahoma, sans-serif;
+  overflow: hidden;
+  break-after: page;
+  page-break-after: always;
+  position: relative;
+}
+.paper-page.official:last-child { break-after: auto; page-break-after: auto; }
+.paper-page .doc-sheet-body { display: flow-root; max-width: 100%; }
+.paper-page .memo-top {
+  position: relative;
+  padding-top: 1.2mm;
+  height: 24mm;
+  margin: 0;
+}
+.paper-page .memo-top h1 {
+  font: bold 23pt/1.2 "TH Sarabun New", "Sarabun", "Noto Sans Thai", sans-serif;
+  text-align: center;
+  margin: 3mm 0 0;
+}
+.paper-page .garuda-emblem {
+  position: absolute;
+  left: 1mm;
+  top: 2mm;
+  width: 15mm;
+  height: 15mm;
+  object-fit: contain;
+  display: block;
+}
+.paper-page .draft-stamp {
+  position: absolute;
+  right: 16mm;
+  top: 6mm;
+  font: 7pt/1.2 "Sarabun", "Noto Sans Thai", sans-serif;
+  color: #888;
+  margin: 0;
+}
+.paper-page .memo-field {
+  margin: 1.2mm 0;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  line-height: 1.26;
+  break-inside: avoid;
+}
+.paper-page .memo-field strong {
+  width: 25mm;
+  flex: 0 0 25mm;
+}
+.paper-page .memo-line {
+  margin: 4mm 0;
+  border-bottom: 1px solid #111;
+}
+.paper-page p {
+  font-size: 15pt;
+  line-height: 1.30;
+  margin: 2mm 0;
+}
+.paper-page ol {
+  margin: 2mm 0;
+  padding-left: 8mm;
+  font-size: 14.6pt;
+  line-height: 1.27;
+}
+.paper-page li { padding-left: 1mm; margin: .7mm 0; }
+.paper-page .indent { text-indent: 12mm; }
+.paper-page .print-title {
+  font-size: 20pt;
+  line-height: 1.25;
+  margin: 2mm 0 5mm;
+  text-align: center;
+}
+.paper-page .official-table {
+  table-layout: fixed;
+  border: 1px solid #222;
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 3mm 0;
+  font: 13.2pt/1.2 "TH Sarabun New","Sarabun","Noto Sans Thai",Tahoma,sans-serif;
+}
+.paper-page .official-table thead { display: table-header-group; }
+.paper-page .official-table th,
+.paper-page .official-table td {
+  font: inherit;
+  color: #111;
+  background: #fff;
+  padding: 1.6mm 1.1mm;
+  border: 1px solid #222 !important;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.paper-page .official-table th { text-align: center; font-weight: 700; }
+.paper-page .official-table tr { break-inside: avoid; page-break-inside: avoid; }
+.paper-page .official-table-ruled .table-filler td {
+  padding: 0 1mm;
+  height: 100%;
+  border-right: 1px solid #222 !important;
+  border-left: 1px solid #222 !important;
+}
+.paper-page .sign-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 3mm 7mm;
+  margin-top: 5mm;
+  font-size: 12.4pt;
+  line-height: 1.24;
+  text-align: center;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.paper-page .director-sign {
+  width: 60%;
+  margin: 5mm 0 0 auto;
+  font-size: 12.4pt;
+  line-height: 1.27;
+  text-align: center;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.paper-page .inspector-sign {
+  width: 62%;
+  margin: 7mm 0 0 auto;
+  font-size: 12.5pt;
+  text-align: center;
+  break-inside: avoid;
+}
+.paper-page .note { font-size: 10pt; }
+.paper-page h1,.paper-page h2,.paper-page p,
+.paper-page th,.paper-page td,.paper-page ol { color:#111; }
+body.print-measuring #print-area {
+  display: block !important;
+  position: fixed !important;
+  left: -20000px !important;
+  top: 0 !important;
+  width: 210mm !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  z-index: -1;
+}
+body.print-measuring #print-area .paper-page {
+  box-shadow: none !important;
+  min-height: 0 !important;
+  height: 296mm !important;
+  padding: 12mm 16mm 11mm !important;
+  margin: 0 !important;
+  width: 210mm !important;
+}
+@page { size: A4; margin: 0; }
+@media print {
+  html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+  #app { display: none !important; }
+  #print-area {
+    display: block !important;
+    position: static !important;
+    width: 210mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: visible !important;
+    background: #fff !important;
+  }
+  #print-area .paper-page.official {
+    display: block !important;
+    box-sizing: border-box !important;
+    width: 210mm !important;
+    height: 296mm !important;
+    min-height: 0 !important;
+    max-height: 296mm !important;
+    margin: 0 !important;
+    padding: 12mm 16mm 11mm !important;
+    overflow: hidden !important;
+    break-before: auto !important;
+    break-inside: avoid !important;
+    break-after: page !important;
+    page-break-after: always !important;
+    box-shadow: none !important;
+  }
+  #print-area .paper-page.official:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+  #print-area .paper-page .doc-sheet-body { zoom: var(--doc-fit, 1); }
+  #print-area .garuda-emblem { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  #print-area .official-table,
+  #print-area .official-table th,
+  #print-area .official-table td {
+    border-color: #222 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
