@@ -888,7 +888,9 @@ test('wizard evidence inputs are optional and reuse saved metadata keys across p
  for(const kind of ['purchase','hire']){
   const step3=docMetaWizardInputs({},3,kind);
   const step4=docMetaWizardInputs({},4,kind);
-  for(const name of ['order_number','order_date'])assert.match(step3,new RegExp('name="doc_'+name+'"'));
+  assert.match(step3,/name="doc_order_number"/);
+  assert.doesNotMatch(step3,/name="doc_order_date"/,'order date is edited only once, next to other header dates');
+  assert.match(step4,/name="doc_order_date"/);
   for(const name of ['delivery_date','invoice_number','invoice_date','inspection_date','inspection_location',
    'vat_baht','withholding_baht','fine_baht','budget_total_baht','budget_paid_baht']){
    assert.match(step4,new RegExp('name="doc_'+name+'"'));
