@@ -883,3 +883,6 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
   border-bottom:1px dotted #222!important;
  }
 }
+
+/* Optional annex heading date. Legacy annex sheets without a date stay unchanged. */
+.gov-doc.gov-annex .gov-annex-heading-date{text-align:right;font-size:var(--doc-size);line-height:1.15;margin:0 0 1mm}

@@ -43,6 +43,13 @@ export function renderMemoReference(prefix,number){
 }
 function meta(r){return r.document_meta&&typeof r.document_meta==='object'&&!Array.isArray(r.document_meta)?r.document_meta:{};}
 function signingDate(r,key,fallback=''){return meta(r)[key]||fallback;}
+function requestHeaderDate(r){return meta(r).request_document_date||r.document_date;}
+function annexHeaderDate(r){return meta(r).annex_document_date||'';}
+function approvalHeaderDate(r){return meta(r).approval_document_date||r.document_date;}
+function orderHeaderDate(r){const m=meta(r);return m.order_date||m.order_school_sign_date||'';}
+function acceptanceHeaderDate(r){const m=meta(r);return m.acceptance_date||m.sign_acceptance_date||m.inspection_date||m.delivery_date||'';}
+function requisitionHeaderDate(r){const m=meta(r);return m.requisition_date||m.sign_requisition_date||m.delivery_date||'';}
+function paymentHeaderDate(r){const m=meta(r);return m.payment_document_date||m.sign_payment_date||'';}
 const numericMoney=x=>x!==undefined&&x!==null&&String(x).trim()!==''&&Number.isFinite(Number(x))&&Number(x)>=0;
 function moneyField(m,key){return numericMoney(m[key])?baht(Number(m[key])):'–';}
 function paymentNetSatang(r){try{return payable(Number(r.total_satang),meta(r)).net;}catch(_){return 0;}}
@@ -78,7 +85,8 @@ function signRow(r,s,dateValue=''){return '<div class="sign-grid">'+sign(officer
 function memo(r,s,title,body,signatureHtml,cls=''){const m=meta(r);const numberKey=cls==='gov-approval'?'approval_memo_number':cls==='gov-payment'?'payment_memo_number':'memo_number';const prefix=m.memo_prefix||s.memo_prefix;const no=numberKey==='memo_number'?renderMemoReference(prefix,m[numberKey]):(normalizeMemoNumber(m[numberKey],prefix)||'........../........');
  // Payment memo heading date may be selected explicitly; otherwise it remains blank.
  // Its assigned official number remains automatic, including for old records.
- const headingDate=cls==='gov-payment'?(m.payment_document_date?'<span class="memo-value">'+thaiDate(m.payment_document_date)+'</span>':'<span class="memo-value kp-payment-date-writein" aria-label="เว้นวันที่ให้ฝ่ายการเงินเขียนเอง"></span>'):'<span class="memo-value">'+thaiDate(r.document_date)+'</span>';
+ const hdate=cls==='gov-payment'?paymentHeaderDate(r):cls==='gov-approval'?approvalHeaderDate(r):requestHeaderDate(r);
+ const headingDate=hdate?'<span class="memo-value">'+thaiDate(hdate)+'</span>':(cls==='gov-payment'?'<span class="memo-value kp-payment-date-writein" aria-label="เว้นวันที่ให้ฝ่ายการเงินเขียนเอง"></span>':'<span class="memo-value">'+blank+'</span>');
  return '<section class="paper-page official gov-doc memo-page '+cls+'"><div class="doc-sheet-body">'+
  '<div class="memo-top"><img class="garuda-emblem" src="/garuda-memo.svg" alt="ตราครุฑ"><h1>บันทึกข้อความ</h1></div>'+
  '<div class="memo-field memo-field-agency"><strong>ส่วนราชการ</strong><span class="memo-value">'+department(s)+'</span></div>'+
@@ -90,7 +98,7 @@ function page(title,body,cls=''){return '<section class="paper-page official gov
 function lawLine(text){return '<p class="gov-law">'+e(text)+'</p>';}
 function dataHead(r,s,kind){const m=meta(r),isAcceptance=kind==='acceptance';
  const number=isAcceptance?(m.acceptance_number||'ร. ........../'+String((Number(String(r.document_date||'').slice(0,4))||2026)+543)):(m.requisition_number||blank);
- const date=isAcceptance?(m.acceptance_date||m.inspection_date||m.delivery_date):(m.requisition_date||m.delivery_date);
+ const date=isAcceptance?acceptanceHeaderDate(r):requisitionHeaderDate(r);
  return '<div class="gov-right-head"><div>'+(isAcceptance?'ใบตรวจรับ เลขที่':'ใบเบิก เลขที่')+' '+v(number)+'</div><div>วันที่ '+(date?thaiDate(date):blank)+'</div><div>ส่วนราชการ '+e(s.name||'โรงเรียน')+'</div><div>ที่อยู่ '+schoolAddress(s)+'</div></div>';
 }
 function itemTable(r,kind='annex',height=85){
@@ -134,7 +142,7 @@ const body=line+'<p class="indent">งานพัสดุได้ตรวจ
 return memo(r,s,title,body,signRow(r,s,signingDate(r,'sign_request_date',r.document_date))+directorSign(r,s,'เห็นชอบ<br>อนุมัติ',signingDate(r,'sign_request_date',r.document_date)),'gov-request');}
 function annex(r,s,buy){const noun=buy?'พัสดุที่จะซื้อ':'งานจ้าง',subject=buy?'รายงานขอซื้อ':'รายงานขอจ้าง',chunks=pageChunks(r.items,officialPageSize(r));
  return chunks.map((part,i)=>page('รายละเอียดของ'+noun+' แนบท้าย'+subject,
- lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560')+'<p class="gov-law gov-law-second">ข้อ 22 วรรคหนึ่ง (2) และข้อ 22 วรรคสอง</p>'+
+ (annexHeaderDate(r)?'<div class="gov-annex-heading-date">วันที่ '+thaiDate(annexHeaderDate(r))+'</div>':'')+lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560')+'<p class="gov-law gov-law-second">ข้อ 22 วรรคหนึ่ง (2) และข้อ 22 วรรคสอง</p>'+
  '<p class="gov-count">จำนวน'+(buy?'พัสดุ':'งานจ้าง')+' '+(r.items||[]).length+' รายการ'+(chunks.length>1?' (หน้าที่ '+(i+1)+'/'+chunks.length+')':'')+'</p>'+
  itemTable({...r,items:part.items,__item_offset:part.offset,__show_totals:i===chunks.length-1},'annex',fillerHeight(part.items,90,9))+
  '<div class="gov-annex-sign">'+signRow(r,s,signingDate(r,'sign_annex_date',signingDate(r,'sign_request_date',r.document_date)))+'</div>','gov-annex')).join('');
@@ -151,7 +159,7 @@ return memo(r,s,'รายงานผลการพิจารณาและ
 function acceptance(r,s,buy){const noun=buy?'พัสดุ':'งานจ้าง',vendor=v(r.vendor_name),m=meta(r);const dd= r.due_date?thaiDate(r.due_date):blank;
 const body=lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 175')+
  dataHead(r,s,'acceptance')+
- '<p class="indent">ตามที่ '+e(s.name||'โรงเรียน')+' ได้'+(buy?'จัดซื้อพัสดุ':'จัดจ้าง')+' จำนวน '+(r.items||[]).length+' รายการ จาก '+vendor+' ตาม'+(buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง')+'เลขที่ '+v(m.order_number)+' ลงวันที่ '+(m.order_date?thaiDate(m.order_date):blank)+' ผู้ตรวจรับได้ดำเนินการตรวจรับ'+noun+' ตามรายละเอียด ดังนี้</p>'+
+ '<p class="indent">ตามที่ '+e(s.name||'โรงเรียน')+' ได้'+(buy?'จัดซื้อพัสดุ':'จัดจ้าง')+' จำนวน '+(r.items||[]).length+' รายการ จาก '+vendor+' ตาม'+(buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง')+'เลขที่ '+v(m.order_number)+' ลงวันที่ '+(orderHeaderDate(r)?thaiDate(orderHeaderDate(r)):blank)+' ผู้ตรวจรับได้ดำเนินการตรวจรับ'+noun+' ตามรายละเอียด ดังนี้</p>'+
  '<ol class="gov-numbered gov-inspection-list"><li>'+noun+'ครบกำหนดส่งมอบในวันที่ '+dd+'</li>'+
  '<li>ผู้'+(buy?'ขาย':'รับจ้าง')+' ทำการส่งมอบเมื่อวันที่ '+(m.delivery_date?thaiDate(m.delivery_date):blank)+' ณ '+v(m.inspection_location,'สถานที่ส่งมอบตามเอกสาร')+'</li>'+
  '<li>ได้ทำการตรวจรับตามใบส่งของ/ใบสำคัญรับเงิน/ใบเสร็จรับเงิน เลขที่ '+v(m.invoice_number)+' ลงวันที่ '+(m.invoice_date?thaiDate(m.invoice_date):blank)+'</li>'+
@@ -165,7 +173,7 @@ const body=lawLine('ตามระเบียบกระทรวงการ
  '<div class="gov-inspection-bottom">'+signRow(r,s,signingDate(r,'sign_acceptance_date'))+directorSign(r,s,'เห็นชอบ<br>อนุมัติ',signingDate(r,'sign_acceptance_date'))+'</div>';
 return page('ใบตรวจรับ'+noun,body,'gov-acceptance');}
 function payment(r,s,buy){const verb=buy?'ซื้อ':'จ้าง',noun=buy?'พัสดุ':'งานจ้าง',m=meta(r),vendor=v(r.vendor_name);
-const body='<p class="indent">ตามที่ได้อนุมัติให้'+(buy?'จัดซื้อพัสดุ':'จัดจ้าง')+' จำนวน '+(r.items||[]).length+' รายการ จาก '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ตาม'+(buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง')+'เลขที่ '+v(m.order_number)+' ลงวันที่ '+(m.order_date?thaiDate(m.order_date):blank)+' ซึ่งครบกำหนดส่งมอบเมื่อวันที่ '+(r.due_date?thaiDate(r.due_date):blank)+' นั้น</p>'+
+const body='<p class="indent">ตามที่ได้อนุมัติให้'+(buy?'จัดซื้อพัสดุ':'จัดจ้าง')+' จำนวน '+(r.items||[]).length+' รายการ จาก '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ตาม'+(buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง')+'เลขที่ '+v(m.order_number)+' ลงวันที่ '+(orderHeaderDate(r)?thaiDate(orderHeaderDate(r)):blank)+' ซึ่งครบกำหนดส่งมอบเมื่อวันที่ '+(r.due_date?thaiDate(r.due_date):blank)+' นั้น</p>'+
  '<p class="indent">บัดนี้ ผู้'+(buy?'ขาย':'รับจ้าง')+'ได้ส่งมอบ'+noun+' ตามใบส่งของ/ใบเสร็จ เลขที่ '+v(m.invoice_number)+' ลงวันที่ '+(m.invoice_date?thaiDate(m.invoice_date):blank)+' ผู้ตรวจรับ'+noun+'ได้ทำการตรวจรับ'+noun+'ไว้แล้ว ปรากฏว่าครบถ้วนถูกต้อง เมื่อวันที่ '+((m.inspection_date||m.delivery_date)?thaiDate(m.inspection_date||m.delivery_date):blank)+' ดังหลักฐานการตรวจรับที่แนบ</p>'+
  '<p class="indent">จึงเรียนมาเพื่อโปรด</p><ol class="gov-numbered"><li>ทราบผลการตรวจรับ'+noun+'</li>'+
  '<li>อนุมัติจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+payableAmount(r)+' บาท ('+e(thaiBahtText(paymentNetSatang(r)))+') รายละเอียดดังนี้</li></ol>'+
@@ -223,7 +231,7 @@ function orderForm(r,s,buy){
    '<div>ชื่อบัญชี '+v(m.order_bank_account_name)+'</div>'+
    '<div>ธนาคาร '+v(m.order_bank_name)+'</div></div><div class="order-school">'+
    '<div>'+title+' เลขที่ '+v(m.order_number)+'</div>'+
-   '<div>วันที่ '+(m.order_date?thaiDate(m.order_date):blank)+'</div>'+
+   '<div>วันที่ '+(orderHeaderDate(r)?thaiDate(orderHeaderDate(r)):blank)+'</div>'+
    '<div>ส่วนราชการ '+schoolName+'</div>'+
    '<div>ที่อยู่ '+schoolAddress(s)+'</div></div></div>'+
    '<p class="order-introduction">ตามที่ '+v(r.vendor_name)+' ได้เสนอราคาให้ต่อ '+schoolName+
