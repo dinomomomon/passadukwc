@@ -24,6 +24,8 @@ test('every dated purchase/hire document has independently editable header and s
   if(kind==='hire')assert.doesNotMatch(editor,/name="doc_requisition_date"/);
  }
  assert.match(docMetaDateInputs({},'purchase'),/วันที่หัวเอกสารและวันที่ลงนาม/);
+ const info=docMetaInputs({}, {kind:'purchase'});
+ assert.match(info,/หากพิมพ์แล้วยังมีเส้นประ/);
 });
 test('previously saved signature dates populate missing document header dates without inventing entries in database',()=>{
  const m={sign_request_date:'2026-10-26',sign_approval_date:'2026-10-26',sign_acceptance_date:'2026-10-28',sign_requisition_date:'2026-10-28',order_school_sign_date:'2026-10-26'};

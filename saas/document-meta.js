@@ -58,13 +58,13 @@ export function docMetaInputs(meta={},options={}){
  const mode=typeof options==='string'?options:(options.mode||'all');
  const kind=typeof options==='string'?'purchase':(options.kind||'purchase');
  if(mode==='create')return '<div class="form-grid">'+primaryDocumentFields.filter(f=>f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta)).join('')+(kind==='purchase'?fieldHtml(['requisition_number','ใบเบิกพัสดุ เลขที่ (กรอกได้ เช่น จ. 218/2569)'],meta):'')+'</div><p class="hint">รหัสตามหมวดที่โรงเรียนกำหนดเลือกจากขั้นที่ 1 รายงานผลการพิจารณาและทราบผลและขออนุมัติเบิกจ่ายออกเลขที่จากทะเบียนอัตโนมัติ ส่วนวันที่หัวหนังสือเบิกจ่ายและวันที่ลงนามเลือกได้ในขั้นตอนนี้ หากไม่ระบุจะเว้นว่างไว้ให้กรอกภายหลัง</p>'; 
- const main='<section class="doc-meta-section"><h3>เลขที่หนังสือและตำแหน่งผู้ตรวจรับ</h3><p class="hint">เลขที่ทราบผลและขออนุมัติเบิกจ่ายออกอัตโนมัติตามทะเบียน ส่วนวันที่บนหัวกระดาษของฉบับนี้เลือกได้ในหัวข้อวันที่ลงนาม หากไม่ระบุจะเว้นให้ฝ่ายการเงินกรอกภายหลัง</p><div class="form-grid">'+primaryDocumentFields.filter(f=>kind==='purchase'||f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta,options.categories)).join('')+'</div></section>';
+ const main='<section class="doc-meta-section"><h3>เลขที่หนังสือและตำแหน่งผู้ตรวจรับ</h3><p class="hint">เลขที่ทราบผลและขออนุมัติเบิกจ่ายออกอัตโนมัติตามทะเบียน วันที่หัวกระดาษและวันที่ลงนามเลือกแยกกันได้ทุกฉบับในหัวข้อถัดไป โดยไม่เปลี่ยนวันที่และเลขทะเบียนดั้งเดิม</p><div class="form-grid">'+primaryDocumentFields.filter(f=>kind==='purchase'||f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta,options.categories)).join('')+'</div></section>';
  const signatureSection=docMetaDateInputs(meta,kind);
  const sections=documentInfoGroups.filter(g=>kind==='purchase'||g.id!=='requisition').map(g=>{
   const extra=g.advanced?.length?'<details class="doc-meta-advanced"><summary>กรณีพิเศษ / ข้อมูลเพิ่มเติม</summary><div class="form-grid">'+g.advanced.map(f=>fieldHtml(f,meta)).join('')+'</div></details>':'';
   return '<details class="doc-meta-section" '+(g.id==='order'?'open':'')+'><summary>'+e(g.title)+'</summary><p class="hint">'+e(g.description)+'</p><div class="form-grid">'+g.fields.map(f=>fieldHtml(f,meta)).join('')+'</div>'+extra+'</details>';
  }).join('');
- return main+signatureSection+sections+'<p id="registry-help" class="hint">เลขที่เอกสารออกอัตโนมัติและแก้ผ่านเมนูทะเบียนคุมเลขเท่านั้น เพื่อป้องกันเลขซ้ำ</p><p class="hint">ใช้รหัสตามหมวดเฉพาะรายงานขอซื้อ/ขอจ้าง เอกสารฉบับอื่นใช้เลขหลังคำว่า ที่ เท่านั้น ยอดเงินรวมและกิจกรรม/โครงการเชื่อมจากข้อมูลหลัก ส่วนยอดเบิกจ่ายคำนวณอัตโนมัติเมื่อไม่กรอกยอดสุทธิเอง</p>';
+ return main+signatureSection+sections+'<p id="registry-help" class="hint">เลขที่เอกสารออกอัตโนมัติและแก้ผ่านเมนูทะเบียนคุมเลขเท่านั้น เพื่อป้องกันเลขซ้ำ</p><p class="hint">หากพิมพ์แล้วยังมีเส้นประที่เลขใบสั่ง/ใบตรวจรับ/ใบเบิก กรุณาตรวจว่าได้กรอกเลขใบสั่งจริงหรือออกเลขจากทะเบียนคุมแล้ว วันที่ลงนามไม่ใช่เลขหนังสือและไม่ออกเลขทะเบียนให้อัตโนมัติ</p><p class="hint">ใช้รหัสตามหมวดเฉพาะรายงานขอซื้อ/ขอจ้าง เอกสารฉบับอื่นใช้เลขหลังคำว่า ที่ เท่านั้น ยอดเงินรวมและกิจกรรม/โครงการเชื่อมจากข้อมูลหลัก ส่วนยอดเบิกจ่ายคำนวณอัตโนมัติเมื่อไม่กรอกยอดสุทธิเอง</p>';
 }
 /**
  * Optional evidence panels in the 4-step procurement wizard.
@@ -99,7 +99,7 @@ export function docMetaWizardInputs(meta={},step=3,kind='purchase'){
  };
  if(Number(step)===3){
   return '<div class="kp-evidence-panel">'+section('ข้อมูลใบสั่ง'+(kind==='hire'?'จ้าง':'ซื้อ')+' (ถ้าออกแล้ว)',
-   'เลขที่ใบสั่งและวันที่ต้องตรงกับเอกสารจริง ไม่ใช่เลขรายงานขอซื้อ/ขอจ้าง หากยังไม่ออกใบสั่ง ให้เว้นว่างไว้แล้วมาแก้ไขในเมนูข้อมูลเอกสารได้ภายหลัง',orderFields,'order')+'</div>';
+   'เลขที่ใบสั่งต้องตรงกับเอกสารจริง ไม่ใช่เลขรายงานขอซื้อ/จ้าง วันที่ใบสั่งซื้อ/จ้างเลือกได้ในขั้นที่ 4 พร้อมวันที่ลงนาม หากยังไม่ออกเอกสารสามารถเว้นไว้ได้',orderFields,'order')+'</div>';
  }
  if(Number(step)===4){
   return '<div class="kp-evidence-panel">'+docMetaDateInputs(meta,kind)+'<h3>ข้อมูลสำหรับเติมเอกสารตรวจรับและเบิกจ่าย</h3>'+
