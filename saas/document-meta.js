@@ -98,7 +98,18 @@ export function docMetaWizardInputs(meta={},step=3,kind='purchase'){
    '<div class="form-grid">'+fields.map(f=>fieldHtml(f,meta)).join('')+'</div></details>';
  };
  if(Number(step)===3){
-  return '<div class="kp-evidence-panel">'+section('ข้อมูลใบสั่ง'+(kind==='hire'?'จ้าง':'ซื้อ')+' (ถ้าออกแล้ว)',
+  // The requisition requester is the actual person withdrawing supplies.
+  // Show these fields directly, not inside the optional order-data accordion.
+  // Both create and edit wizards share the saved document_meta keys.
+  const requesterFields=kind==='purchase'?
+   '<section class="kp-requisition-requester"><h3>ข้อมูลผู้เบิกพัสดุ (สำหรับใบเบิกพัสดุ)</h3>'+
+   '<p class="hint">กรอกชื่อผู้เบิกจริง ไม่ใช่ชื่อผู้ขาย ผู้ตรวจรับ หรือเจ้าหน้าที่พัสดุ ระบบจะนำไปแสดงใต้ช่องลงชื่อ “ผู้เบิก” ในใบเบิกพัสดุ สามารถกลับมาแก้ไขภายหลังได้</p>'+
+   '<div class="form-grid">'+[
+    ['requester_name','ชื่อผู้เบิกพัสดุ'],
+    ['requester_position','ตำแหน่งผู้เบิก (ถ้ามี)']
+   ].map(f=>fieldHtml(f,meta)).join('')+'</div></section>':'';
+  return '<div class="kp-evidence-panel">'+requesterFields+
+   section('ข้อมูลใบสั่ง'+(kind==='hire'?'จ้าง':'ซื้อ')+' (ถ้าออกแล้ว)',
    'เลขที่ใบสั่งต้องตรงกับเอกสารจริง ไม่ใช่เลขรายงานขอซื้อ/จ้าง วันที่ใบสั่งซื้อ/จ้างเลือกได้ในขั้นที่ 4 พร้อมวันที่ลงนาม หากยังไม่ออกเอกสารสามารถเว้นไว้ได้',orderFields,'order')+'</div>';
  }
  if(Number(step)===4){
