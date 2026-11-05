@@ -25,7 +25,7 @@ async function loadSupabaseSdk(){
 }
 const {createClient}=await loadSupabaseSdk();
 import {SUPABASE_URL,SUPABASE_KEY} from './config.js';
-import {buildDocuments,escapeHtml as e,normalizeMemoPrefix} from './print.js';
+import {buildDocuments,escapeHtml as e,normalizeMemoPrefix,OFFICIAL_ITEMS_PER_PAGE} from './print.js';
 import {docMetaInputs,docMetaValue,docMetaWizardInputs} from './document-meta.js';
 import {calculatePricing,savedPricing,formatSatang} from './tax-calculator.js';
 import {schoolProcurementCategories,validateSchoolProcurementCategories,requestPrefixOptions,MAX_SCHOOL_CATEGORIES} from './procurement-categories.js';
@@ -666,17 +666,27 @@ async function printOfficialDocuments(){
   // Long item descriptions can consume a different number of A4 rows.
   // Rebuild COMPLETE forms at progressively smaller page sizes. Every
   // continuation retains the original heading, legal citation and signers.
-  for(const count of [10,9,8,7,6,5,4,3,2,1]){
-   root.innerHTML=applyDocumentTemplates(buildDocuments({...state.currentRecord,__items_per_page:count},state.school),liveTemplateLayouts(state.currentRecord),state.currentRecord,state.school);
+  const perFormLimit={annex:OFFICIAL_ITEMS_PER_PAGE,order:OFFICIAL_ITEMS_PER_PAGE,requisition:OFFICIAL_ITEMS_PER_PAGE};
+  // A long order must not split an 8-item annex into an unnecessary 7+1.
+  // Reduce only the specific document type that fails the actual A4 fit check.
+  for(let attempt=0;attempt<=OFFICIAL_ITEMS_PER_PAGE*3;attempt++){
+   root.innerHTML=applyDocumentTemplates(
+    buildDocuments({...state.currentRecord,__items_per_page_by_form:perFormLimit},state.school),
+    liveTemplateLayouts(state.currentRecord),state.currentRecord,state.school);
    failures=[];
    for(const page of [...root.querySelectorAll('.paper-page.official.gov-doc')]){
     if(!fitSheet(page)){
      const title=page.querySelector('.memo-field-subject .memo-value,.print-title')?.textContent?.trim()||'เอกสาร';
-     failures.push({title,items:page.classList.contains('gov-annex')||page.classList.contains('gov-requisition')||page.classList.contains('gov-order')});
+     const itemForm=page.classList.contains('gov-annex')?'annex':
+      page.classList.contains('gov-requisition')?'requisition':
+      page.classList.contains('gov-order')?'order':null;
+     failures.push({title,itemForm});
     }
    }
    if(!failures.length)break;
-   if(failures.some(f=>!f.items))break;
+   const failedTypes=[...new Set(failures.map(f=>f.itemForm))];
+   if(failedTypes.includes(null)||failedTypes.some(type=>perFormLimit[type]<=1))break;
+   for(const type of failedTypes)perFormLimit[type]--;
   }
   if(failures.length){
    root.innerHTML='';return notify('เอกสารมีข้อความมากเกินพื้นที่ A4: '+failures.map(f=>f.title).join(', ')+' กรุณาลดข้อความที่ยาวมากเพื่อป้องกันลายเซ็นถูกตัด',true);

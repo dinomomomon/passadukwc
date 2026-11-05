@@ -126,9 +126,12 @@ function itemTable(r,kind='annex',height=85){
 }
 // Official annexes and requisition forms preserve their entire printed A4 form.
 // A page may contain fewer rows when long descriptions require more space.
-export const OFFICIAL_ITEMS_PER_PAGE=10;
-function officialPageSize(record){
- return Math.max(1,Math.min(OFFICIAL_ITEMS_PER_PAGE,Math.trunc(Number(record.__items_per_page)||OFFICIAL_ITEMS_PER_PAGE)));
+export const OFFICIAL_ITEMS_PER_PAGE=15;
+function officialPageSize(record,form='annex'){
+ // Numeric overrides still work for older callers. A longer purchase order
+ // must not force an annex or requisition to use its lower page limit.
+ const selected=record.__items_per_page_by_form?.[form]??record.__items_per_page;
+ return Math.max(1,Math.min(OFFICIAL_ITEMS_PER_PAGE,Math.trunc(Number(selected)||OFFICIAL_ITEMS_PER_PAGE)));
 }
 function pageChunks(items,size){const all=Array.isArray(items)?items:[],chunks=[];for(let i=0;i<all.length;i+=size)chunks.push({items:all.slice(i,i+size),offset:i});return chunks.length?chunks:[{items:[],offset:0}];}
 function fillerHeight(items,baseline,perItem){const arr=items||[],lines=arr.reduce((n,x)=>n+Math.max(0,Math.ceil(String(x.name||'').length/55)-1),0);return Math.max(0,baseline-Math.max(0,arr.length-1)*perItem-lines*7);}
@@ -149,7 +152,7 @@ const body=line+'<p class="indent">งานพัสดุได้ตรวจ
  '<ol class="gov-numbered"><li>เห็นชอบในรายงานขอ'+verb+'ดังกล่าวข้างต้น</li>'+
  '<li>อนุมัติให้แต่งตั้ง '+v(r.inspector_name)+' ตำแหน่ง '+v(meta(r).inspector_position)+' เป็นผู้ตรวจรับ'+item+'</li></ol>';
 return memo(r,s,title,body,signRow(r,s,signingDate(r,'sign_request_date',r.document_date))+directorSign(r,s,'เห็นชอบ<br>อนุมัติ',signingDate(r,'sign_request_date',r.document_date)),'gov-request');}
-function annex(r,s,buy){const noun=buy?'พัสดุที่จะซื้อ':'งานจ้าง',subject=buy?'รายงานขอซื้อ':'รายงานขอจ้าง',chunks=pageChunks(r.items,officialPageSize(r));
+function annex(r,s,buy){const noun=buy?'พัสดุที่จะซื้อ':'งานจ้าง',subject=buy?'รายงานขอซื้อ':'รายงานขอจ้าง',chunks=pageChunks(r.items,officialPageSize(r,'annex'));
  return chunks.map((part,i)=>page('รายละเอียดของ'+noun+' แนบท้าย'+subject,
  (annexHeaderDate(r)?'<div class="gov-annex-heading-date">วันที่ '+thaiDate(annexHeaderDate(r))+'</div>':'')+lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560')+'<p class="gov-law gov-law-second">ข้อ 22 วรรคหนึ่ง (2) และข้อ 22 วรรคสอง</p>'+
  '<p class="gov-count">จำนวน'+(buy?'พัสดุ':'งานจ้าง')+' '+(r.items||[]).length+' รายการ'+(chunks.length>1?' (หน้าที่ '+(i+1)+'/'+chunks.length+')':'')+'</p>'+
@@ -218,7 +221,7 @@ const approvalPart='<div class="gov-payment-director">'+
  signatureBlock(director(r,s),'',true,{kind:'payment',schoolName:s.name||'โรงเรียน',dateValue:signingDate(r,'sign_payment_date')})+
  '</div></div>';
 return memo(r,s,'ทราบผลและขออนุมัติเบิกจ่าย',body,approvalPart,'gov-payment');}
-function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name),chunks=pageChunks(r.items,officialPageSize(r));
+function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v(m.issuer_name,s.head_name?e(s.head_name):blank),receiver=v(m.receiver_name||m.delegate_name),chunks=pageChunks(r.items,officialPageSize(r,'requisition'));
  return chunks.map((part,i)=>{
  const top=lawLine('ตามระเบียบกระทรวงการคลัง ว่าด้วยการจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560 ข้อ 204 และ ข้อ 205')+
  dataHead(r,s,'requisition')+
@@ -236,7 +239,7 @@ function requisition(r,s){const m=meta(r),requester=v(m.requester_name),issuer=v
  record and actual order data; blanks remain blank until entered. */
 function orderForm(r,s,buy){
  const m=meta(r),title=buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง',party=buy?'ผู้ขาย':'ผู้รับจ้าง',item=buy?'พัสดุ':'งานจ้าง';
- const chunks=pageChunks(r.items,officialPageSize(r)),schoolName=e(s.name||'โรงเรียน');
+ const chunks=pageChunks(r.items,officialPageSize(r,'order')),schoolName=e(s.name||'โรงเรียน');
  return chunks.map((part,pageIndex)=>{
   const last=pageIndex===chunks.length-1;
   const header='<div class="order-heading"><img class="order-garuda" src="/garuda-memo.svg" alt="ตราครุฑ"><h2 class="print-title">'+title+'</h2></div>'+
