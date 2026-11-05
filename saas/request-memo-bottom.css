@@ -1,0 +1,13 @@
+/* Scope: only the LOWER edge of the request memo; never alter header/side spacing.
+   The fixed A4 page, body text and signature hierarchy are unchanged. */
+.paper-page.official.gov-doc.gov-request{
+ padding-bottom:10mm;
+}
+body.print-measuring #print-area .paper-page.official.gov-doc.gov-request{
+ padding-bottom:10mm!important;
+}
+@media print{
+ #print-area .paper-page.official.gov-doc.gov-request{
+  padding-bottom:10mm!important;
+ }
+}

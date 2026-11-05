@@ -26,7 +26,8 @@ test('editor field, preview drag and publishing all honor the same request-speci
  const editor=await readFile(new URL('./template-builder.js',import.meta.url),'utf8');
  const app=await readFile(new URL('./app.js',import.meta.url),'utf8');
  assert.match(editor,/signatureVerticalLimit\(activeSignature,selected\)/);
- assert.match(editor,/max="\'+maxSignatureY\+/);
+ assert.match(editor,/data-tpl-field="signatureY"/);
+ assert.match(editor,/maxSignatureY/);
  assert.match(editor,/safeSignatureOffset\(\{x:now\.x\+x,y:now\.y\+y\},id,selected\)/);
  assert.match(editor,/applySignatureOffsets\(section,t\.signatureOffsets,key\)/);
  assert.match(app,/classList\.contains\('gov-request'\)\?30:15/);
@@ -34,7 +35,7 @@ test('editor field, preview drag and publishing all honor the same request-speci
  assert.match(app,/Math\.min\(drag\.maxY,/);
 });
 test('request only gets five millimetres more bottom space in editor, fit check and print',async()=>{
- const css=await readFile(new URL('./government-forms.css',import.meta.url),'utf8');
+ const css=await readFile(new URL('./request-memo-bottom.css',import.meta.url),'utf8');
  const end=css.slice(css.indexOf('Only request memos gain an extra 5mm'));
  assert.match(end,/\.paper-page\.official\.gov-doc\.gov-request\{\s*padding-bottom:10mm;/);
  assert.match(end,/body\.print-measuring #print-area \.paper-page\.official\.gov-doc\.gov-request\{\s*padding-bottom:10mm!important;/);
