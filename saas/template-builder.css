@@ -1,0 +1,177 @@
+
+/* Per-school official-document layout builder. A4 preview uses print styling. */
+.te-header{display:flex;flex-direction:column;gap:12px;padding:16px!important;margin-bottom:15px}
+.te-tabs{display:flex;gap:7px;flex-wrap:wrap}
+.te-tabs>button{font-size:12px;padding:9px 12px;max-width:255px;white-space:normal;text-align:left;line-height:1.4}
+.te-actions{display:flex;justify-content:flex-end;align-items:center;gap:9px;flex-wrap:wrap}
+.te-actions small{margin-right:auto;color:#5a7694}
+.te-actions button{padding:9px 13px;font-size:12px}
+.te-builder{display:grid;grid-template-columns:minmax(310px,380px) minmax(0,1fr);gap:16px;align-items:start}
+.te-pane,.te-right{min-width:0;background:#fff;border:1px solid #d7e4f6;border-radius:16px;padding:16px;box-shadow:0 4px 18px rgba(17,70,130,.045)}
+.te-pane{display:flex;flex-direction:column;gap:9px}
+.te-pane-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.te-pane-title h2{margin:0;font-size:16px;color:#0e3c7c}
+.te-pane .hint{margin:2px 0;color:#5f7898;font-size:12px;line-height:1.55}
+.te-block-list{padding:0;margin:4px 0 12px;display:flex;flex-direction:column;gap:7px;list-style:none;max-height:330px;overflow:auto}
+.te-block{display:flex;align-items:center;background:#f6f9ff;border:1px solid #e0eafd;border-radius:10px;padding:4px 6px;cursor:grab;gap:3px}
+.te-block.te-selected{border-color:#277adf;background:#eaf2ff}
+.te-block:active{cursor:grabbing}
+.te-block-open{flex:1 1 auto;min-width:0;background:transparent;border:0;color:#174778;font:600 12px/1.5 Sarabun,sans-serif;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;padding:7px 4px}
+.te-drag-handle{font-size:19px;margin-right:7px;color:#6e92b9;vertical-align:middle}
+.te-block-btns{display:flex;gap:2px}
+.te-block-btns button{padding:4px 8px;min-width:26px}
+.te-newblock{display:flex;gap:6px;align-items:center}
+.te-newblock select{flex:1}
+.te-newblock button{flex-shrink:0}
+.te-fields{display:flex;flex-direction:column;gap:8px;border-top:1px solid #dce8f5;padding-top:12px}
+.te-fields>label{font-size:12px;font-weight:700;color:#174778}
+.te-fields .input{width:100%;font-size:13px}
+.te-field-title{font-size:14px;font-weight:700;border-top:1px solid #e4ecf6;padding-top:12px;margin-top:6px;color:#174778}
+.te-style-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+.te-style-controls label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#174778}
+.te-style-controls label:last-child{display:flex;flex-direction:row;align-items:center;grid-column:span 2}
+.te-style-controls input[type=checkbox]{width:17px;height:17px}
+.te-fields details{font-size:12px;color:#174778;padding-top:10px;border-top:1px solid #eef2fa}
+.te-fields summary{cursor:pointer;font-weight:700}
+.te-vars{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.te-vars button{font-size:11px;display:flex;flex-direction:column;gap:1px;padding:5px 9px}
+.te-vars small{color:#6582a0;font-size:10px}
+.te-preview-caption{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#153f80;margin-bottom:15px}
+.te-preview-caption span{font-size:11px;color:#7994ae}
+.te-preview-scroll{overflow:auto;background:#e6edf7;border-radius:12px;padding:20px;min-height:550px;max-height:920px}
+#te-print-preview{transform-origin:top left;zoom:.8;width:210mm;min-width:210mm}
+#te-print-preview>.paper-page{margin:0!important;box-shadow:0 5px 22px #8da5bd7d!important;background:#fff!important}
+#te-print-preview .te-extra-block{white-space:pre-wrap;overflow-wrap:break-word}
+.te-extra-block{break-inside:avoid;page-break-inside:avoid;margin:2.2mm 0;color:#111;line-height:1.4;white-space:pre-wrap;overflow-wrap:break-word}
+.te-extra-heading{line-height:1.2}
+.te-extra-note{border-left:2px solid #71839c;padding-left:3mm;font-style:italic}
+.te-extra-divider hr{border:0;border-top:1px solid #222;margin:3mm 0}
+.te-right>.alert{margin-top:14px}
+.te-history{margin-top:16px}
+.te-history h2{font-size:15px}
+.te-history .row{border-top:1px solid #e7eff9;padding:10px 0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+@media(max-width:1050px){.te-builder{grid-template-columns:1fr}.te-pane{max-width:none}.te-preview-scroll{max-height:800px}#te-print-preview{zoom:.73}}
+@media(max-width:600px){.te-header,.te-pane,.te-right{padding:11px!important}.te-actions{justify-content:flex-start}.te-preview-scroll{padding:8px}#te-print-preview{zoom:.52}.te-tabs>button{font-size:11px}}
+#te-print-preview .te-canvas-draggable{cursor:grab;position:relative;outline:1px dashed transparent;outline-offset:1px;transition:outline-color .15s}
+#te-print-preview .te-canvas-draggable:hover{outline-color:#277adf;background:rgba(40,119,222,.045)}
+#te-print-preview .te-canvas-draggable.te-canvas-selected{outline:2px solid #287de4;outline-offset:2px;background:rgba(40,119,222,.07)}
+@media print{.te-builder,.te-pane,.te-header,.te-right{display:none!important}.te-extra-block{break-inside:avoid!important}}
+
+/* Word-like direct editing surface. Only literal fragments are editable.
+   System-dependent names, roles, dates and totals cannot be typed over. */
+#te-print-preview .te-inline-edit{
+ cursor:text!important;
+ border-radius:2px;
+ outline:1px dotted rgba(18,104,215,.2);
+ outline-offset:1px;
+}
+/* Edit text fragments inline without collapsing A4 structural blocks.
+   In particular h2.print-title and p.gov-law must remain block-level
+   and centered exactly as in the printed PDF. */
+#te-print-preview span.te-inline-edit{
+ display:inline;
+ white-space:pre-wrap;
+}
+#te-print-preview [data-template-header].te-inline-edit{
+ display:block;
+ white-space:normal;
+}
+/* Editable director decision supports Enter while preserving print-like line spacing. */
+#te-print-preview [data-template-header="decisionText"].te-inline-edit{
+ display:block;
+ white-space:pre-line;
+ min-height:2em;
+}
+#te-print-preview .te-inline-edit:hover{background:rgba(48,129,229,.085);outline-color:#277ce4}
+#te-print-preview .te-inline-edit:focus{background:#f2f8ff;outline:1.5px solid #146df0!important;box-shadow:0 0 0 3px rgba(37,111,240,.09)}
+#te-print-preview .te-system-locked{
+ cursor:not-allowed;display:inline;color:#195ca2;
+ border-bottom:1px dashed #377eca;background:rgba(40,129,224,.055);
+}
+#te-print-preview .te-system-locked:hover{background:#d9eaff}
+.te-lock-alert{background:#fff2dd;border:1px solid #f5cb7a;padding:10px 12px;font-size:12px;font-weight:600;color:#784305;border-radius:9px;line-height:1.7}
+#te-print-preview .te-signature-handle{cursor:move;outline:1px dashed transparent;outline-offset:2px}
+#te-print-preview .te-signature-handle:hover{outline-color:#2673d2;background:rgba(64,119,211,.04)}
+#te-print-preview .te-signature-handle.te-dragging-signer{outline:2px dashed #155dc3;background:rgba(31,109,230,.09)}
+#te-print-preview .te-signature-handle .signature-name,
+#te-print-preview .te-signature-handle .signature-role,
+#te-print-preview .te-signature-handle .kp-signature-position{cursor:not-allowed}
+#te-print-preview .te-inline-edit{user-select:text;-webkit-user-select:text}
+#te-print-preview .te-signature-handle{user-select:none;-webkit-user-select:none}
+@media print{
+ #print-area .te-inline-edit,#print-area .te-system-locked{
+  outline:0!important;border-bottom:0!important;background:transparent!important;color:inherit!important;
+ }
+ #print-area .te-signature-handle{outline:0!important;background:transparent!important}
+}
+
+/* Accessible Word-style formatting ribbon above the editable A4 sheet */
+.te-word-ribbon{display:flex;align-items:center;flex-wrap:wrap;gap:8px;background:#f5f9ff;border:1px solid #ccdef5;border-radius:10px;padding:10px;margin:0 0 13px}
+.te-word-ribbon strong{font-size:12px;color:#133e77;margin-right:5px}
+.te-word-ribbon .te-ribbon-btn{padding:5px 12px;border:1px solid #adc9e9;background:#fff;color:#153e74;font-family:Sarabun,sans-serif;font-size:16px;font-weight:700;border-radius:6px;min-height:31px;cursor:pointer}
+.te-word-ribbon .te-ribbon-btn:hover{background:#dcecff}
+.te-word-ribbon label{display:flex;gap:6px;align-items:center;font-size:12px}
+.te-word-ribbon select{padding:4px;font-size:12px;min-width:73px}
+.te-word-ribbon small{width:100%;font-size:11px;color:#6884a0}
+
+/* Draft Save is the primary in-editor action, separate from publishing. */
+.te-actions .te-save-draft{
+ background:linear-gradient(135deg,#ff912e 0%,#f47708 55%,#dc5b02 100%);
+ color:#fff;border:1px solid #da6409;border-radius:10px;
+ padding:10px 16px;font-size:13px;font-weight:800;min-height:40px;
+ box-shadow:0 8px 20px rgba(221,101,10,.23);
+ display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ transition:transform .16s,box-shadow .16s,filter .16s;
+}
+.te-actions .te-save-draft:hover{filter:brightness(1.05);transform:translateY(-1px);box-shadow:0 10px 24px rgba(221,101,10,.3)}
+.te-actions .te-save-draft:active{transform:translateY(0)}
+.te-actions .te-save-draft:focus-visible{outline:3px solid #ffc28b;outline-offset:2px}
+
+
+/* Header controls use explicit, reviewable formatting; no silent auto-resize. */
+.te-heading-controls{
+ border:1px solid #dce7f8;
+ background:#f7faff;
+ border-radius:12px;
+ padding:10px 12px;
+ display:grid;
+ gap:9px;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.te-heading-controls>b{
+ grid-column:1/-1;
+ font-size:12px;
+ font-weight:800;
+ color:#154d91;
+}
+.te-heading-controls>label{
+ font-size:11px;
+ color:#31577d;
+ font-weight:700;
+ display:flex;
+ flex-direction:column;
+ gap:4px;
+}
+.te-heading-controls>label:last-child{grid-column:1/-1}
+.te-heading-controls .select{width:100%;max-width:100%;min-width:0;font-size:12px}
+@media (max-width:500px){
+ .te-heading-controls{grid-template-columns:1fr}
+ .te-heading-controls>label{grid-column:1/-1}
+}
+
+
+/* Editing the official master text is opt-in; never overwrite legal references silently. */
+.te-fields .te-copy-master{
+ display:inline-flex;
+ align-items:center;
+ align-self:flex-start;
+ padding:6px 10px;
+ font-size:11px;
+ color:#1554a3;
+ background:#edf5ff;
+ border:1px solid #c8defb;
+ border-radius:8px;
+ white-space:normal;
+ text-align:left;
+}
+.te-fields .te-copy-master:hover{background:#dcecff}

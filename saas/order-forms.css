@@ -1,0 +1,61 @@
+/* Original-style school purchase and hire order, isolated from existing memos. */
+.paper-page.official.gov-doc.gov-order{--doc-size:13.2pt;--doc-leading:1.15;--doc-sign-size:12.8pt;font-size:13.2pt;line-height:1.15}
+.gov-order .order-heading{height:30mm;display:flex;flex-direction:column;align-items:center;gap:1mm}
+.gov-order .order-garuda{width:19mm;height:21mm;object-fit:contain;display:block}
+.gov-order .order-heading .print-title{font-size:19pt;margin:0;line-height:1.05}
+.gov-order .order-parties{display:grid;grid-template-columns:55% 45%;gap:3mm;margin:0 0 2mm;line-height:1.14;font-size:var(--doc-size)}
+.gov-order .order-parties>div{min-width:0;overflow-wrap:break-word}
+.gov-order .order-parties>div>div{min-height:4.1mm}
+.gov-order .order-introduction{margin:1mm 0!important;text-indent:15mm;line-height:1.18!important}
+.gov-order .order-continuation{text-align:center;font-weight:700;margin:1mm 0!important}
+.gov-order .official-table.gov-order-table{width:100%;margin:1.5mm 0 0;border:1px solid #222!important;table-layout:fixed}
+.gov-order .gov-order-table col.col-order{width:7%!important}
+.gov-order .gov-order-table col.col-description{width:42%!important}
+.gov-order .gov-order-table col.col-quantity{width:11%!important}
+.gov-order .gov-order-table col.col-unit{width:8%!important}
+.gov-order .gov-order-table col.col-price{width:15%!important}
+.gov-order .gov-order-table col.col-total{width:17%!important}
+.gov-order .gov-order-table td,.gov-order .gov-order-table th{font:400 var(--doc-size)/1.12 "TH Sarabun New",Sarabun,sans-serif!important;padding:.5mm .6mm!important}
+.gov-order .gov-order-table th{font-weight:700!important;text-align:center;font-size:12.5pt!important;white-space:nowrap}
+.gov-order .gov-order-table tr.gov-data-row td{border-top:0!important;border-bottom:0!important}
+.gov-order .gov-order-table .table-filler td{border-top:0!important;border-bottom:1px solid #222!important}
+/* The original form has one continuous six-column grid; totals must use
+   the same fixed table width and borders, never an independent table/grid. */
+.gov-order .gov-order-table tr.order-totals td,
+.gov-order .gov-order-table tr.order-total-row td{
+ border:1px solid #222!important;
+ vertical-align:middle!important;
+ font-weight:400!important;
+ padding:.4mm 1mm!important;
+}
+.gov-order .gov-order-table td.order-amount-words{
+ text-align:center!important;
+ vertical-align:middle!important;
+ white-space:normal;
+ overflow-wrap:break-word;
+ padding:1mm 1.2mm!important;
+}
+.gov-order .gov-order-table td.order-total-label{
+ text-align:right!important;
+ padding-right:2mm!important;
+ white-space:nowrap;
+}
+.gov-order .gov-order-table td.order-total-value{
+ text-align:right!important;
+ padding-right:1mm!important;
+ white-space:nowrap;
+ font-variant-numeric:tabular-nums;
+}
+.gov-order .order-terms-title{font-weight:700;margin:2mm 0 .8mm}
+.gov-order .order-terms{margin:0 0 1mm!important;padding-left:7mm!important;list-style:decimal outside}
+.gov-order .order-terms li{font:400 var(--doc-size)/1.12 "TH Sarabun New",Sarabun,sans-serif;margin:.3mm 0!important;padding-left:.5mm!important}
+.gov-order .order-signatures{display:flex;flex-direction:column;width:58%;margin:3.5mm 0 0 auto;gap:5mm;break-inside:avoid}
+.gov-order .order-signature{text-align:center;font-size:var(--doc-sign-size);line-height:1.14;break-inside:avoid}
+.gov-order .order-signature>div:first-child{white-space:nowrap}
+.gov-order .order-sign-rule{display:inline-block;width:30mm;height:.8em;vertical-align:baseline;border-bottom:1px dotted #222}
+.gov-order .order-signer-name,.gov-order .order-signer-role,.gov-order .order-signer-date{text-align:center;min-height:3.5mm;margin:.5mm 0 0}
+@media print{
+ #print-area .paper-page.official.gov-doc.gov-order{--doc-size:13.2pt;--doc-sign-size:12.8pt}
+ #print-area .gov-order .order-signatures{break-inside:avoid;page-break-inside:avoid}
+ #print-area .gov-order .gov-order-table thead{display:table-header-group}
+}

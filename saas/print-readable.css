@@ -1,0 +1,234 @@
+/* ครูพัสดุ: แบบพิมพ์ A4 อ่านง่าย — 14pt with comfortable line spacing
+   Applies ONLY to official PDF/print surfaces. No changes to SaaS UI.
+   Designed for user's request to prioritize legibility over compressing text.
+*/
+:root { --official-readable-font: "TH Sarabun New","TH Sarabun PSK","Sarabun","Noto Sans Thai",Tahoma,sans-serif; }
+
+.paper-page.official,
+#print-area .paper-page.official {
+  font-family:var(--official-readable-font);
+  font-size:14pt;
+  line-height:1.38;
+  color:#111;
+  letter-spacing:0;
+  background:#fff;
+  box-sizing:border-box;
+  width:210mm;
+  height:296mm;
+  min-height:0;
+  padding:25mm 20mm 20mm 30mm;
+  overflow:hidden;
+}
+
+.paper-page.official .doc-sheet-body { width:100%; max-width:100%; overflow:visible; }
+
+.paper-page.official .memo-top {
+  height:20mm;
+  margin:0 0 3mm;
+  padding:0;
+  position:relative;
+}
+.paper-page.official .memo-top h1 {
+  text-align:center;
+  font:700 25pt/1.1 var(--official-readable-font);
+  margin:0;
+  padding:0;
+}
+.paper-page.official .garuda-emblem {
+  display:block;
+  left:0;
+  top:0;
+  width:15mm;
+  height:15mm;
+  object-fit:contain;
+}
+.paper-page.official .draft-stamp {
+  top:7mm;
+  right:20mm;
+  font:8pt/1.2 var(--official-readable-font);
+  color:#777;
+}
+.paper-page.official .memo-field {
+  display:grid;
+  grid-template-columns:29mm minmax(0,1fr);
+  align-items:start;
+  gap:2mm;
+  margin:1.3mm 0;
+  font:400 14pt/1.34 var(--official-readable-font);
+  break-inside:avoid;
+}
+.paper-page.official .memo-field strong {
+  display:block;
+  width:auto;
+  min-width:0;
+  flex:none;
+  font:700 14pt/1.34 var(--official-readable-font);
+  white-space:nowrap;
+  word-break:keep-all;
+}
+.paper-page.official .memo-field .memo-value {min-width:0;overflow-wrap:break-word;}
+.paper-page.official .memo-field-number {
+  grid-template-columns:10mm 38mm 17mm minmax(0,1fr);
+  gap:1.5mm;
+}
+.paper-page.official .memo-line {
+  height:0;
+  border:0;
+  border-bottom:1px solid #111;
+  margin:4mm 0 4mm;
+}
+.paper-page.official .memo-field-to { margin-bottom:5mm; }
+
+.paper-page.official p {
+  margin:2mm 0 2.5mm;
+  font:400 14pt/1.40 var(--official-readable-font);
+  color:#111;
+  overflow-wrap:break-word;
+}
+.paper-page.official p.indent {text-indent:20mm;}
+.paper-page.official ol {
+  font:400 14pt/1.40 var(--official-readable-font);
+  margin:3mm 0 3mm;
+  padding-left:9mm;
+}
+.paper-page.official li { margin:1.2mm 0; padding-left:1mm; }
+.paper-page.official .print-title {
+  font:700 19pt/1.28 var(--official-readable-font);
+  text-align:center;
+  margin:0 0 6mm;
+  color:#111;
+}
+.paper-page.official .official-table {
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  border-collapse:collapse;
+  table-layout:fixed;
+  margin:5mm 0 4mm;
+  font:400 14pt/1.26 var(--official-readable-font);
+  border:1px solid #222;
+}
+.paper-page.official .official-table th,
+.paper-page.official .official-table td {
+  border:1px solid #222 !important;
+  padding:1.7mm 1.2mm;
+  font:inherit;
+  color:#111;
+  background:#fff;
+  overflow-wrap:break-word;
+  vertical-align:top;
+}
+.paper-page.official .official-table th {font-weight:700;text-align:center;}
+.paper-page.official .official-table tr {break-inside:avoid;}
+.paper-page.official .official-table-ruled .table-filler td {padding:0 1.2mm;}
+.paper-page.official .signature-writing,
+.paper-page.official .signature-date {
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:2.5mm;
+  font-size:14pt;
+  line-height:1.38;
+  white-space:nowrap;
+}
+.paper-page.official .signature-rule,
+.paper-page.official .date-rule {
+  display:inline-block;
+  border-bottom:1px dotted #333;
+  height:.95em;
+  min-width:0;
+}
+.paper-page.official .signature-rule {width:39mm;max-width:75%;}
+.paper-page.official .date-rule {width:23mm;max-width:64%;}
+.paper-page.official .signature-name,
+.paper-page.official .signature-role {
+  text-align:center;
+  overflow-wrap:break-word;
+  line-height:1.32;
+}
+.paper-page.official .signature-card {
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  min-width:0;
+  gap:.4mm;
+  padding:1mm 0;
+  break-inside:avoid;
+  page-break-inside:avoid;
+  font:400 14pt/1.32 var(--official-readable-font);
+}
+.paper-page.official .sign-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  column-gap:9mm;
+  row-gap:5mm;
+  margin:7mm 0 0;
+  font:400 14pt/1.32 var(--official-readable-font);
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+.paper-page.official .sign-grid-four {margin-top:10mm;row-gap:8mm;}
+.paper-page.official .director-sign {
+  width:65%;
+  margin:8mm 0 0 auto;
+  font:400 14pt/1.32 var(--official-readable-font);
+  text-align:center;
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+.paper-page.official .director-sign .approval-options {
+  display:flex;
+  justify-content:center;
+  gap:3mm;
+  margin:0 0 4mm;
+  font-size:13pt;
+  white-space:nowrap;
+}
+.paper-page.official .inspector-sign {
+  margin:9mm 0 0 auto;
+  width:70%;
+  font:400 14pt/1.32 var(--official-readable-font);
+  text-align:center;
+  break-inside:avoid;
+}
+.paper-page.official .doc-sheet-body .r {text-align:right;}
+.paper-page.official .doc-sheet-body .c {text-align:center;}
+
+/* Print CSS is authoritative and is not affected by visual browser UI theme. */
+body.print-measuring #print-area .paper-page.official {
+  width:210mm!important;
+  height:296mm!important;
+  padding:25mm 20mm 20mm 30mm!important;
+  margin:0!important;
+}
+@page { size:A4; margin:0; }
+@media print {
+  #app {display:none!important;}
+  #print-area {display:block!important;position:static!important;width:210mm!important;}
+  #print-area .paper-page.official {
+    width:210mm!important;
+    height:296mm!important;
+    min-height:0!important;
+    max-height:296mm!important;
+    margin:0!important;
+    padding:25mm 20mm 20mm 30mm!important;
+    overflow:hidden!important;
+    box-shadow:none!important;
+    font:400 14pt/1.38 var(--official-readable-font)!important;
+    break-after:page!important;
+    page-break-after:always!important;
+    print-color-adjust:exact;
+    -webkit-print-color-adjust:exact;
+  }
+  #print-area .paper-page.official:last-child {break-after:auto!important;page-break-after:auto!important;}
+  #print-area .paper-page.official.print-flow {
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    break-inside:auto!important;
+    page-break-inside:auto!important;
+  }
+  #print-area .paper-page.official.print-flow .table-filler {display:none;}
+  #print-area .paper-page.official.print-flow .doc-sheet-body {overflow:visible!important;}
+}
