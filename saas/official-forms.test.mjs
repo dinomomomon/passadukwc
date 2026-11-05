@@ -289,7 +289,7 @@ test('hiring wizard does not ask for a purchasing requisition number',()=>{
  assert.doesNotMatch(docMetaInputs({}, {mode:'all',kind:'hire'}),/name="doc_requisition_number"/);
 });
 test('requisition number entered once prints on all requisition continuation sheets',()=>{
- const record={...sample,items:Array.from({length:12},(_,i)=>({name:'วัสดุที่ '+(i+1),qty:1,unit:'ชุด',price_satang:100})),total_satang:1200,document_meta:{requisition_number:'จ. 218/2569'}};
+ const record={...sample,items:Array.from({length:16},(_,i)=>({name:'วัสดุที่ '+(i+1),qty:1,unit:'ชุด',price_satang:100})),total_satang:1600,document_meta:{requisition_number:'จ. 218/2569'}};
  const html=buildDocuments(record,school);
  assert.equal((html.match(/ใบเบิก เลขที่ จ\. 218\/2569/g)||[]).length,2);
  assert.equal((html.match(/class="gov-requisition-signatures"/g)||[]).length,2);
