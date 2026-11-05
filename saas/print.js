@@ -57,6 +57,15 @@ function payableAmount(r){const n=paymentNetSatang(r);return n===null?'–':cash
 function basePriceAmount(r){const x=savedPricing(r);if(x)return cash(x.base_satang);const m=meta(r);if(numericMoney(m.vat_baht))return baht(Math.max(0,amt(r.total_satang)-Number(m.vat_baht)));return numericMoney(m.item_base_baht)?moneyField(m,'item_base_baht'):cash(r.total_satang);}
 function vatDisplay(r){const x=savedPricing(r);return x?cash(x.vat_satang):moneyField(meta(r),'vat_baht');}
 function discountDisplay(r){return moneyField(meta(r),'discount_baht');}
+/** Never show a fabricated 0.00 balance if the budget does not cover payment. */
+function financeBudgetBalance(r){
+ const m=meta(r);
+ if(!numericMoney(m.budget_total_baht)||!numericMoney(m.budget_paid_baht))return '–';
+ const net=paymentNetSatang(r);
+ if(!Number.isSafeInteger(net)||net<0)return '–';
+ const remaining=Math.round(Number(m.budget_total_baht)*100)-Math.round(Number(m.budget_paid_baht)*100)-net;
+ return Number.isSafeInteger(remaining)&&remaining>=0?cash(remaining):'–';
+}
 function officer(r,s){return v(r.signers?.officer||s.officer_name);}
 function head(r,s){return v(r.signers?.head||s.head_name);}
 function director(r,s){return v(r.signers?.director||s.director_name);}
@@ -185,8 +194,16 @@ const body='<p class="indent">ตามที่ได้อนุมัติ�
  ].map(row=>'<div><span>'+row[0]+'</span><span>'+row[1]+'</span><span>บาท</span></div>').join('')+'</div>'+
 
  '<div class="gov-finance-title">ความเห็นของเจ้าหน้าที่การเงิน</div>'+
- '<p class="indent">ได้ตรวจสอบหลักฐานแล้ว มีเอกสารครบถ้วน และมีเงินตามกิจกรรม/โครงการ '+v(r.budget_source||m.budget_activity||m.budget_project)+' ปีงบประมาณ '+v(r.fiscal_year||m.budget_year)+'</p>'+
- '<p>เป็นเงิน '+moneyField(m,'budget_total_baht')+' บาท จ่ายไปแล้ว '+moneyField(m,'budget_paid_baht')+' บาท จ่ายครั้งนี้ '+payableAmount(r)+' บาท คงเหลืองบประมาณ '+(numericMoney(m.budget_total_baht)&&numericMoney(m.budget_paid_baht)&&paymentNetSatang(r)!==null?baht(Math.max(0,Number(m.budget_total_baht)-Number(m.budget_paid_baht)-paymentNetSatang(r)/100)):'–')+' บาท</p>'+
+ // Keep fiscal year and amount/unit phrases together when a line wraps.
+ '<p class="gov-finance-budget-description">ได้ตรวจสอบหลักฐานแล้ว มีเอกสารครบถ้วน และมีเงินตามกิจกรรม/โครงการ '+
+ '<span class="gov-finance-budget-source">'+v(r.budget_source||m.budget_activity||m.budget_project)+'</span> '+
+ '<span class="gov-finance-budget-year">ปีงบประมาณ '+v(r.fiscal_year||m.budget_year)+'</span></p>'+
+ '<p class="gov-finance-budget-amounts">'+[
+  ['เป็นเงิน',moneyField(m,'budget_total_baht')],
+  ['จ่ายไปแล้ว',moneyField(m,'budget_paid_baht')],
+  ['จ่ายครั้งนี้',payableAmount(r)],
+  ['คงเหลืองบประมาณ',financeBudgetBalance(r)]
+ ].map(([label,amount])=>'<span class="gov-finance-amount-group">'+label+' '+amount+' บาท</span>').join(' ')+'</p>'+
  '<p class="indent">เห็นสมควรอนุมัติเบิกจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+payableAmount(r)+' บาท ('+(paymentNetSatang(r)!==null?e(thaiBahtText(paymentNetSatang(r))):blank)+')</p>'+
  (String(m.finance_note||'').trim()?'<p class="gov-finance-extra-note">หมายเหตุเพิ่มเติม '+v(m.finance_note)+'</p>':'');
 // Original form: approval decisions at left are horizontally aligned with the

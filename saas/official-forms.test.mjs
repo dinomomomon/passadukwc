@@ -314,6 +314,35 @@ test('payment finance note is not redundantly printed and signatures have separa
  assert.match(paymentPage,/class="gov-payment-director"/);
  assert.match(paymentPage,/class="gov-director-position kp-signature-position kp-director-one-line">ผู้อำนวยการโรงเรียนกาวิละวิทยาลัย/);
 });
+test('finance memo keeps fiscal year and monetary amounts as coherent A4 phrases',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const record={...sample,budget_source:'ค่าจัดกิจกรรมการเรียนการสอน',fiscal_year:2569,
+  total_satang:1424000,document_meta:{...sample.document_meta,
+   budget_total_baht:'20000.00',budget_paid_baht:'1000.00'}};
+ const html=buildDocuments(record,school);
+ const start=html.indexOf('class="paper-page official gov-doc memo-page gov-payment"');
+ const page=html.slice(start,html.indexOf('</section>',start));
+ assert.match(page,/class="gov-finance-budget-description"/);
+ assert.match(page,/class="gov-finance-budget-source">ค่าจัดกิจกรรมการเรียนการสอน<\/span>/);
+ assert.match(page,/class="gov-finance-budget-year">ปีงบประมาณ 2569<\/span>/);
+ assert.ok(page.includes('<span class="gov-finance-amount-group">เป็นเงิน 20,000.00 บาท</span>'));
+ assert.ok(page.includes('<span class="gov-finance-amount-group">จ่ายไปแล้ว 1,000.00 บาท</span>'));
+ assert.ok(page.includes('<span class="gov-finance-amount-group">จ่ายครั้งนี้ 14,240.00 บาท</span>'));
+ assert.ok(page.includes('<span class="gov-finance-amount-group">คงเหลืองบประมาณ 4,760.00 บาท</span>'));
+ const css=readFileSync(new URL('./government-forms.css',import.meta.url),'utf8');
+ assert.match(css,/\.gov-finance-budget-year\{[\s\S]*?white-space:nowrap!important/);
+ assert.match(css,/\.gov-finance-amount-group\{[\s\S]*?white-space:nowrap!important/);
+ assert.match(css,/\.gov-payment \.memo-content p\.gov-finance-budget-description\{[\s\S]*?text-indent:4mm!important/);
+});
+test('insufficient budget does not print a misleading 0.00 baht remaining balance',()=>{
+ const record={...sample,fiscal_year:2569,total_satang:1424000,
+  document_meta:{...sample.document_meta,budget_total_baht:'0.00',budget_paid_baht:'0.00'}};
+ const html=buildDocuments(record,school);
+ const start=html.indexOf('class="paper-page official gov-doc memo-page gov-payment"');
+ const page=html.slice(start,html.indexOf('</section>',start));
+ assert.ok(page.includes('<span class="gov-finance-amount-group">คงเหลืองบประมาณ – บาท</span>'));
+ assert.ok(!page.includes('<span class="gov-finance-amount-group">คงเหลืองบประมาณ 0.00 บาท</span>'));
+});
 test('finance notes entered as real values are still available as optional additional notes',()=>{
  const rec={...sample,document_meta:{...sample.document_meta,finance_note:'เอกสารครบถ้วน'}};
  const html=buildDocuments(rec,school);

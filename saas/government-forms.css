@@ -886,3 +886,42 @@ body.print-measuring #print-area .paper-page.official.gov-doc .doc-sheet-body{
 
 /* Optional annex heading date. Legacy annex sheets without a date stay unchanged. */
 .gov-doc.gov-annex .gov-annex-heading-date{text-align:right;font-size:var(--doc-size);line-height:1.15;margin:0 0 1mm}
+
+/* Finance opinion on the payment memo: avoid orphaned fiscal years and
+   broken amount/unit phrases without changing the body font or A4 geometry. */
+.paper-page.official.gov-doc.gov-payment .memo-content p.gov-finance-budget-description{
+ text-indent:4mm!important;
+ text-align:left!important;
+ white-space:normal!important;
+ word-break:normal!important;
+ overflow-wrap:break-word!important;
+ margin-block:var(--doc-gap)!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-finance-budget-source{
+ white-space:normal;
+ overflow-wrap:break-word;
+}
+.paper-page.official.gov-doc.gov-payment .gov-finance-budget-year{
+ display:inline-block;
+ white-space:nowrap!important;
+ word-break:keep-all!important;
+}
+.paper-page.official.gov-doc.gov-payment .memo-content p.gov-finance-budget-amounts{
+ text-indent:0!important;
+ text-align:left!important;
+ white-space:normal!important;
+ word-break:normal!important;
+ margin-block:var(--doc-gap)!important;
+}
+.paper-page.official.gov-doc.gov-payment .gov-finance-amount-group{
+ display:inline-block;
+ white-space:nowrap!important;
+ break-inside:avoid;
+ margin-right:1.2mm;
+}
+@media print{
+ #print-area .paper-page.official.gov-doc.gov-payment .gov-finance-budget-year,
+ #print-area .paper-page.official.gov-doc.gov-payment .gov-finance-amount-group{
+  white-space:nowrap!important;
+ }
+}
