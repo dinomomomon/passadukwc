@@ -98,13 +98,18 @@ export function signatureElements(section){
  section.querySelectorAll('.gov-requisition-signatures>div').forEach((el,i)=>add(el,'requisition'+i,['ผู้เบิก','ผู้สั่งจ่าย','ผู้มอบ','ผู้รับของ'][i]||'ผู้ลงนาม'));
  return output;
 }
-export function safeSignatureOffset(input){
- return {x:Math.max(-15,Math.min(15,Number(input?.x)||0)),
-  y:Math.max(-15,Math.min(15,Number(input?.y)||0))};
+// Only the director approval on request memos may extend farther down the A4.
+export function signatureVerticalLimit(id='',pageKey=''){
+ return id==='director'&&pageKey==='request'?30:15;
 }
-export function applySignatureOffsets(section,offsets={}){
+export function safeSignatureOffset(input,id='',pageKey=''){
+ const maxY=signatureVerticalLimit(id,pageKey);
+ return {x:Math.max(-15,Math.min(15,Number(input?.x)||0)),
+  y:Math.max(-15,Math.min(maxY,Number(input?.y)||0))};
+}
+export function applySignatureOffsets(section,offsets={},pageKey=''){
  for(const {el,id} of signatureElements(section)){
-  const {x,y}=safeSignatureOffset(offsets[id]);
+  const {x,y}=safeSignatureOffset(offsets[id],id,pageKey);
   if(x||y){
    el.style.setProperty('translate',x+'mm '+y+'mm');
    el.dataset.templateSignature=id;

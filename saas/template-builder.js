@@ -3,7 +3,7 @@
  * remain the source of truth for dynamic values, legal text and signatures.
  * User edits are typed JSON patches: no arbitrary user HTML or JavaScript.
  */
-import {currentTextNodes,tokenizeOriginalText,applyTextEditsToBlock,applySignatureOffsets,decorateSignatureHandles,safeSignatureOffset} from './template-rich-editor.js';
+import {currentTextNodes,tokenizeOriginalText,applyTextEditsToBlock,applySignatureOffsets,decorateSignatureHandles,safeSignatureOffset,signatureVerticalLimit} from './template-rich-editor.js';
 export const TEMPLATE_PAGES=[
  {key:'request',name:'รายงานขอซื้อ / ขอจ้าง',css:'gov-request'},
  {key:'annex',name:'รายละเอียดพัสดุ / งานจ้างแนบท้าย',css:'gov-annex'},
@@ -42,7 +42,7 @@ export function expandTemplateText(text,r,s){
  return String(text||'').replace(/\{\{([a-z_]+)\}\}/g,(_match,key)=>
   Object.prototype.hasOwnProperty.call(vals,key)?String(vals[key]):'');
 }
-export function safeTemplateDraft(input){
+export function safeTemplateDraft(input,pageKey=''){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('รูปแบบแม่แบบไม่ถูกต้อง');
  const limit=(t,max)=>String(t??'').slice(0,max);
  const clean={};
@@ -100,7 +100,7 @@ export function safeTemplateDraft(input){
  clean.signatureOffsets={};
  for(const [id,offset] of Object.entries(offsets).slice(0,12)){
   if(!/^(staff[01]|director|finance|inspector|requisition[0-3])$/.test(id))continue;
-  clean.signatureOffsets[id]=safeSignatureOffset(offset);
+  clean.signatureOffsets[id]=safeSignatureOffset(offset,id,pageKey);
  }
  return clean;
 }
@@ -145,7 +145,7 @@ export function applyDocumentTemplates(html,layouts,r,s,doc=typeof document!=='u
   const key=templateKeyForPage(section);
   if(!key)continue;
   const input=layouts[key];if(!input)continue;
-  const t=safeTemplateDraft(input);
+  const t=safeTemplateDraft(input,key);
   const pageNumber=occurrence[key]||0;occurrence[key]=pageNumber+1;
   if(t.title){
    const title=section.querySelector('.print-title,.memo-field-subject .memo-value');
@@ -178,7 +178,7 @@ export function applyDocumentTemplates(html,layouts,r,s,doc=typeof document!=='u
    const decision=section.querySelector('.director-sign .director-action');
    if(decision)decision.textContent=t.decisionText;
   }
-  applySignatureOffsets(section,t.signatureOffsets);
+  applySignatureOffsets(section,t.signatureOffsets,key);
   // A published blank/master template or heading-only change must not disturb
   // the original legal form hierarchy, signatures or preformatted tables.
   if(!t.order.length&&!t.blocks.length)continue;
@@ -215,7 +215,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
  let selected='request',draft=emptyTemplate(),revision=0,currentBlock='',dirty=false,history=[];
  const row=()=>state.schoolTemplates?.[selected];
  let activeSignature='',inlineAlert='';
- function assignDraft(){draft=safeTemplateDraft(row()?.draft||emptyTemplate());revision=row()?.draft_revision||0;currentBlock='';activeSignature='';inlineAlert='';dirty=false;}
+ function assignDraft(){draft=safeTemplateDraft(row()?.draft||emptyTemplate(),selected);revision=row()?.draft_revision||0;currentBlock='';activeSignature='';inlineAlert='';dirty=false;}
  async function load(){
   if(state.demo){state.schoolTemplates={};return;}
   if(!state.school?.id)return;
@@ -319,8 +319,9 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const cur=draft.blocks.find(b=>b.id===currentBlock);
   const sty=draft.styles[currentBlock]||{align:'left',size:16,bold:false};
   const signature=draft.signatureOffsets[activeSignature]||{x:0,y:0};
+  const maxSignatureY=signatureVerticalLimit(activeSignature,selected);
   return '<div class="te-fields">'+
-   (activeSignature?'<div class="te-field-title">ย้ายชุดลายเซ็น (ชื่อและตำแหน่งล็อกไว้)</div><label>ซ้าย / ขวา (-15 ถึง 15 มม.)</label><input class="input" type="number" min="-15" max="15" step="1" data-tpl-field="signatureX" value="'+signature.x+'"><label>ขึ้น / ลง (-15 ถึง 15 มม.)</label><input class="input" type="number" min="-15" max="15" step="1" data-tpl-field="signatureY" value="'+signature.y+'"><p class="hint">ลากบล็อกลงนามในหน้า A4 ได้ทั้งชุด โดยชื่อ ตำแหน่ง และวันที่จะอยู่ด้วยกัน</p>':'')+
+   (activeSignature?'<div class="te-field-title">ย้ายชุดลายเซ็น (ชื่อและตำแหน่งล็อกไว้)</div><label>ซ้าย / ขวา (-15 ถึง 15 มม.)</label><input class="input" type="number" min="-15" max="15" step="1" data-tpl-field="signatureX" value="'+signature.x+'"><label>ขึ้น / ลง (-15 ถึง '+maxSignatureY+' มม.)</label><input class="input" type="number" min="-15" max="'+maxSignatureY+'" step="1" data-tpl-field="signatureY" value="'+signature.y+'"><p class="hint">'+(maxSignatureY===30?'รายงานขอซื้อ/ขอจ้าง: เลื่อนชุดเห็นชอบ/อนุมัติลงได้เพิ่มขึ้น โดยยังเว้นพื้นที่ขอบล่างสำหรับพิมพ์ A4 • ':'')+'ลากบล็อกลงนามได้ทั้งชุด โดยชื่อ ตำแหน่ง และวันที่จะอยู่ด้วยกัน</p>':'')+
    (['request','approval','acceptance'].includes(selected)?
     '<div class="te-field-title">คำสั่งผู้อำนวยการ</div>'+
     '<label>ข้อความก่อนลงนาม (กด Enter เพื่อแยกบรรทัด)</label>'+
@@ -395,7 +396,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   const target=draft.blocks.find(b=>b.id===currentBlock),sty=draft.styles[currentBlock]||(draft.styles[currentBlock]={align:'left',size:16,bold:false});
   const value=el.type==='checkbox'?el.checked:el.value;
   if(field==='ribbonSize'){if(!currentBlock)return;const t=draft.blocks.find(b=>b.id===currentBlock);if(t)t.size=Number(value);else if(currentBlock.startsWith('d'))draft.styles[currentBlock]={...(draft.styles[currentBlock]||{}),size:Number(value)};}
-  else if(field==='signatureX'||field==='signatureY'){if(!activeSignature)return;const now=draft.signatureOffsets[activeSignature]||{x:0,y:0};draft.signatureOffsets[activeSignature]=safeSignatureOffset({...now,[field==='signatureX'?'x':'y']:value});}
+  else if(field==='signatureX'||field==='signatureY'){if(!activeSignature)return;const now=draft.signatureOffsets[activeSignature]||{x:0,y:0};draft.signatureOffsets[activeSignature]=safeSignatureOffset({...now,[field==='signatureX'?'x':'y']:value},activeSignature,selected);}
   else if(field==='title'||field==='legal'||field==='legalSecond'||field==='decisionText')draft[field]=String(value).replace(/\r\n?/g,'\n').slice(0,400);
   else if(['headingSize','headingAlign','headingBold'].includes(field)){
    const part=el.dataset.headingPart;
@@ -420,7 +421,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
  }
  const move=(id,delta)=>{const seq=blockSeq(),i=seq.indexOf(id),j=i+delta;if(i<0||j<0||j>=seq.length)return;[seq[i],seq[j]]=[seq[j],seq[i]];draft.order=seq;dirty=true;view();};
  async function save(){
-  draft=safeTemplateDraft(draft);
+  draft=safeTemplateDraft(draft,selected);
   if(state.demo)return notify('โหมดสาธิต: ทดลองออกแบบได้ แต่ยังไม่ได้บันทึกจริง',true);
   const {data,error}=await db.rpc('save_school_document_template',{p_school_id:state.school.id,p_template_key:selected,p_layout:draft,p_expected_revision:revision});
   if(error)throw Error('บันทึกแม่แบบไม่สำเร็จ: '+error.message);
@@ -481,7 +482,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
   if(name==='tpl-restore'){
    const h=history.find(x=>x.version===Number(el.dataset.version));
    if(!h||!confirm('นำแม่แบบเวอร์ชัน '+h.version+' กลับมาเป็นฉบับร่าง? ยังไม่เปลี่ยนแม่แบบใช้งานจนกว่าจะบันทึกและประกาศใช้'))return;
-   draft=safeTemplateDraft(h.layout);currentBlock='';dirty=true;view();return;
+   draft=safeTemplateDraft(h.layout,selected);currentBlock='';dirty=true;view();return;
   }
   if(name==='tpl-reset'){
    if(!confirm('คืนค่าแม่แบบกลางสำหรับหน้านี้ในฉบับร่าง? ต้องบันทึกและประกาศใช้จึงจะเปลี่ยนหน้าเอกสารของเจ้าหน้าที่'))return;
@@ -536,7 +537,7 @@ export function createTemplateEditor({db,state,shell,heading,btn,buildDocuments,
  function moveSignature(id,x,y){
   if(!/^(staff[01]|director|finance|inspector|requisition[0-3])$/.test(id))return;
   const now=draft.signatureOffsets[id]||{x:0,y:0};
-  draft.signatureOffsets[id]=safeSignatureOffset({x:now.x+x,y:now.y+y});
+  draft.signatureOffsets[id]=safeSignatureOffset({x:now.x+x,y:now.y+y},id,selected);
   activeSignature=id;currentBlock='';dirty=true;view();
  }
  let dragging='';

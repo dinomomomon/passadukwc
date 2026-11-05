@@ -1433,7 +1433,7 @@ document.addEventListener('pointerdown',ev=>{
  ev.preventDefault();
  const page=signer.closest('.paper-page');
  const pixelsPerMm=(page?.getBoundingClientRect().width||1)/210;
- tePointer={id:signer.dataset.templateSignature,x:ev.clientX,y:ev.clientY,pxMm:pixelsPerMm,moved:false};
+ tePointer={id:signer.dataset.templateSignature,x:ev.clientX,y:ev.clientY,pxMm:pixelsPerMm,moved:false,maxY:signer.dataset.templateSignature==='director'&&page?.classList.contains('gov-request')?30:15};
  signer.classList.add('te-dragging-signer');
 });
 document.addEventListener('pointermove',ev=>{
@@ -1444,7 +1444,7 @@ document.addEventListener('pointermove',ev=>{
  if(Math.abs(dx)+Math.abs(dy)>4)tePointer.moved=true;
  if(tePointer.moved){
   const x=Math.max(-15,Math.min(15,Math.round(dx/tePointer.pxMm)));
-  const y=Math.max(-15,Math.min(15,Math.round(dy/tePointer.pxMm)));
+  const y=Math.max(-15,Math.min(tePointer.maxY,Math.round(dy/tePointer.pxMm)));
   node.style.transform='translate('+x+'mm,'+y+'mm)';
  }
 });
@@ -1453,7 +1453,7 @@ document.addEventListener('pointerup',ev=>{
  const drag=tePointer;tePointer=null;
  if(!drag.moved)return;
  const x=Math.max(-15,Math.min(15,Math.round((ev.clientX-drag.x)/drag.pxMm)));
- const y=Math.max(-15,Math.min(15,Math.round((ev.clientY-drag.y)/drag.pxMm)));
+ const y=Math.max(-15,Math.min(drag.maxY,Math.round((ev.clientY-drag.y)/drag.pxMm)));
  teJustDragged=true;
  templateEditor.moveSignature(drag.id,x,y);
 });
