@@ -453,7 +453,7 @@ function updatePayablePreview(){
  ' บาท − ส่วนลดจากยอดจ่าย − ภาษีหัก ณ ที่จ่าย − ค่าปรับ = '+net.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+
  ' บาท'+(entered?' · ยอดที่ระบุเอง '+Number(entered).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท':' · หากไม่กรอกยอดสุทธิ ระบบใช้ยอดคำนวณนี้ในเอกสาร');
 }
-function editDocumentMeta(){const r=state.currentRecord;if(!r)return detail();shell('ข้อมูลเอกสารราชการ','เลขที่หนังสือและข้อมูลตรวจรับ',heading('ข้อมูลประกอบเอกสาร','แก้ไขวันที่หัวเอกสารและวันที่ลงนามของแต่ละฉบับได้จากปฏิทิน ข้อมูลเลขที่หนังสือและหลักฐานอื่นแยกด้านล่าง')+'<form id="doc-meta-form" class="card"><h2>'+e(r.title)+'</h2>'+docMetaInputs({...r.document_meta,memo_prefix:r.document_meta?.memo_prefix||state.school?.memo_prefix||''},{kind:r.kind,categories:schoolProcurementCategories(state.school)})+'<p id="kp-payable-preview" class="hint" aria-live="polite"></p><div class="row">'+btn('กลับไปเอกสาร','detail','secondary')+'<button type="submit" class="primary">บันทึกข้อมูลเอกสาร</button></div></form>');updatePayablePreview();}
+function editDocumentMeta(){const r=state.currentRecord;if(!r)return detail();shell('ข้อมูลเอกสารราชการ','เลขที่หนังสือและข้อมูลตรวจรับ',heading('ข้อมูลประกอบเอกสาร','แก้ไขวันที่หัวเอกสารและวันที่ลงนามของแต่ละฉบับได้จากปฏิทิน ข้อมูลเลขที่หนังสือและหลักฐานอื่นแยกด้านล่าง')+'<form id="doc-meta-form" class="card"><h2>'+e(r.title)+'</h2>'+docMetaInputs({...r.document_meta,memo_prefix:r.document_meta?.memo_prefix||state.school?.memo_prefix||''},{kind:r.kind,categories:schoolProcurementCategories(state.school,r.kind)})+'<p id="kp-payable-preview" class="hint" aria-live="polite"></p><div class="row">'+btn('กลับไปเอกสาร','detail','secondary')+'<button type="submit" class="primary">บันทึกข้อมูลเอกสาร</button></div></form>');updatePayablePreview();}
 function form(){
  const d=state.draft,editing=!!state.editingRecordId;
  const step=Math.min(4,Math.max(1,Number(state.wizardStep)||1));
@@ -484,16 +484,15 @@ function form(){
  const labels=['ข้อมูลหลัก','รายการพัสดุ','ผู้ขายและผู้ตรวจรับ','เลขหนังสือ / ตรวจสอบ'];
  const steps='<nav class="kp-wizard-nav" aria-label="ขั้นตอนกรอกข้อมูล">'+labels.map((label,i)=>'<span class="kp-wizard-step '+(step===i+1?'is-active':step>i+1?'is-done':'')+'" data-wizard-indicator="'+(i+1)+'">'+(i+1)+'. '+e(label)+'</span>').join('')+'</nav>';
  const panel=(number,title,inner)=>'<section class="card kp-wizard-panel" data-wizard-panel="'+number+'" style="'+(step===number?'':'display:none')+'"><h2>'+title+'</h2>'+inner+'</section>';
- const categories=schoolProcurementCategories(state.school);
- const chosenRequestPrefix=normalizeMemoPrefix(d.doc_memo_prefix||categories[0]?.prefix||state.school?.memo_prefix||'พว.')||'พว.';
- const requestPrefixChoices=requestPrefixOptions(state.school,chosenRequestPrefix);
- const procurementTypeField=d.kind==='hire'?
-  '<input type="hidden" name="doc_memo_prefix" value="'+e(chosenRequestPrefix)+'">':
-  '<div class="field kp-procurement-class-field"><label for="kp-purchase-category">หมวดของที่จะจัดซื้อ (กำหนดรหัสรายงาน)</label>'+
-   '<select class="select" id="kp-purchase-category" name="doc_memo_prefix">'+
+ const categories=schoolProcurementCategories(state.school,d.kind);
+ const chosenRequestPrefix=normalizeMemoPrefix(d.doc_memo_prefix||categories[0]?.prefix||state.school?.memo_prefix||'พว.')||categories[0]?.prefix||'พว.';
+ const requestPrefixChoices=requestPrefixOptions(state.school,chosenRequestPrefix,d.kind);
+ const procurementTypeField=
+  '<div class="field kp-procurement-class-field"><label for="kp-procurement-category">หมวด'+(d.kind==='hire'?'งานจ้าง':'พัสดุจัดซื้อ')+' (กำหนดรหัสรายงาน)</label>'+
+   '<select class="select" id="kp-procurement-category" name="doc_memo_prefix" required>'+
    requestPrefixChoices.map(choice=>'<option value="'+e(choice.prefix)+'" '+(choice.prefix===chosenRequestPrefix?'selected':'')+'>'+
     e(choice.name+' — '+choice.prefix)+'</option>').join('')+
-   '</select><p class="hint">แอดมินตั้งค่าหมวดและรหัสได้จากเมนูข้อมูลโรงเรียน เลขลำดับทุกหมวดใช้ทะเบียนคำขอร่วมกัน</p></div>';
+   '</select><p class="hint">เลือกได้เฉพาะรหัส'+(d.kind==='hire'?'จัดจ้าง':'จัดซื้อ')+' ที่แอดมินโรงเรียนกำหนดไว้ • เลขทะเบียนยังใช้ตามระบบเดิม</p></div>';
  const basic=panel(1,'ขั้นที่ 1 — ข้อมูลการจัดหา','<div class="form-grid"><div class="field"><label>ประเภทการจัดหา</label>'+(editing?'<input type="hidden" name="kind" value="'+e(d.kind)+'">':'')+'<select class="select" name="kind" '+(editing?'disabled':'')+'><option value="purchase" '+(d.kind!=='hire'?'selected':'')+'>จัดซื้อ</option><option value="hire" '+(d.kind==='hire'?'selected':'')+'>จัดจ้าง</option></select></div>'+procurementTypeField+input('วันที่เอกสาร','document_date',d.document_date||dateToday(),'date','required')+input('ปีงบประมาณ (พ.ศ.)','fiscal_year',d.fiscal_year||fiscalYear(),'number',editing?'required readonly':'required min="2500" max="2700"')+input('กลุ่มงาน/ฝ่ายที่ขอ','department',d.department||'')+'</div>'+input('เรื่องที่จัดซื้อ/จัดจ้าง','title',d.title||'','text','required maxlength="500" placeholder="เช่น ซื้อวัสดุสำนักงาน"')+area('เหตุผลและความจำเป็น','reason',d.reason||'')+input('แผนงาน/โครงการ/แหล่งเงิน','budget_source',d.budget_source||'','text','required'));
  const entries=panel(2,'ขั้นที่ 2 — รายการพัสดุ / งานจ้าง','<p class="muted">เลือกวิธีคิด VAT ก่อนกรอกราคาต่อหน่วย ระบบจะแยกฐานภาษีและจัดเก็บราคาสุทธิรวม VAT เพื่อให้ทุกเอกสารยอดตรงกัน</p>'+taxPicker+'<div class="kp-item-entry-table">'+itemHeading+items+'</div>'+btn('+ เพิ่มรายการ','add-item','secondary')+'<div class="total-row"><span>วงเงินรวมตามใบสั่งซื้อ/จ้าง</span><strong id="live-total">0.00 บาท</strong></div><p id="kp-vat-breakdown" class="hint" aria-live="polite"></p>');
  const existingOfficer=editing?state.records.find(x=>x.id===state.editingRecordId)?.signers?.officer||state.school?.officer_name||'':null;
@@ -694,20 +693,27 @@ async function printOfficialDocuments(){
 
 function preview(){detail();const sheet=applyDocumentTemplates(buildDocuments(state.currentRecord,state.school),liveTemplateLayouts(state.currentRecord),state.currentRecord,state.school);document.getElementById('print-area').innerHTML=sheet;const target=app.querySelector('.content');target.insertAdjacentHTML('beforeend','<div class="card" id="preview-output"><div class="section-head"><h2>ตัวอย่างเอกสารสำหรับพิมพ์</h2>'+btn('พิมพ์ / PDF','print')+'</div><div class="doc-preview"><div class="preview-page"><div class="official">'+sheet+'</div></div></div><p class="hint">กรุณาตรวจข้อความและจำนวนหน้าก่อนใช้งานจริง</p></div>');document.querySelector('#preview-output')?.scrollIntoView({behavior:'smooth'});const previewRoot=app.querySelector('#preview-output');requestAnimationFrame(()=>{fitDirectorPosition(previewRoot);fitOfficialTableHeaders(previewRoot);});document.fonts?.ready?.then(()=>requestAnimationFrame(()=>{fitDirectorPosition(previewRoot);fitOfficialTableHeaders(previewRoot);}));}
 
-function schoolCategoryRow(category={}){
+function schoolCategoryRow(category={},kind='purchase'){
+ const hire=kind==='hire';
  return '<div class="kp-category-row" data-category-row>'+
- '<div class="field"><label>ชื่อหมวดพัสดุ</label><input class="input" name="category_name" value="'+e(category.name||'')+'" maxlength="60" placeholder="เช่น วัสดุ หรือ ครุภัณฑ์" required></div>'+
- '<div class="field"><label>รหัสหนังสือ</label><input class="input" name="category_prefix" value="'+e(category.prefix||'')+'" maxlength="24" placeholder="เช่น พว." required></div>'+
+ '<div class="field"><label>ชื่อหมวด'+(hire?'งานจ้าง':'พัสดุจัดซื้อ')+'</label><input class="input" name="category_name" value="'+e(category.name||'')+'" maxlength="60" placeholder="'+(hire?'เช่น งานจ้างทั่วไป':'เช่น วัสดุ หรือ ครุภัณฑ์')+'" required></div>'+
+ '<div class="field"><label>รหัสหนังสือ</label><input class="input" name="category_prefix" value="'+e(category.prefix||'')+'" maxlength="24" placeholder="'+(hire?'เช่น พจ':'เช่น พว.')+'" required></div>'+
  btn('นำหมวดออก','remove-category','mini-btn kp-category-remove')+'</div>';
 }
 function schoolCategorySettingsMarkup(){
- const cats=schoolProcurementCategories(state.school);
- return '<form id="school-categories-form" class="card kp-category-settings"><div class="kp-category-title"><div><h2>หมวดพัสดุและรหัสหนังสือของโรงเรียน</h2>'+
- '<p class="muted">กำหนดหมวดและรหัสเองได้หลายหมวด หรือใช้รหัสเดียวสำหรับทุกหมวดก็ได้</p></div><span class="tag amber">เฉพาะแอดมินโรงเรียน</span></div>'+
- '<div class="kp-category-list">'+cats.map(schoolCategoryRow).join('')+'</div>'+
- '<div class="kp-category-actions">'+btn('+ เพิ่มหมวดพัสดุ','add-category','secondary')+
- '<button type="submit" class="primary">บันทึกหมวดและรหัสหนังสือ</button></div>'+
- '<p class="hint">ใส่เฉพาะคำย่อ เช่น พว. ไม่ใส่เลขที่หรือปี พ.ศ. • เลขคำขอทุกหมวดใช้ลำดับร่วมกัน • เอกสารเดิมไม่เปลี่ยนย้อนหลัง</p></form>';
+ const sections=['purchase','hire'].map(kind=>{
+  const hire=kind==='hire',categories=schoolProcurementCategories(state.school,kind);
+  return '<section class="kp-category-kind-section" data-category-kind="'+kind+'">'+
+   '<h3>'+(hire?'หมวดงานจัดจ้าง และรหัสหนังสือจัดจ้าง':'หมวดพัสดุจัดซื้อ และรหัสหนังสือจัดซื้อ')+'</h3>'+
+   '<p class="hint">'+(hire?'เช่น งานจ้างทั่วไป — พจ':'เช่น วัสดุ — พว. และครุภัณฑ์ — พค.')+'</p>'+
+   '<div class="kp-category-list">'+categories.map(x=>schoolCategoryRow(x,kind)).join('')+'</div>'+
+   '<div class="kp-category-actions">'+btn('+ เพิ่มหมวด'+(hire?'จัดจ้าง':'จัดซื้อ'),'add-category','secondary','data-kind="'+kind+'"')+'</div>'+
+   '</section>';
+ }).join('');
+ return '<form id="school-categories-form" class="card kp-category-settings"><div class="kp-category-title"><div><h2>หมวดและรหัสหนังสือของโรงเรียน (แยกจัดซื้อ / จัดจ้าง)</h2>'+
+ '<p class="muted">แอดมินกำหนดหมวดได้แยกกัน ประเภทละ 1–'+MAX_SCHOOL_CATEGORIES+' หมวด รหัสจัดจ้างไม่ปนกับจัดซื้อ</p></div><span class="tag amber">เฉพาะแอดมินโรงเรียน</span></div>'+
+ sections+'<div class="kp-category-actions"><button type="submit" class="primary">บันทึกหมวดและรหัสหนังสือทั้งสองประเภท</button></div>'+
+ '<p class="hint">กรอกเฉพาะรหัส เช่น พว. / พค. / พจ ไม่ใส่เลขที่หรือปี พ.ศ. • ใช้กับการเลือกในรายการใหม่ • เอกสารเก่ายังคงรหัสที่บันทึกไว้</p></form>';
 }
 function officerSignerRow(row={},n=0){
  return '<div class="kp-officer-row" data-officer-row>'+
@@ -973,15 +979,16 @@ if(action==='asset-guide'){
 
  if(action==='add-category'||action==='remove-category'){
   if(!isAdmin()||state.page!=='settings')return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
-  const list=document.querySelector('#school-categories-form .kp-category-list');
+  const kind=el.dataset.kind||el.closest('[data-category-kind]')?.dataset.categoryKind||'purchase';
+  const list=document.querySelector('#school-categories-form [data-category-kind="'+kind+'"] .kp-category-list');
   if(!list)return;
   const rows=list.querySelectorAll('[data-category-row]');
   if(action==='add-category'){
-   if(rows.length>=MAX_SCHOOL_CATEGORIES)return notify('เพิ่มได้ไม่เกิน '+MAX_SCHOOL_CATEGORIES+' หมวด',true);
-   list.insertAdjacentHTML('beforeend',schoolCategoryRow());
+   if(rows.length>=MAX_SCHOOL_CATEGORIES)return notify('เพิ่มได้ไม่เกิน '+MAX_SCHOOL_CATEGORIES+' หมวดต่อประเภท',true);
+   list.insertAdjacentHTML('beforeend',schoolCategoryRow({},kind));
    list.querySelector('[data-category-row]:last-child input')?.focus();
   }else{
-   if(rows.length<2)return notify('ต้องมีหมวดพัสดุอย่างน้อย 1 หมวด',true);
+   if(rows.length<2)return notify('ต้องมีหมวดอย่างน้อย 1 หมวดในแต่ละประเภท',true);
    el.closest('[data-category-row]')?.remove();
   }
   return;
@@ -1268,18 +1275,24 @@ if(form.id==='school-logo-form'){
 }
 if(form.id==='school-categories-form'){
   if(!isAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
-  const input=new FormData(form),names=input.getAll('category_name'),codes=input.getAll('category_prefix');
-  let categories;
+  let categories,hireCategories;
   try{
-   if(names.length!==codes.length)throw Error('ข้อมูลหมวดกับรหัสหนังสือไม่ครบ');
-   categories=validateSchoolProcurementCategories(names.map((name,i)=>({name,prefix:codes[i]})));
+   const readKind=kind=>{
+    const section=form.querySelector('[data-category-kind="'+kind+'"]');
+    if(!section)throw Error('ไม่พบหมวดสำหรับ '+kind);
+    return validateSchoolProcurementCategories([...section.querySelectorAll('[data-category-row]')].map(row=>({
+     name:row.querySelector('[name="category_name"]')?.value,
+     prefix:row.querySelector('[name="category_prefix"]')?.value
+    })));
+   };
+   categories=readKind('purchase');hireCategories=readKind('hire');
   }catch(err){return notify(err.message,true);}
-  const patch={procurement_categories:categories,memo_prefix:categories[0].prefix};
+  const patch={procurement_categories:categories,procurement_hire_categories:hireCategories,memo_prefix:categories[0].prefix};
   if(state.demo){state.school={...state.school,...patch};return notify('บันทึกข้อมูลตัวอย่างแล้ว (ไม่บันทึกจริง)');}
   const {data,error}=await db.from('schools').update(patch).eq('id',state.school.id).select('*').single();
   if(error)return notify('บันทึกหมวดไม่สำเร็จ: '+error.message,true);
   state.school=data;
-  return notify('บันทึกหมวดและรหัสหนังสือแล้ว ใช้กับรายการใหม่ โดยไม่เปลี่ยนเอกสารและเลขทะเบียนเดิม');
+  return notify('บันทึกหมวดและรหัสจัดซื้อ/จัดจ้างแยกกันแล้ว โดยไม่เปลี่ยนเอกสารและเลขทะเบียนเดิม');
  }
  if(form.id==='school-officers-form'){
   if(!isAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
@@ -1390,9 +1403,8 @@ document.addEventListener('change',ev=>{
  if(ev.target?.name==='doc_vat_mode'&&state.page==='create'){collectDraft();form();return;}
  if(ev.target?.name==='kind'&&state.page==='create'){
   collectDraft();const current=state.draft.kind;
-  if(current==='hire')state.draft.doc_memo_prefix=schoolProcurementCategories(state.school)[0].prefix;
-  else if(current==='purchase'&&!requestPrefixOptions(state.school).some(x=>x.prefix===normalizeMemoPrefix(state.draft.doc_memo_prefix)))
-   state.draft.doc_memo_prefix=schoolProcurementCategories(state.school)[0].prefix;
+  if(current==='hire'||current==='purchase')
+   state.draft.doc_memo_prefix=schoolProcurementCategories(state.school,current)[0].prefix;
   form();
  }
 });

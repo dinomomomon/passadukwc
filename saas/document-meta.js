@@ -18,8 +18,8 @@ function fieldHtml([key,label,type],meta,categories){
   memoNumbers.has(key)&&memoNumberTokens(raw).length<=1?
    normalizeMemoNumber(raw,meta?.memo_prefix??meta?.doc_memo_prefix??''):raw;
  if(key==='memo_prefix'){
-  const normalized=normalizeMemoPrefix(value)||'พว.';
   const base=Array.isArray(categories)&&categories.length?categories:[{name:'วัสดุ',prefix:'พว.'},{name:'ครุภัณฑ์',prefix:'พค.'}];
+  const normalized=normalizeMemoPrefix(value)||base[0]?.prefix||'พว.';
   const grouped=new Map();
   for(const cat of base){
    if(!cat?.prefix||!cat?.name)continue;
@@ -28,7 +28,7 @@ function fieldHtml([key,label,type],meta,categories){
   }
   if(!grouped.has(normalized))grouped.set(normalized,['รหัสเดิมของเอกสารนี้']);
   return '<div class="field"><label for="doc_memo_prefix">'+e(label)+'</label>'+
-   '<select class="select" id="doc_memo_prefix" name="doc_memo_prefix" aria-label="รหัสรายงานขอซื้อ">'+
+   '<select class="select" id="doc_memo_prefix" name="doc_memo_prefix" aria-label="รหัสรายงานขอซื้อหรือขอจ้าง">'+
     [...grouped].map(([code,names])=>'<option value="'+e(code)+'" '+(code===normalized?'selected':'')+'>'+
      e(code+' — '+names.join(' / '))+'</option>').join('')+
    '</select><p class="hint">รหัสรายงานตามหมวดที่โรงเรียนกำหนด ไม่แก้เลขทะเบียนคุม</p></div>';
@@ -58,7 +58,7 @@ export function docMetaInputs(meta={},options={}){
  const mode=typeof options==='string'?options:(options.mode||'all');
  const kind=typeof options==='string'?'purchase':(options.kind||'purchase');
  if(mode==='create')return '<div class="form-grid">'+primaryDocumentFields.filter(f=>f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta)).join('')+(kind==='purchase'?fieldHtml(['requisition_number','ใบเบิกพัสดุ เลขที่ (กรอกได้ เช่น จ. 218/2569)'],meta):'')+'</div><p class="hint">รหัสตามหมวดที่โรงเรียนกำหนดเลือกจากขั้นที่ 1 รายงานผลการพิจารณาและทราบผลและขออนุมัติเบิกจ่ายออกเลขที่จากทะเบียนอัตโนมัติ ส่วนวันที่หัวหนังสือเบิกจ่ายและวันที่ลงนามเลือกได้ในขั้นตอนนี้ หากไม่ระบุจะเว้นว่างไว้ให้กรอกภายหลัง</p>'; 
- const main='<section class="doc-meta-section"><h3>เลขที่หนังสือและตำแหน่งผู้ตรวจรับ</h3><p class="hint">เลขที่ทราบผลและขออนุมัติเบิกจ่ายออกอัตโนมัติตามทะเบียน วันที่หัวกระดาษและวันที่ลงนามเลือกแยกกันได้ทุกฉบับในหัวข้อถัดไป โดยไม่เปลี่ยนวันที่และเลขทะเบียนดั้งเดิม</p><div class="form-grid">'+primaryDocumentFields.filter(f=>kind==='purchase'||f[0]!=='memo_prefix').map(f=>fieldHtml(f,meta,options.categories)).join('')+'</div></section>';
+ const main='<section class="doc-meta-section"><h3>เลขที่หนังสือและตำแหน่งผู้ตรวจรับ</h3><p class="hint">เลขที่ทราบผลและขออนุมัติเบิกจ่ายออกอัตโนมัติตามทะเบียน วันที่หัวกระดาษและวันที่ลงนามเลือกแยกกันได้ทุกฉบับในหัวข้อถัดไป โดยไม่เปลี่ยนวันที่และเลขทะเบียนดั้งเดิม</p><div class="form-grid">'+primaryDocumentFields.map(f=>fieldHtml(f,meta,options.categories)).join('')+'</div></section>';
  const signatureSection=docMetaDateInputs(meta,kind);
  const sections=documentInfoGroups.filter(g=>kind==='purchase'||g.id!=='requisition').map(g=>{
   const extra=g.advanced?.length?'<details class="doc-meta-advanced"><summary>กรณีพิเศษ / ข้อมูลเพิ่มเติม</summary><div class="form-grid">'+g.advanced.map(f=>fieldHtml(f,meta)).join('')+'</div></details>':'';
