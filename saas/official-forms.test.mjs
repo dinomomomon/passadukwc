@@ -1132,11 +1132,12 @@ test('request prefix พว. or พค. is selected per procurement record and s
  const editing=docMetaInputs({memo_prefix:'พค.'},{kind:'purchase'});
  assert.match(editing,/พค\. — ครุภัณฑ์/);
  assert.match(editing,/name="doc_memo_prefix"/);
- assert.doesNotMatch(docMetaInputs({memo_prefix:'พว.'},{kind:'hire'}),/name="doc_memo_prefix"/,'hiring must not allow equipment-only prefix');
+ assert.match(docMetaInputs({memo_prefix:'พจ'},{kind:'hire'}),/name="doc_memo_prefix"/,'hiring now has its own prefix selector');
+ assert.match(docMetaInputs({memo_prefix:'พจ'},{kind:'hire'}),/value="พจ" selected/);
  assert.equal(docMetaValue({doc_memo_prefix:'พค.'}).memo_prefix,'พค.');
  const {readFileSync}=await import('node:fs');
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
- assert.match(app,/id="kp-purchase-category"/);
+ assert.match(app,/id="kp-procurement-category"/);
  assert.match(app,/name="doc_memo_prefix"/);
  assert.match(app,/kind==='hire'/);
  assert.match(app,/if\(row\.series==='request'\)return \(normalizeMemoPrefix\(row\.procurements\?\.document_meta\?\.memo_prefix/);
