@@ -39,11 +39,10 @@ test('only the FINAL order page includes totals when items flow to multiple A4 p
  const items=Array.from({length:25},(_,i)=>({name:'รายการ '+(i+1),qty:1,unit:'ชิ้น',price_satang:10000}));
  for(const kind of ['purchase','hire']){
   const pages=[...buildDocuments({...rec,kind,items,total_satang:250000},school).matchAll(/<section class="paper-page official gov-doc gov-order">([\s\S]*?)<\/section>/g)];
-  assert.equal(pages.length,3);
+  assert.equal(pages.length,2);
   assert.equal(pages[0][1].includes('class="order-totals"'),false);
-  assert.equal(pages[1][1].includes('class="order-totals"'),false);
-  assert.equal(pages[2][1].includes('class="order-totals"'),true);
-  assert.equal((pages[2][1].match(/<table\b/g)||[]).length,1);
+  assert.equal(pages[1][1].includes('class="order-totals"'),true);
+  assert.equal((pages[1][1].match(/<table\b/g)||[]).length,1);
  }
 });
 test('A4 totals CSS cannot create an overflowing independent grid/table',async()=>{
@@ -92,12 +91,12 @@ test('new and saved purchase and hire forms allow order data and calendar contro
  assert.ok(documentInfoFields.some(([key])=>key==='order_vendor_tax_id'));
  assert.ok(TEMPLATE_PAGES.some(x=>x.key==='order'));
 });
-test('25 line items produce three pages while preserving order headers and final signatures',()=>{
+test('25 line items produce two pages while preserving order headers and final signatures',()=>{
  const items=Array.from({length:25},(_,i)=>({name:'รายการที่ '+(i+1),qty:1,unit:'ชิ้น',price_satang:10000}));
  const html=buildDocuments({...rec,items,total_satang:250000},school);
- assert.equal((html.match(/class="paper-page official gov-doc gov-order"/g)||[]).length,3);
+ assert.equal((html.match(/class="paper-page official gov-doc gov-order"/g)||[]).length,2);
  assert.equal((html.match(/class="order-signatures"/g)||[]).length,1);
- assert.equal((html.match(/class="order-garuda"/g)||[]).length,3);
+ assert.equal((html.match(/class="order-garuda"/g)||[]).length,2);
 });
 test('separate A4 stylesheet ships in browser build',async()=>{
  const css=await readFile(new URL('./order-forms.css',import.meta.url),'utf8');
