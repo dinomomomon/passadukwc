@@ -36,7 +36,7 @@ test('editor field, preview drag and publishing all honor the same request-speci
 });
 test('request only gets five millimetres more bottom space in editor, fit check and print',async()=>{
  const css=await readFile(new URL('./request-memo-bottom.css',import.meta.url),'utf8');
- const end=css.slice(css.indexOf('Only request memos gain an extra 5mm'));
+ const end=css; // Dedicated stylesheet: all selectors must be limited to request memos.
  assert.match(end,/\.paper-page\.official\.gov-doc\.gov-request\{\s*padding-bottom:10mm;/);
  assert.match(end,/body\.print-measuring #print-area \.paper-page\.official\.gov-doc\.gov-request\{\s*padding-bottom:10mm!important;/);
  assert.match(end,/@media print\{\s*#print-area \.paper-page\.official\.gov-doc\.gov-request\{\s*padding-bottom:10mm!important;/);
