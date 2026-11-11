@@ -59,3 +59,25 @@
  #print-area .gov-order .order-signatures{break-inside:avoid;page-break-inside:avoid}
  #print-area .gov-order .gov-order-table thead{display:table-header-group}
 }
+
+
+/* Order-specific fallback when the normal A4 order cannot fit even with
+   zero empty table filler. Preserve legal clauses, all signatures and fonts. */
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-heading{height:25mm;gap:.3mm}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-garuda{width:18mm;height:19mm}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-parties{margin-bottom:.5mm;line-height:1.1}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-parties>div>div{min-height:3.5mm}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-introduction{margin:.4mm 0!important;line-height:1.14!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .official-table.gov-order-table{margin:.6mm 0 0!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .gov-order-table col.col-description{width:46%!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .gov-order-table col.col-quantity{width:9%!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .gov-order-table col.col-unit{width:7%!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .gov-order-table col.col-price{width:14%!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .gov-order-table tr.gov-data-row td{padding:.3mm .5mm!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-terms-title{margin:1mm 0 .5mm!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-terms{margin:0!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-terms li{margin:.05mm 0!important;line-height:1.08!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-signatures{margin:1.5mm 0 0 auto!important;gap:2mm!important}
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-signer-name,
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-signer-role,
+.paper-page.official.gov-doc.gov-order[data-order-fit="compact"] .order-signer-date{min-height:2.6mm;margin:.2mm 0 0}

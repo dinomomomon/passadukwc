@@ -274,7 +274,7 @@ function orderForm(r,s,buy){
   const table='<table class="official-table official-table-ruled gov-items gov-order-table">'+
    '<colgroup><col class="col-order"><col class="col-description"><col class="col-quantity"><col class="col-unit"><col class="col-price"><col class="col-total"></colgroup>'+
    '<thead><tr><th>ลำดับ</th><th>รายละเอียดและคุณลักษณะ</th><th>จำนวน</th><th>หน่วย</th><th>ราคาต่อหน่วย</th><th>จำนวนเงิน</th></tr></thead>'+
-   '<tbody>'+rows+'<tr class="table-filler" style="height:'+fillerHeight(part.items,80,5.6)+'mm">'+Array.from({length:6},()=>'<td>&nbsp;</td>').join('')+'</tr>'+totals+'</tbody></table>';
+   '<tbody>'+rows+'<tr class="table-filler" style="height:'+(last?fillerHeight(part.items,80,5.6):0)+'mm">'+Array.from({length:6},()=>'<td>&nbsp;</td>').join('')+'</tr>'+totals+'</tbody></table>';
   let footer='';
   if(last){
    const days=v(m.order_delivery_days),location=v(m.order_delivery_location),warranty=v(m.order_warranty);

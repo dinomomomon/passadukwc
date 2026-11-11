@@ -630,11 +630,20 @@ async function printOfficialDocuments(){
    delete sheet.dataset.density;
    delete sheet.dataset.signDensity;
    sheet.style.removeProperty('--gov-zoom');
+   delete sheet.dataset.orderFit;
    for(const height of heights){
     if(filler)filler.style.height=height+'mm';
     if(doesFit())return true;
    }
-   return false; // Caller retries with fewer items and a complete repeated form.
+   // In hire/purchase orders, reclaim excess spacing before cutting
+   // a short six-line order into 5+1 A4 pages.
+   if(sheet.classList.contains('gov-order')){
+    sheet.dataset.orderFit='compact';
+    if(filler)filler.style.height='0mm';
+    if(doesFit())return true;
+    delete sheet.dataset.orderFit;
+   }
+   return false; // Only now retry with fewer items on this document type.
   }
   for(const height of heights){
    if(filler)filler.style.height=height+'mm';
