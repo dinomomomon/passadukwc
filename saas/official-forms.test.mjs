@@ -905,7 +905,7 @@ test('fixed form item rows retain vertical columns without horizontal lines',asy
  assert.match(css,/\.gov-items tbody > tr\.gov-data-row:last-child > td\{\s*border-bottom:1px solid #222!important/);
  assert.match(print,/OFFICIAL_ITEMS_PER_PAGE=15/);
  assert.match(app,/if\(fixedItemForm\)\{[\s\S]*?delete sheet\.dataset\.fitMargin;[\s\S]*?delete sheet\.dataset\.density;[\s\S]*?sheet\.style\.removeProperty\('--gov-zoom'\);/);
- assert.match(app,/if\(doesFit\(\)\)return true;[\s\S]*?return false; \/\/ Caller retries with fewer items/);
+ assert.match(app,/if\(doesFit\(\)\)return true;[\s\S]*?return false; \/\/ Only now retry with fewer items/);
 });
 
 
