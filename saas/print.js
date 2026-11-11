@@ -188,7 +188,9 @@ function payment(r,s,buy){const verb=buy?'ซื้อ':'จ้าง',noun=buy?
 const body='<p class="indent">ตามที่ได้อนุมัติให้'+(buy?'จัดซื้อพัสดุ':'จัดจ้าง')+' จำนวน '+(r.items||[]).length+' รายการ จาก '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ตาม'+(buy?'ใบสั่งซื้อ':'ใบสั่งจ้าง')+'เลขที่ '+v(m.order_number)+' ลงวันที่ '+(orderHeaderDate(r)?thaiDate(orderHeaderDate(r)):blank)+' ซึ่งครบกำหนดส่งมอบเมื่อวันที่ '+(r.due_date?thaiDate(r.due_date):blank)+' นั้น</p>'+
  '<p class="indent">บัดนี้ ผู้'+(buy?'ขาย':'รับจ้าง')+'ได้ส่งมอบ'+noun+' ตามใบส่งของ/ใบเสร็จ เลขที่ '+v(m.invoice_number)+' ลงวันที่ '+(m.invoice_date?thaiDate(m.invoice_date):blank)+' ผู้ตรวจรับ'+noun+'ได้ทำการตรวจรับ'+noun+'ไว้แล้ว ปรากฏว่าครบถ้วนถูกต้อง เมื่อวันที่ '+((m.inspection_date||m.delivery_date)?thaiDate(m.inspection_date||m.delivery_date):blank)+' ดังหลักฐานการตรวจรับที่แนบ</p>'+
  '<p class="indent">จึงเรียนมาเพื่อโปรด</p><ol class="gov-numbered"><li>ทราบผลการตรวจรับ'+noun+'</li>'+
- '<li>อนุมัติจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+payableAmount(r)+' บาท ('+e(thaiBahtText(paymentNetSatang(r)))+') รายละเอียดดังนี้</li></ol>'+
+ // Item 2 authorizes the full requisition amount, NOT the net vendor payment
+ // after withholding tax, discounts or fines. Keep the net only in the breakdown.
+ '<li>อนุมัติจ่ายเงินให้แก่ '+vendor+' เป็นเงิน '+cash(r.total_satang)+' บาท ('+e(thaiBahtText(r.total_satang))+') รายละเอียดดังนี้</li></ol>'+
  '<div class="gov-money-list">'+[
  ['มูลค่าสินค้า',basePriceAmount(r)],
  ['บวก ภาษีมูลค่าเพิ่ม',vatDisplay(r)],['จำนวนเงินที่ขอเบิก',cash(r.total_satang)],

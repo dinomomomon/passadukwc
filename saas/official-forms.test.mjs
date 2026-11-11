@@ -195,11 +195,37 @@ test('annex legal article 22 begins its own line',()=>{
  const html=buildDocuments(sample,school);
  assert.match(html,/class="gov-law gov-law-second">ข้อ 22 วรรคหนึ่ง \(2\) และข้อ 22 วรรคสอง/);
 });
-test('payment words are next to payable approval rather than dangling below table',()=>{
+test('payment request approval item 2 uses requested amount, not vendor net payment',()=>{
  const record={...sample,document_meta:{withholding_baht:'10.00',fine_baht:'0'}};
  const html=buildDocuments(record,school);
- assert.match(html,/อนุมัติจ่ายเงินให้แก่ [^<]+ เป็นเงิน 190\.00 บาท \(หนึ่งร้อยเก้าสิบบาทถ้วน\)/);
+ assert.match(html,/อนุมัติจ่ายเงินให้แก่ [^<]+ เป็นเงิน 200\.00 บาท \(สองร้อยบาทถ้วน\)/);
+ assert.doesNotMatch(html,/อนุมัติจ่ายเงินให้แก่ [^<]+ เป็นเงิน 190\.00 บาท/);
+ assert.match(html,/คงเหลือจ่ายจริง<\/span><span>190\.00<\/span>/);
  assert.doesNotMatch(html,/class="gov-words"/);
+});
+test('purchase and hire item 2 approves 2,700.00 even when 25.23 tax is withheld',()=>{
+ for(const kind of ['purchase','hire']){
+  const record={...sample,kind,total_satang:270000,
+   items:[{name:kind==='hire'?'ค่าจ้างบริการ':'วัสดุ',qty:1,unit:'รายการ',price_satang:270000}],
+   document_meta:{withholding_baht:'25.23',fine_baht:'0.00',vat_baht:'176.63'}};
+  const html=buildDocuments(record,school);
+  const start=html.indexOf('class="paper-page official gov-doc memo-page gov-payment"');
+  assert.ok(start>=0,'payment memo exists');
+  const payment=html.slice(start,html.indexOf('</section>',start));
+  assert.match(payment,/อนุมัติจ่ายเงินให้แก่ [^<]+ เป็นเงิน 2,700\.00 บาท \(สองพันเจ็ดร้อยบาทถ้วน\) รายละเอียดดังนี้<\/li>/);
+  assert.match(payment,/จำนวนเงินที่ขอเบิก<\/span><span>2,700\.00<\/span>/);
+  assert.match(payment,/หัก ภาษีเงินได้<\/span><span>25\.23<\/span>/);
+  assert.match(payment,/คงเหลือจ่ายจริง<\/span><span>2,674\.77<\/span>/);
+  assert.doesNotMatch(payment,/อนุมัติจ่ายเงินให้แก่ [^<]+ เป็นเงิน 2,674\.77/);
+ }
+});
+test('manual net override never replaces the requested amount in payment item 2',()=>{
+ const record={...sample,total_satang:20000,document_meta:{payable_baht:'195.50',withholding_baht:'4.50'}};
+ const html=buildDocuments(record,school);
+ const start=html.indexOf('class="paper-page official gov-doc memo-page gov-payment"');
+ const payment=html.slice(start,html.indexOf('</section>',start));
+ assert.match(payment,/อนุมัติจ่ายเงินให้แก่ [^<]+ เป็นเงิน 200\.00 บาท \(สองร้อยบาทถ้วน\) รายละเอียดดังนี้<\/li>/);
+ assert.match(payment,/คงเหลือจ่ายจริง<\/span><span>195\.50<\/span>/);
 });
 test('explicit net amount can be recorded instead of merely displaying a deduction estimate',()=>{
  const record={...sample,document_meta:{payable_baht:'195.50',withholding_baht:'10.00',fine_baht:'0'}};
