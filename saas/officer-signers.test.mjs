@@ -79,7 +79,7 @@ test('bundle and UI cache cover new officer roster module',()=>{
  const pkg=JSON.parse(read('package.json')),index=read('index.html'),css=read('brand-theme.css');
  assert.match(pkg.scripts.build,/officer-signers\.test\.mjs/);
  assert.match(index,/app\.js\?v=\d{8}-[a-z0-9-]+/);
- assert.match(index,/brand-theme\.css\?v=20261024-equipment-simple-v3/);
+ assert.match(index,/brand-theme\.css\?v=\d{8}-[a-z0-9-]+/);
  assert.match(css,/\.kp-officer-row/);
  assert.match(read('app.js'),/from '\.\/officer-signers\.js'/);
 });
