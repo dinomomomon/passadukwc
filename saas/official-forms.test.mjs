@@ -978,11 +978,11 @@ test('wizard evidence inputs are optional and reuse saved metadata keys across p
  assert.match(html,/9 พฤศจิกายน 2569/);
  assert.doesNotMatch(html,/ซึ่งครบกำหนดส่งมอบเมื่อวันที่ 9 พฤศจิกายน 2569/);
 });
-test('procurement stage 3 and stage 4 reuse metadata collection for actual later evidence',async()=>{
+test('eight-stage procurement wizard keeps all evidence in the same document metadata payload',async()=>{
  const {readFileSync}=await import('node:fs');
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  assert.match(app,/docMetaWizardInputs\(meta,3,d\.kind\|\|'purchase'\)/);
- assert.match(app,/docMetaWizardInputs\(meta,4,d\.kind\|\|'purchase'\)/);
+ for(const phase of [5,6,7])assert.match(app,new RegExp("docMetaWizardInputs\\(meta,"+phase+",d\\.kind\\|\\|'purchase'\\)"));
  assert.match(app,/const docMeta=docMetaValue\(d,editing\?original\?\.document_meta\|\|\{\}:\{\}\)/);
  assert.match(app,/p_meta:docMeta/);
 });
