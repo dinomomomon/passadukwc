@@ -909,3 +909,17 @@ table td {
 .eq-auto-grid strong{font-size:16px;color:#0b54b6;overflow-wrap:anywhere}
 @media(max-width:1100px){.eq-auto-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){.eq-auto-grid{grid-template-columns:1fr}}
+
+/* School-wide fiscal-year selector. Scoped to settings, never to printed A4. */
+.kp-fiscal-setting{border:1px solid #b7d6fe;background:linear-gradient(125deg,#f2f8ff,#fff 68%);box-shadow:0 9px 29px #1a5ca017}
+.kp-fiscal-heading{display:flex;align-items:start;justify-content:space-between;flex-wrap:wrap;gap:15px}
+.kp-fiscal-heading h2{font-size:19px;color:#113e7f}
+.kp-fiscal-heading p{max-width:820px;font-size:12px;color:#466a99;line-height:1.85;margin:0 0 16px}
+.kp-fiscal-current{display:inline-flex;align-items:center;border:1px solid #b7d8fb;color:#1558a4;background:#e9f3ff;border-radius:999px;font-size:12px;font-weight:800;padding:8px 13px;white-space:nowrap}
+.kp-fiscal-row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+.kp-fiscal-row .field{margin-bottom:0;min-width:230px;max-width:280px}
+.kp-fiscal-row .primary{min-height:44px}
+.kp-fiscal-setting .hint{margin:14px 0 0;line-height:1.75}
+.kp-fiscal-warning{margin:12px 0 0!important;font-size:12px;line-height:1.75;background:#fff9ed;border:1px solid #ffdf9a;color:#986211;padding:10px 13px;border-radius:10px}
+@media(max-width:680px){.kp-fiscal-row{display:grid;grid-template-columns:1fr}.kp-fiscal-row .field{max-width:100%}}
+@media print{.kp-fiscal-setting{display:none!important}}

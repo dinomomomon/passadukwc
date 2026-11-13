@@ -56,6 +56,7 @@ const money=n=>(Number(n||0)/100).toLocaleString('th-TH',{minimumFractionDigits:
 const dateThai=d=>d?new Date(d+'T12:00:00+07:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
 const dateToday=()=>new Date(Date.now()+7*3600000).toISOString().slice(0,10);
 const fiscalYear=()=>{let d=new Date(Date.now()+7*3600000);return d.getUTCFullYear()+543+(d.getUTCMonth()>=9?1:0);};
+const schoolFiscalYear=()=>{const y=Number(state.school?.numbering_fiscal_year);return Number.isInteger(y)&&y>=2500&&y<=2700?y:fiscalYear();};
 // Personnel management is reserved for active school admins of this tenant.
 // Super Admin may create schools and assign their initial admin, but cannot
 // manage other schools' staff through school-scoped user controls.
@@ -343,7 +344,7 @@ async function loadOfficialNumbers(){
 }
 async function loadOfficialNumberStarts(){
  if(state.demo||!isSchoolAdmin()||!state.school?.id){state.numberStarts=[];return;}
- const year=Number(state.numberSetupYear)||(new Date().getFullYear()+543);
+ const year=Number(state.numberSetupYear)||schoolFiscalYear();
  const {data,error}=await db.rpc('get_official_number_starts',{p_school_id:state.school.id,p_year:year});
  if(error)throw Error('โหลดเลขถัดไปไม่สำเร็จ: '+error.message);
  state.numberStarts=data||[];
@@ -383,7 +384,7 @@ function officialRegistry(){
  '<select class="select" name="year">'+options([['all','ทุกปี'],...years.map(y=>[y,y])],state.numberYear)+'</select>'+
  '<select class="select" name="status">'+options([['all','ทุกสถานะ'],...Object.entries(registryStatusLabel)],state.numberStatus)+'</select>'+
  '<button class="secondary" type="submit">ค้นหา</button></form>';
- const setupYear=Number(state.numberSetupYear)||(new Date().getFullYear()+543);
+ const setupYear=Number(state.numberSetupYear)||schoolFiscalYear();
  const setup=(state.numberStarts||[]).reduce((obj,x)=>(obj[x.series]=x,obj),{});
  const setupSeries=['request','general','acceptance','requisition'];
  const setupNotes={
@@ -394,8 +395,8 @@ function officialRegistry(){
  };
  const configs=isSchoolAdmin()?'<details class="card kp-registry-admin" open>'+
   '<summary>กำหนดเลขถัดไปอัตโนมัติ (แอดมินโรงเรียน)</summary>'+
-  '<p class="hint">ตั้งเลขเริ่มต้นแยกตามโรงเรียน / ปี พ.ศ. / ประเภททะเบียนได้ทีละประเภท ระบบจะนับเลขต่อเนื่อง ไม่ย้อนกลับไปใช้เลขที่เคยจองหรือยกเลิก</p>'+
-  '<form id="registry-setup-year-form" class="kp-registry-year"><label for="registry-setup-year">ปี พ.ศ. ที่ต้องการตั้งเลข</label>'+
+  '<p class="hint">ปีงบประมาณหลักของโรงเรียน: <b>'+schoolFiscalYear()+'</b> (ตั้งค่าที่เมนูข้อมูลโรงเรียน) • ช่องปีด้านล่างใช้ตรวจสอบหรือกำหนดลำดับของทะเบียนเฉพาะปี ไม่ได้เปลี่ยนปีงบประมาณหลัก</p>'+
+  '<form id="registry-setup-year-form" class="kp-registry-year"><label for="registry-setup-year">ปีงบประมาณที่ต้องการตรวจสอบลำดับ</label>'+
   '<input id="registry-setup-year" class="input" type="number" min="2500" max="2700" name="year" value="'+setupYear+'" required>'+
   '<button class="secondary" type="submit">ดูเลขของปีนี้</button></form>'+
   '<div class="kp-number-setup-grid">'+setupSeries.map(series=>{
@@ -412,7 +413,7 @@ function officialRegistry(){
     '<button class="primary" type="submit">บันทึกเลขถัดไป</button></div>'+
     '</form>';
   }).join('')+'</div>'+
-  '<p class="hint kp-number-setup-notice">เช่น เลขล่าสุด 3/2569 ต้องการให้ใบถัดไปเป็น 4/2569 ให้ใส่ 4 • ไม่แก้เลขที่ออกแล้ว • รหัสรายงานตามหมวดและ ร., จ. ระบบจัดให้เอง</p>'+
+  '<p class="hint kp-number-setup-notice">เช่น เลขล่าสุด 3/'+setupYear+' ต้องการให้ใบถัดไปเป็น 4/'+setupYear+' ให้ใส่ 4 • ไม่แก้เลขที่ออกแล้ว • รหัสรายงานตามหมวดและ ร., จ. ระบบจัดให้เอง</p>'+
   '</details>':'';
  shell('ทะเบียนคุมเลขเอกสาร','โรงเรียน / งานพัสดุ',heading('ทะเบียนคุมเลขเอกสาร','ตรวจสอบเลขที่ ใช้กับเรื่องอะไร ใครจองและสถานะล่าสุด',btn('รีเฟรช','registry-refresh','secondary'))+
   '<div class="alert">เลขที่ใหม่ออกจากฐานข้อมูลกลาง ป้องกันเลขซ้ำระหว่างเจ้าหน้าที่ เลขยกเลิกจะไม่ถูกนำกลับมาใช้ ข้อมูลเดิมที่ซ้ำต้องตรวจสอบก่อนออกเลขใหม่</div>'+
@@ -464,7 +465,7 @@ function dashboard(){
    '<div class="kp-ov-hero-actions">'+mainAction+
     '<button type="button" class="kp-ov-button kp-ov-button--outline" data-action="records">'+i('search')+' ค้นหารายการ</button></div>'+
    '<div class="kp-ov-hero-meta"><span>'+i('building')+' '+e(state.school?.name||'โรงเรียน')+'</span>'+
-     '<span>'+i('clock')+' '+e(dateLabel)+'</span></div></div>'+
+     '<span>'+i('clock')+' '+e(dateLabel)+'</span><span>ปีงบประมาณ '+schoolFiscalYear()+'</span></div></div>'+
    '<div class="kp-ov-hero-visual" aria-hidden="true"><div class="kp-ov-glass">'+
     '<span class="kp-ov-glass-label">KRU PASADU · OVERVIEW</span><div class="kp-ov-glass-icon">'+i('dashboard')+'</div>'+
     '<strong>'+prettyCount(summary.total)+'</strong><small>รายการจัดซื้อจัดจ้างในระบบ</small>'+
@@ -548,7 +549,7 @@ function form(){
    requestPrefixChoices.map(choice=>'<option value="'+e(choice.prefix)+'" '+(choice.prefix===chosenRequestPrefix?'selected':'')+'>'+
     e(choice.name+' — '+choice.prefix)+'</option>').join('')+
    '</select><p class="hint">เลือกได้เฉพาะรหัส'+(d.kind==='hire'?'จัดจ้าง':'จัดซื้อ')+' ที่แอดมินโรงเรียนกำหนดไว้ • เลขทะเบียนยังใช้ตามระบบเดิม</p></div>';
- const basic=panel(1,'ขั้นที่ 1 — ข้อมูลการจัดหา','<div class="form-grid"><div class="field"><label>ประเภทการจัดหา</label>'+(editing?'<input type="hidden" name="kind" value="'+e(d.kind)+'">':'')+'<select class="select" name="kind" '+(editing?'disabled':'')+'><option value="purchase" '+(d.kind!=='hire'?'selected':'')+'>จัดซื้อ</option><option value="hire" '+(d.kind==='hire'?'selected':'')+'>จัดจ้าง</option></select></div>'+procurementTypeField+input('วันที่เอกสาร','document_date',d.document_date||dateToday(),'date','required')+input('ปีงบประมาณ (พ.ศ.)','fiscal_year',d.fiscal_year||fiscalYear(),'number',editing?'required readonly':'required min="2500" max="2700"')+input('กลุ่มงาน/ฝ่ายที่ขอ','department',d.department||'')+'</div>'+input('เรื่องที่จัดซื้อ/จัดจ้าง','title',d.title||'','text','required maxlength="500" placeholder="เช่น ซื้อวัสดุสำนักงาน"')+area('เหตุผลและความจำเป็น','reason',d.reason||'')+input('แผนงาน/โครงการ/แหล่งเงิน','budget_source',d.budget_source||'','text','required'));
+ const basic=panel(1,'ขั้นที่ 1 — ข้อมูลการจัดหา','<div class="form-grid"><div class="field"><label>ประเภทการจัดหา</label>'+(editing?'<input type="hidden" name="kind" value="'+e(d.kind)+'">':'')+'<select class="select" name="kind" '+(editing?'disabled':'')+'><option value="purchase" '+(d.kind!=='hire'?'selected':'')+'>จัดซื้อ</option><option value="hire" '+(d.kind==='hire'?'selected':'')+'>จัดจ้าง</option></select></div>'+procurementTypeField+input('วันที่เอกสาร','document_date',d.document_date||dateToday(),'date','required')+input('ปีงบประมาณ (ตั้งค่ากลางของโรงเรียน)','fiscal_year',editing?(d.fiscal_year||schoolFiscalYear()):schoolFiscalYear(),'number','required readonly min="2500" max="2700"')+input('กลุ่มงาน/ฝ่ายที่ขอ','department',d.department||'')+'</div>'+input('เรื่องที่จัดซื้อ/จัดจ้าง','title',d.title||'','text','required maxlength="500" placeholder="เช่น ซื้อวัสดุสำนักงาน"')+area('เหตุผลและความจำเป็น','reason',d.reason||'')+input('แผนงาน/โครงการ/แหล่งเงิน','budget_source',d.budget_source||'','text','required'));
  const entries=panel(2,'ขั้นที่ 2 — รายการพัสดุ / งานจ้าง','<p class="muted">เลือกวิธีคิด VAT ก่อนกรอกราคาต่อหน่วย ระบบจะแยกฐานภาษีและจัดเก็บราคาสุทธิรวม VAT เพื่อให้ทุกเอกสารยอดตรงกัน</p>'+taxPicker+'<div class="kp-item-entry-table">'+itemHeading+items+'</div>'+btn('+ เพิ่มรายการ','add-item','secondary')+'<div class="total-row"><span>วงเงินรวมตามใบสั่งซื้อ/จ้าง</span><strong id="live-total">0.00 บาท</strong></div><p id="kp-vat-breakdown" class="hint" aria-live="polite"></p>');
  const existingOfficer=editing?state.records.find(x=>x.id===state.editingRecordId)?.signers?.officer||state.school?.officer_name||'':null;
  const activeOfficers=activeOfficerSigners(state.school);
@@ -609,7 +610,7 @@ function tableItems(r){return '<div class="table-scroller"><table><thead><tr><th
 
 async function ensureAcceptanceNumber(){
  const r=state.currentRecord;if(!r||r.document_meta?.acceptance_number)return;
- if(state.demo){const be=Number(String(r.document_meta?.delivery_date||r.document_date||'').slice(0,4))+543;r.document_meta={...(r.document_meta||{}),acceptance_number:'ร. '+r.document_number+'/'+be};return;}
+ if(state.demo){r.document_meta={...(r.document_meta||{}),acceptance_number:'ร. '+r.document_number+'/'+r.fiscal_year};return;}
  if(!canEditDocumentMeta(r)||!r.document_meta?.delivery_date)return;
  const {data,error}=await db.rpc('ensure_procurement_acceptance_number',{p_record_id:r.id});
  if(error){console.warn('เลขใบตรวจรับอัตโนมัติ:',error.message);notify('ยังไม่สามารถจัดเลขใบตรวจรับอัตโนมัติได้: '+error.message,true);return;}
@@ -806,7 +807,19 @@ function officerSignerSettingsMarkup(){
   '<button type="submit" class="primary">บันทึกรายชื่อผู้ลงนาม</button></div>'+
   '<p class="hint">ปิดใช้งานรายชื่อที่ไม่ได้ปฏิบัติหน้าที่ได้ แต่ต้องเหลือคนที่เปิดใช้งานอย่างน้อย 1 คน • ไม่เปลี่ยนชื่อในเอกสารที่เคยสร้างแล้ว</p></form>';
 }
-function schoolSettingsMarkup(){const s=state.school;const inp=(t,k)=>'<div class="field"><label>'+t+'</label><input class="input" name="'+k+'" value="'+e(k==='memo_prefix'?normalizeMemoPrefix(s[k]):s[k]||'')+'"></div>';return heading('ตั้งค่าโรงเรียนและผู้ลงนาม','ชื่อและตำแหน่งที่ตั้งค่าใช้กับรายการใหม่ ส่วนเอกสารเก่าจะเก็บชื่อเดิม')+'<div class="card"><h2>โลโก้โรงเรียน</h2><div class="school-logo-setting">'+schoolLogo('settings')+'<div><b>'+e(s.name)+'</b><p class="muted">สำหรับหน้า Dashboard และเมนูของโรงเรียนเท่านั้น <strong>ไม่แทรกในเอกสารราชการและไม่แทนตราครุฑ</strong></p></div></div><form id="school-logo-form"><div class="field"><label>แนบไฟล์โลโก้โรงเรียน (PNG, JPG หรือ WEBP)</label><input class="input" id="school-logo-file" name="school_logo" type="file" accept="image/png,image/jpeg,image/webp" required><small class="hint">ขนาดไม่เกิน 1 MB แนะนำภาพสี่เหลี่ยมจัตุรัส พื้นหลังโปร่งใส</small></div><div class="logo-form-actions"><button class="secondary" type="submit">อัปโหลดโลโก้โรงเรียน</button>'+(s.logo_path||state.demoLogoUrl?btn('นำโลโก้ออก','remove-school-logo','mini-btn'):'')+'</div></form></div><form class="card" id="school-form"><h2>ข้อมูลสถานศึกษา</h2>'+inp('ชื่อโรงเรียน','name')+'<div class="form-grid">'+inp('อำเภอ','district')+inp('จังหวัด','province')+'</div><h2>ที่อยู่บนเอกสาร</h2>'+inp('ที่อยู่โรงเรียนสำหรับเอกสาร','address')+'<h2>ชื่อผู้ลงนาม</h2><div class="form-grid">'+inp('หัวหน้าเจ้าหน้าที่พัสดุ','head_name')+inp('ผู้อำนวยการสถานศึกษา','director_name')+inp('เจ้าหน้าที่การเงิน','finance_name')+'</div><button type="submit" class="primary">บันทึกข้อมูลโรงเรียน</button></form>'+officerSignerSettingsMarkup()+schoolCategorySettingsMarkup();}
+function schoolFiscalYearSettingsMarkup(){
+ const year=schoolFiscalYear();
+ return '<form id="school-fiscal-year-form" class="card kp-fiscal-setting">'+
+  '<div class="kp-fiscal-heading"><div><h2>ปีงบประมาณสำหรับเลขเอกสารทั้งหมด</h2>'+
+  '<p>ตั้งค่าครั้งเดียวต่อโรงเรียน เลขจัดซื้อ/จัดจ้าง เลขรายงาน เลข ร. ใบตรวจรับ และเลข จ. ใบเบิก ใช้ปีงบประมาณเดียวกัน โดยไม่อิงวันที่หัวเอกสาร</p></div>'+
+  '<span class="kp-fiscal-current">ปีงบฯ ปัจจุบัน '+year+'</span></div>'+
+  '<div class="kp-fiscal-row"><div class="field"><label for="school-numbering-year">ปีงบประมาณหลัก (พ.ศ.)</label>'+
+  '<input class="input" id="school-numbering-year" name="fiscal_year" type="number" min="2500" max="2700" step="1" required value="'+year+'"></div>'+
+  '<button class="primary" type="submit">บันทึกปีงบประมาณหลัก</button></div>'+
+  '<p class="hint">ตัวอย่างปีงบประมาณ 2570: เลข พจ 17/2570 • ใบตรวจรับ ร. 5/2570 • ใบเบิก จ. 3/2570 แม้หัวเอกสารเป็นพฤศจิกายน 2569</p>'+
+  '<p class="kp-fiscal-warning">มีผลกับเลขที่จะออกใหม่เท่านั้น เลขที่จองหรือใช้แล้วจะไม่เปลี่ยนย้อนหลัง เพื่อรักษาทะเบียนและเอกสารราชการ เมื่อขึ้นปีงบประมาณใหม่ในอนาคตให้เปลี่ยนที่นี่เพียงจุดเดียว</p></form>';
+}
+function schoolSettingsMarkup(){const s=state.school;const inp=(t,k)=>'<div class="field"><label>'+t+'</label><input class="input" name="'+k+'" value="'+e(k==='memo_prefix'?normalizeMemoPrefix(s[k]):s[k]||'')+'"></div>';return heading('ตั้งค่าโรงเรียนและผู้ลงนาม','ชื่อและตำแหน่งที่ตั้งค่าใช้กับรายการใหม่ ส่วนเอกสารเก่าจะเก็บชื่อเดิม')+schoolFiscalYearSettingsMarkup()+'<div class="card"><h2>โลโก้โรงเรียน</h2><div class="school-logo-setting">'+schoolLogo('settings')+'<div><b>'+e(s.name)+'</b><p class="muted">สำหรับหน้า Dashboard และเมนูของโรงเรียนเท่านั้น <strong>ไม่แทรกในเอกสารราชการและไม่แทนตราครุฑ</strong></p></div></div><form id="school-logo-form"><div class="field"><label>แนบไฟล์โลโก้โรงเรียน (PNG, JPG หรือ WEBP)</label><input class="input" id="school-logo-file" name="school_logo" type="file" accept="image/png,image/jpeg,image/webp" required><small class="hint">ขนาดไม่เกิน 1 MB แนะนำภาพสี่เหลี่ยมจัตุรัส พื้นหลังโปร่งใส</small></div><div class="logo-form-actions"><button class="secondary" type="submit">อัปโหลดโลโก้โรงเรียน</button>'+(s.logo_path||state.demoLogoUrl?btn('นำโลโก้ออก','remove-school-logo','mini-btn'):'')+'</div></form></div><form class="card" id="school-form"><h2>ข้อมูลสถานศึกษา</h2>'+inp('ชื่อโรงเรียน','name')+'<div class="form-grid">'+inp('อำเภอ','district')+inp('จังหวัด','province')+'</div><h2>ที่อยู่บนเอกสาร</h2>'+inp('ที่อยู่โรงเรียนสำหรับเอกสาร','address')+'<h2>ชื่อผู้ลงนาม</h2><div class="form-grid">'+inp('หัวหน้าเจ้าหน้าที่พัสดุ','head_name')+inp('ผู้อำนวยการสถานศึกษา','director_name')+inp('เจ้าหน้าที่การเงิน','finance_name')+'</div><button type="submit" class="primary">บันทึกข้อมูลโรงเรียน</button></form>'+officerSignerSettingsMarkup()+schoolCategorySettingsMarkup();}
 function settings(){if(!isAdmin()){notify('เฉพาะผู้ดูแลโรงเรียน',true);return;}shell('ข้อมูลโรงเรียน','ตั้งค่าผู้ลงนาม',schoolSettingsMarkup());}
 
 const staffRoleLabels={
@@ -1257,7 +1270,7 @@ if(action==='open'||action==='open-edit'){
   await loadOwner();
   state.flash='ต่ออายุ '+row.school_name+' เรียบร้อยแล้ว ใช้ได้ถึง '+subscriptionDate(data);
   return owner();
-}if(action==='approve-school'){if(!confirm('อนุมัติคำขอเปิดโรงเรียนนี้?'))return;const {error}=await db.rpc('platform_approve_request',{p_request_id:el.dataset.id});if(error)return notify(error.message,true);await loadOwner();state.flash='อนุมัติโรงเรียนแล้ว';return owner();}if(action==='owner'){await loadOwner();state.page='owner';return render();}if(action==='members'){if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้นที่เข้าเมนูจัดการผู้ใช้งานได้',true);await loadMembers();state.page='members';return render();}if(action==='subscription-help'){return notify('สิทธิ์ทดลองหรือสมาชิกหมดอายุแล้ว กรุณาติดต่อเจ้าของแพลตฟอร์มครูพัสดุ (LINE จะเพิ่มภายหลัง)',true);}if(action==='create'){if(!state.demo){try{await refreshSubscription();}catch(ex){return notify('ตรวจสอบสิทธิ์ไม่สำเร็จ: '+ex.message,true);}if(!canCreate())return notify('ครบโควตาหรือหมดอายุแล้ว กรุณาติดต่อเจ้าของแพลตฟอร์ม',true);}state.editingRecordId=null;state.wizardStep=1;state.items=[{name:'',qty:'1',unit:'',price:'',vat_treatment:''}];state.draft={};state.page='create';return render();}if(action==='records'){if(!state.demo)await loadRecords();state.page='records';return render();}if(action==='settings'){state.page='settings';return render();}if(action==='remove-school-logo'){if(!isAdmin())return notify('ไม่มีสิทธิ์ลบโลโก้โรงเรียน',true);if(!confirm('ต้องการนำโลโก้โรงเรียนออกจากหน้าเว็บใช่หรือไม่?'))return;if(state.demo){state.demoLogoUrl='';state.flash='นำโลโก้ตัวอย่างออกแล้ว';return render();}const old=state.school.logo_path;if(!old)return;const {data,error}=await db.from('schools').update({logo_path:''}).eq('id',state.school.id).select('*').single();if(error)return notify(error.message,true);state.school=data;await db.storage.from('school-logos').remove([old]);state.flash='นำโลโก้โรงเรียนออกแล้ว';return render();}if(action==='edit-record'){const rec=state.currentRecord;if(!canEditMainRecord(rec))return notify('แก้ไขได้เฉพาะรายการฉบับร่างที่มีสิทธิ์',true);state.editingRecordId=rec.id;state.wizardStep=1;state.items=(rec.items||[]).map(x=>({name:x.name,qty:String(x.qty),unit:x.unit,price:(Number(x.entered_price_satang??x.price_satang)/100).toFixed(2),vat_treatment:x.vat_treatment||''}));state.draft={...rec,...Object.fromEntries(Object.entries(rec.document_meta||{}).map(([k,v])=>['doc_'+k,v]))};state.page='create';return render();}if(action==='cancel-edit'){state.editingRecordId=null;state.page='detail';return render();}if(action==='doc-meta'){if(!canEditDocumentMeta(state.currentRecord))return notify('ไม่มีสิทธิ์แก้ไขข้อมูลเอกสารนี้',true);state.page='docmeta';return render();}if(action==='detail'){state.page='detail';return render();}if(action==='dashboard'){state.page='dashboard';return render();}}
+}if(action==='approve-school'){if(!confirm('อนุมัติคำขอเปิดโรงเรียนนี้?'))return;const {error}=await db.rpc('platform_approve_request',{p_request_id:el.dataset.id});if(error)return notify(error.message,true);await loadOwner();state.flash='อนุมัติโรงเรียนแล้ว';return owner();}if(action==='owner'){await loadOwner();state.page='owner';return render();}if(action==='members'){if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้นที่เข้าเมนูจัดการผู้ใช้งานได้',true);await loadMembers();state.page='members';return render();}if(action==='subscription-help'){return notify('สิทธิ์ทดลองหรือสมาชิกหมดอายุแล้ว กรุณาติดต่อเจ้าของแพลตฟอร์มครูพัสดุ (LINE จะเพิ่มภายหลัง)',true);}if(action==='create'){if(!state.demo){try{await refreshSubscription();}catch(ex){return notify('ตรวจสอบสิทธิ์ไม่สำเร็จ: '+ex.message,true);}if(!canCreate())return notify('ครบโควตาหรือหมดอายุแล้ว กรุณาติดต่อเจ้าของแพลตฟอร์ม',true);}state.editingRecordId=null;state.wizardStep=1;state.items=[{name:'',qty:'1',unit:'',price:'',vat_treatment:''}];state.draft={fiscal_year:schoolFiscalYear()};state.page='create';return render();}if(action==='records'){if(!state.demo)await loadRecords();state.page='records';return render();}if(action==='settings'){state.page='settings';return render();}if(action==='remove-school-logo'){if(!isAdmin())return notify('ไม่มีสิทธิ์ลบโลโก้โรงเรียน',true);if(!confirm('ต้องการนำโลโก้โรงเรียนออกจากหน้าเว็บใช่หรือไม่?'))return;if(state.demo){state.demoLogoUrl='';state.flash='นำโลโก้ตัวอย่างออกแล้ว';return render();}const old=state.school.logo_path;if(!old)return;const {data,error}=await db.from('schools').update({logo_path:''}).eq('id',state.school.id).select('*').single();if(error)return notify(error.message,true);state.school=data;await db.storage.from('school-logos').remove([old]);state.flash='นำโลโก้โรงเรียนออกแล้ว';return render();}if(action==='edit-record'){const rec=state.currentRecord;if(!canEditMainRecord(rec))return notify('แก้ไขได้เฉพาะรายการฉบับร่างที่มีสิทธิ์',true);state.editingRecordId=rec.id;state.wizardStep=1;state.items=(rec.items||[]).map(x=>({name:x.name,qty:String(x.qty),unit:x.unit,price:(Number(x.entered_price_satang??x.price_satang)/100).toFixed(2),vat_treatment:x.vat_treatment||''}));state.draft={...rec,...Object.fromEntries(Object.entries(rec.document_meta||{}).map(([k,v])=>['doc_'+k,v]))};state.page='create';return render();}if(action==='cancel-edit'){state.editingRecordId=null;state.page='detail';return render();}if(action==='doc-meta'){if(!canEditDocumentMeta(state.currentRecord))return notify('ไม่มีสิทธิ์แก้ไขข้อมูลเอกสารนี้',true);state.page='docmeta';return render();}if(action==='detail'){state.page='detail';return render();}if(action==='dashboard'){state.page='dashboard';return render();}}
 function collectDraft(){const f=document.querySelector('#procurement-form');if(!f)return;state.draft=Object.fromEntries(new FormData(f));document.querySelectorAll('[data-item]').forEach(el=>{const n=Number(el.dataset.item),key=el.dataset.key;if(state.items[n])state.items[n][key]=el.value;});}
 async function handleForm(form){if(form.id.startsWith('eq-')){if(await equipmentModule.submit(form))return;}const f=Object.fromEntries(new FormData(form));if(form.id==='auth-form'){
   const email=String(f.email||'').trim(), password=String(f.password||'');
@@ -1390,6 +1403,20 @@ if(form.id==='school-categories-form'){
   state.school=data;
   return notify('บันทึกรายชื่อเจ้าหน้าที่แล้ว ชื่อในเอกสารเดิมไม่เปลี่ยนแปลง');
  }
+ if(form.id==='school-fiscal-year-form'){
+  if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
+  const year=Number(f.fiscal_year);
+  if(!Number.isInteger(year)||year<2500||year>2700)return notify('กรุณากำหนดปีงบประมาณ พ.ศ. 2500–2700',true);
+  const previous=schoolFiscalYear();
+  if(year===previous)return notify('ปีงบประมาณหลักของโรงเรียนเป็น '+year+' อยู่แล้ว');
+  if(!confirm('เปลี่ยนปีงบประมาณสำหรับเลขเอกสารใหม่จาก '+previous+' เป็น '+year+' ใช่หรือไม่? เลขที่ออกไปแล้วจะไม่เปลี่ยนย้อนหลัง'))return;
+  const result=await db.rpc('set_school_numbering_fiscal_year',{p_school_id:state.school.id,p_year:year});
+  if(result.error)return notify('ตั้งค่าปีงบประมาณไม่สำเร็จ: '+result.error.message,true);
+  const {data,error}=await db.from('schools').select('*').eq('id',state.school.id).single();
+  if(error)return notify('บันทึกปีงบประมาณแล้ว แต่โหลดข้อมูลโรงเรียนใหม่ไม่ได้ กรุณารีเฟรช: '+error.message,true);
+  state.school=data;state.numberSetupYear=year;state.draft.fiscal_year=year;
+  return notify('ตั้งปีงบประมาณหลัก '+year+' สำเร็จ เลขใหม่ทุกประเภทจะใช้ปีนี้');
+ }
  if(form.id==='school-form'){if(state.demo){state.school={...state.school,...f};return notify('ปรับข้อมูลตัวอย่างในหน้านี้แล้ว (ไม่บันทึกจริง)');}const {data,error}=await db.from('schools').update(f).eq('id',state.school.id).select('*').single();if(error)return notify(error.message,true);state.school=data;return notify('บันทึกข้อมูลโรงเรียนแล้ว');}
 if(form.id==='member-form'){
   if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
@@ -1430,7 +1457,7 @@ if(form.matches('[data-registry-start-form]')){
  if(!['request','general','acceptance','requisition'].includes(series)||
     !Number.isInteger(year)||year<2500||year>2700||
     !Number.isInteger(next)||next<1||next>9999999)return notify('เลขและปีไม่ถูกต้อง',true);
- if(year!==Number(state.numberSetupYear||new Date().getFullYear()+543))return notify('ปีที่เลือกเปลี่ยนไป กรุณาโหลดทะเบียนใหม่',true);
+ if(year!==Number(state.numberSetupYear||schoolFiscalYear()))return notify('ปีที่เลือกเปลี่ยนไป กรุณาโหลดทะเบียนใหม่',true);
  if(next<Number(current?.next_number||1))return notify('ไม่สามารถตั้งเลขต่ำกว่าที่ระบบเคยจัดสรรได้',true);
  if(next===Number(current?.next_number||1))return notify('เลขถัดไปเป็น '+next+'/'+year+' อยู่แล้ว ไม่ต้องเปลี่ยน');
  if(!confirm('ตั้งเลขถัดไปของทะเบียน '+(registrySeriesLabels[series]||series)+' เป็น '+next+'/'+year+' ใช่หรือไม่? เลขที่ออกไปแล้วจะไม่เปลี่ยน'))return;
