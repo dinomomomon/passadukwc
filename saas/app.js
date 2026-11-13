@@ -588,7 +588,7 @@ function updateWizardReview(){
  const form=document.getElementById('procurement-form'),data=Object.fromEntries(new FormData(form));
  let sum=0;try{sum=calculatePricing(state.items,document.getElementById('kp-vat-mode')?.value||state.draft.doc_vat_mode||'legacy').total_satang/100;}catch(_){}
  const has=(key)=>String(data['doc_'+key]??'').trim()!=='';
- const financial=['vat_baht','withholding_baht','fine_baht','discount_baht','budget_total_baht','budget_paid_baht'].some(has);
+ const financial=['withholding_baht','fine_baht','discount_baht','budget_total_baht','budget_paid_baht'].some(has);
  const checks=[
   ['ใบสั่งซื้อ / ใบสั่งจ้าง',has('order_number')?'มีเลขที่ใบสั่งแล้ว':'ยังไม่มีเลขที่ใบสั่ง',has('order_number')],
   ['การส่งมอบและตรวจรับ',has('delivery_date')?'มีวันที่ส่งมอบแล้ว':'ยังไม่มีวันส่งมอบจริง',has('delivery_date')],
