@@ -62,8 +62,8 @@ export function docMetaInputs(meta={},options={}){
  const main='<section class="doc-meta-section"><h3>เลขที่หนังสือและตำแหน่งผู้ตรวจรับ</h3><p class="hint">เลขที่ทราบผลและขออนุมัติเบิกจ่ายออกอัตโนมัติตามทะเบียน วันที่หัวกระดาษและวันที่ลงนามเลือกแยกกันได้ทุกฉบับในหัวข้อถัดไป โดยไม่เปลี่ยนวันที่และเลขทะเบียนดั้งเดิม</p><div class="form-grid">'+primaryDocumentFields.map(f=>fieldHtml(f[0]==='memo_prefix'?[f[0],kind==='hire'?'รหัสรายงานขอจ้าง (เลือกตามหมวดงานจ้าง)':'รหัสรายงานขอซื้อ (เลือกตามหมวดพัสดุ)']:f,meta,perKindCategories)).join('')+'</div></section>';
  const signatureSection=docMetaDateInputs(meta,kind);
  const sections=documentInfoGroups.filter(g=>kind==='purchase'||g.id!=='requisition').map(g=>{
-  const extra=g.advanced?.length?'<details class="doc-meta-advanced"><summary>กรณีพิเศษ / ข้อมูลเพิ่มเติม</summary><div class="form-grid">'+g.advanced.map(f=>fieldHtml(f,meta)).join('')+'</div></details>':'';
-  return '<details class="doc-meta-section" '+(g.id==='order'?'open':'')+'><summary>'+e(g.title)+'</summary><p class="hint">'+e(g.description)+'</p><div class="form-grid">'+g.fields.map(f=>fieldHtml(f,meta)).join('')+'</div>'+extra+'</details>';
+  const extra=g.advanced?.length?'<details class="doc-meta-advanced" open><summary>กรณีพิเศษ / ข้อมูลเพิ่มเติม (แสดงช่องกรอกแล้ว)</summary><div class="form-grid">'+g.advanced.map(f=>fieldHtml(f,meta)).join('')+'</div></details>':'';
+  return '<section class="doc-meta-section kp-document-main-section"><h3>'+e(g.title)+'</h3><p class="hint">'+e(g.description)+'</p><div class="form-grid">'+g.fields.map(f=>fieldHtml(f,meta)).join('')+'</div>'+extra+'</section>';
  }).join('');
  return main+signatureSection+sections+'<p id="registry-help" class="hint">เลขที่เอกสารออกอัตโนมัติและแก้ผ่านเมนูทะเบียนคุมเลขเท่านั้น เพื่อป้องกันเลขซ้ำ</p><p class="hint">หากพิมพ์แล้วยังมีเส้นประที่เลขใบสั่ง/ใบตรวจรับ/ใบเบิก กรุณาตรวจว่าได้กรอกเลขใบสั่งจริงหรือออกเลขจากทะเบียนคุมแล้ว วันที่ลงนามไม่ใช่เลขหนังสือและไม่ออกเลขทะเบียนให้อัตโนมัติ</p><p class="hint">ใช้รหัสตามหมวดเฉพาะรายงานขอซื้อ/ขอจ้าง เอกสารฉบับอื่นใช้เลขหลังคำว่า ที่ เท่านั้น ยอดเงินรวมและกิจกรรม/โครงการเชื่อมจากข้อมูลหลัก ส่วนยอดเบิกจ่ายคำนวณอัตโนมัติเมื่อไม่กรอกยอดสุทธิเอง</p>';
 }
@@ -92,11 +92,13 @@ export function docMetaWizardInputs(meta={},step=3,kind='purchase'){
   ['budget_paid_baht','จ่ายไปแล้ว (บาท)','number']
  ];
  const section=(title,hint,fields,id)=>{
-  const hasValues=fields.some(([key])=>String(meta?.[key]??meta?.['doc_'+key]??'').trim()!=='');
-  return '<details class="kp-wizard-evidence" data-evidence-group="'+id+'" '+(hasValues?'open':'')+'>'+
-   '<summary>'+e(title)+' <span>กรอกเมื่อมีข้อมูลจริง</span></summary>'+
+  const filled=fields.filter(([key])=>String(meta?.[key]??meta?.['doc_'+key]??'').trim()!=='').length;
+  return '<section class="kp-wizard-evidence kp-evidence-visible" data-evidence-group="'+id+'">'+
+   '<div class="kp-evidence-head"><h4>'+e(title)+'</h4>'+
+   '<span class="kp-evidence-status '+(filled?'has-data':'')+'" data-evidence-count aria-live="polite">'+
+    (filled?'บันทึกข้อมูลแล้ว '+filled+' ช่อง':'ยังไม่มีข้อมูล • กรอกภายหลังได้')+'</span></div>'+
    '<p class="hint">'+e(hint)+'</p>'+
-   '<div class="form-grid">'+fields.map(f=>fieldHtml(f,meta)).join('')+'</div></details>';
+   '<div class="form-grid">'+fields.map(f=>fieldHtml(f,meta)).join('')+'</div></section>';
  };
  if(Number(step)===3){
   // The requisition requester is the actual person withdrawing supplies.
@@ -109,13 +111,13 @@ export function docMetaWizardInputs(meta={},step=3,kind='purchase'){
     ['requester_name','ชื่อผู้เบิกพัสดุ'],
     ['requester_position','ตำแหน่งผู้เบิก (ถ้ามี)']
    ].map(f=>fieldHtml(f,meta)).join('')+'</div></section>':'';
-  return '<div class="kp-evidence-panel">'+requesterFields+
+  return '<div class="kp-evidence-panel"><div class="kp-evidence-intro"><strong>ตรวจสอบข้อมูลใบสั่งซื้อ / ใบสั่งจ้าง</strong><p>ช่องข้อมูลทั้งหมดเปิดแสดงแล้ว หากยังไม่ได้ออกใบสั่งจริงให้เว้นว่างและกลับมาเติมหลังบันทึกฉบับร่างได้</p></div>'+requesterFields+
    section('ข้อมูลใบสั่ง'+(kind==='hire'?'จ้าง':'ซื้อ')+' (ถ้าออกแล้ว)',
    'เลขที่ใบสั่งต้องตรงกับเอกสารจริง ไม่ใช่เลขรายงานขอซื้อ/จ้าง วันที่ใบสั่งซื้อ/จ้างเลือกได้ในขั้นที่ 4 พร้อมวันที่ลงนาม หากยังไม่ออกเอกสารสามารถเว้นไว้ได้',orderFields,'order')+'</div>';
  }
  if(Number(step)===4){
-  return '<div class="kp-evidence-panel">'+docMetaDateInputs(meta,kind)+'<h3>ข้อมูลสำหรับเติมเอกสารตรวจรับและเบิกจ่าย</h3>'+
-   '<p class="hint">ยังไม่มีหลักฐานจริงสามารถเว้นว่างทั้งหมดได้ ระบบจะไม่สมมติวันส่งมอบหรือเลขที่ใบส่งของ กรอกเพิ่มเติมภายหลังได้ที่ “ข้อมูลเอกสาร / ตรวจรับ / เบิกจ่าย”</p>'+
+  return '<div class="kp-evidence-panel"><div class="kp-evidence-intro"><strong>ตรวจสอบข้อมูลสำคัญของเอกสารทุกฉบับ</strong><p>วันที่ลงนาม ข้อมูลตรวจรับ และการเงินอยู่ด้านล่างทั้งหมด ไม่ต้องกดขยายหัวข้อเพื่อเห็นช่องกรอก</p></div>'+docMetaDateInputs(meta,kind)+'<h3>ข้อมูลสำหรับเติมเอกสารตรวจรับและเบิกจ่าย</h3>'+
+   '<p class="hint">แสดงทุกช่องทันที ไม่ต้องกดขยาย • ยังไม่มีหลักฐานจริงสามารถเว้นว่างทั้งหมดได้ ระบบจะไม่สมมติวันส่งมอบหรือเลขที่ใบส่งของ กรอกเพิ่มเติมภายหลังได้ที่ “ข้อมูลเอกสาร / ตรวจรับ / เบิกจ่าย”</p>'+
    section('ข้อมูลส่งมอบและตรวจรับ (เมื่อส่งมอบจริง)',
     'กรอกวันส่งมอบตามเหตุการณ์จริง ไม่ใช่กำหนดส่งมอบ วันตรวจรับใช้วันส่งมอบเป็นค่าเริ่มต้นหากไม่ระบุวันอื่น โปรดตรวจสอบว่าตรวจรับจริงวันใด เลขใบตรวจรับออกจากทะเบียนกลางหลังบันทึกการส่งมอบ',deliveryFields,'delivery')+
    section('ข้อมูลการเงินประกอบการเบิกจ่าย (ถ้ามี)',
