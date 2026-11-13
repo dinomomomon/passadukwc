@@ -14,7 +14,7 @@ test('eight labelled steps show separate purchase, dates, receipt, finance and r
  assert.match(app,/const labels=\['ข้อมูลหลัก','รายการพัสดุ','ผู้ขาย \/ ผู้ตรวจรับ','ใบสั่งซื้อ \/ จ้าง','วันที่และเลขเอกสาร','ส่งมอบ \/ ตรวจรับ','การเงิน','ตรวจทาน \/ บันทึก'\]/);
  assert.match(app,/data-wizard-indicator/);
  assert.match(app,/data-action="wizard-jump"/);
- assert.match(app,/const footer=.*?'ขั้น '\+step\+' จาก 8'/);
+ assert.match(app,/class="kp-wizard-progress">ขั้น '\+step\+' จาก 8/);
 });
 test('existing saved data and optional inputs never duplicate across the new forms',()=>{
  for(const kind of ['purchase','hire']){
