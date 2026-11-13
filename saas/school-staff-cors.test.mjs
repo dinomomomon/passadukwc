@@ -40,7 +40,7 @@ test('OPTIONS preflight returns CORS for allowed origins; POST retains verified 
 
 test('site provides a clear pathway for assigning an additional school admin',()=>{
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
- assert.match(app,/เลือก “แอดมินโรงเรียน” เพื่อเพิ่มผู้ดูแลคนที่ 2/);
+ assert.match(app,/สามารถแต่งตั้งแอดมินโรงเรียนได้ไม่จำกัดจำนวน/);
  assert.match(app,/staffRoleOptions\(editing\.member_role\)/);
  assert.match(app,/staffRequest\('edit',\{user_id:f\.user_id,full_name:f\.full_name,email:f\.email,role:f\.role\}\)/);
 });
