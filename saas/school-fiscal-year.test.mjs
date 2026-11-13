@@ -6,7 +6,7 @@ const sql=readFileSync(new URL('../supabase/migrations/20261113103000_school_fis
 test('admin alone chooses one school-wide year, with changes audited',()=>{
  assert.match(sql,/ADD COLUMN IF NOT EXISTS numbering_fiscal_year integer/);
  assert.match(sql,/CREATE OR REPLACE FUNCTION public\.set_school_numbering_fiscal_year/);
- assert.match(sql,/not public\.is_school_admin\(p_school_id\)/);
+ assert.match(sql,/NOT public\.is_school_admin\(p_school_id\)/i);
  assert.match(sql,/SET numbering_fiscal_year=p_year/);
  assert.match(sql,/existing_issued_numbers_unchanged/);
 });
