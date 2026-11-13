@@ -37,8 +37,8 @@ test('new dashboard is scoped, uses actual school records, and retains all exist
  assert.match(dash,/recordTable\(recent\)/);
  assert.match(dash,/kp-ov-hero/);
  assert.match(dash,/kp-ov-metrics/);
- assert.match(dash,/data-action="registry"/);
- assert.match(dash,/data-action="settings"/);
+ assert.match(dash,/action\('ทะเบียนคุมเลข','ค้นหาและตรวจเลขหนังสือ','book','registry','violet'\)/);
+ assert.match(dash,/action\('ข้อมูลผู้ลงนาม','ตั้งค่าผู้ลงนามของโรงเรียน','users','settings','sky'\)/);
  assert.match(dash,/data-action="records"/);
  assert.match(dash,/canCreate\(\)/);
  assert.doesNotMatch(dash,/recordTable\(rows\.slice\(0,6\)\)/);

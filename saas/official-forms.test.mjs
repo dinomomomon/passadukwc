@@ -618,7 +618,7 @@ test('remove unfinished archive menu and retain PDF saving through procurement r
 test('dashboard replaces storage shortcut with document-number register instead of dead link',async()=>{
  const {readFileSync}=await import('node:fs');
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
- assert.match(app,/<button class="action-card" data-action="registry">/);
+ assert.match(app,/action\('ทะเบียนคุมเลข','ค้นหาและตรวจเลขหนังสือ','book','registry','violet'\)/);
  assert.match(app,/if\(action==='registry'\|\|action==='registry-refresh'\)/);
  assert.doesNotMatch(app,/<button class="action-card" data-action="storage">/);
 });

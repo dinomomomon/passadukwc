@@ -57,7 +57,8 @@ test('table, dashboard and detail use one status presenter but draft-only edit/d
  assert.match(app,/import \{procurementDisplayStatus\} from '\.\/record-display-status\.js'/);
  assert.match(app,/const badge=r=>\{const status=procurementDisplayStatus\(r\)/);
  assert.match(app,/recordTable\(rows/);
- assert.match(app,/recordTable\(rows\.slice\(0,6\)\)/);
+ assert.match(app,/latestDashboardRecords\(state\.records,10\)/);
+ assert.match(app,/recordTable\(recent\)/);
  assert.match(app,/\+badge\(r\)\+'/);
  assert.match(app,/heading\(e\(r\.title\)\+' <span class="kp-detail-status">'\+badge\(r\)/);
  assert.match(app,/const canEditMainRecord=r=>!!r&&r\.state==='draft'/);
