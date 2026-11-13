@@ -1,0 +1,60 @@
+/* ครูพัสดุ — A4 print fitting without altering TH Sarabun 16pt or official margins
+   Short forms remain one page. Long forms can continue without content clipping. */
+
+.paper-page.official.print-compact .memo-top{height:17mm;margin-bottom:0}
+.paper-page.official.print-compact .memo-field{margin:.4mm 0}
+.paper-page.official.print-compact .memo-line{margin:2mm 0 1mm}
+.paper-page.official.print-compact .memo-field-to{margin-bottom:1mm}
+.paper-page.official.print-compact p{font-size:16pt;line-height:1.12;margin:.4mm 0}
+.paper-page.official.print-compact ol{font-size:16pt;line-height:1.12;margin:1mm 0}
+.paper-page.official.print-compact li{margin:.2mm 0}
+.paper-page.official.print-compact .sign-grid{font-size:16pt;line-height:1.10;margin-top:2mm}
+.paper-page.official.print-compact .director-sign{font-size:16pt;line-height:1.10;margin-top:2mm}
+.paper-page.official.print-compact .inspector-sign{font-size:16pt;line-height:1.10;margin-top:2mm}
+.paper-page.official.print-compact .print-title{margin-bottom:2mm}
+.paper-page.official.print-compact .official-table{margin:1.5mm 0}
+.paper-page.official.print-tight .memo-top{height:16mm;margin-bottom:0}
+.paper-page.official.print-tight .memo-field{margin:0}
+.paper-page.official.print-tight .memo-line{margin:1mm 0 .5mm}
+.paper-page.official.print-tight .memo-field-to{margin-bottom:.5mm}
+.paper-page.official.print-tight p{font-size:16pt;line-height:1.07;margin:.1mm 0}
+.paper-page.official.print-tight ol{font-size:16pt;line-height:1.07;margin:.3mm 0}
+.paper-page.official.print-tight li{margin:0}
+.paper-page.official.print-tight .sign-grid{font-size:16pt;line-height:1.06;margin-top:1mm}
+.paper-page.official.print-tight .director-sign{font-size:16pt;line-height:1.06;margin-top:1mm}
+.paper-page.official.print-tight .inspector-sign{font-size:16pt;line-height:1.06;margin-top:1mm}
+.paper-page.official.print-tight .print-title{margin-bottom:1mm}
+.paper-page.official.print-tight .official-table{margin:1mm 0}
+.paper-page.official .doc-sheet-body { overflow: visible; }
+@media print {
+  #print-area .paper-page.official.print-flow {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+  #print-area .paper-page.official.print-flow .doc-sheet-body{
+    overflow: visible !important;
+    height: auto !important;
+  }
+  #print-area .paper-page.official.print-flow p,
+  #print-area .paper-page.official.print-flow li,
+  #print-area .paper-page.official.print-flow .memo-top,
+  #print-area .paper-page.official.print-flow .sign-grid,
+  #print-area .paper-page.official.print-flow .director-sign,
+  #print-area .paper-page.official.print-flow .inspector-sign{
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  #print-area .paper-page.official.print-flow .official-table thead{
+    display:table-header-group;
+  }
+  #print-area .paper-page.official.print-flow .official-table tr{
+    break-inside: avoid;
+  }
+  #print-area .paper-page.official.print-flow .table-filler{
+    display:none;
+  }
+}

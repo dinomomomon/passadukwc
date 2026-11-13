@@ -1,0 +1,37 @@
+/* One global popup for successful saves and failures in every school workflow. */
+.kp-popup{
+ position:fixed;z-index:2147483000;top:22px;right:24px;
+ display:grid;grid-template-columns:48px minmax(0,1fr) 28px;
+ align-items:center;column-gap:13px;width:min(430px,calc(100vw - 32px));
+ min-height:94px;padding:16px 17px 19px;
+ border-radius:18px;border:1px solid #cbe7d9;
+ color:#163b30;background:rgba(255,255,255,.99);
+ box-shadow:0 19px 55px rgba(10,42,81,.22),0 5px 14px rgba(0,0,0,.07);
+ font-family:"Sarabun",Tahoma,sans-serif;
+ animation:kp-popup-enter .26s cubic-bezier(.2,.8,.2,1) both;
+ overflow:hidden;
+}
+.kp-popup-error{border-color:#f6c8c8;color:#6e2626}
+.kp-popup-emblem{
+ width:46px;height:46px;display:grid;place-items:center;
+ border-radius:50%;color:#fff;font-size:25px;font-weight:900;
+ background:linear-gradient(135deg,#20bc83,#0c956e);
+ box-shadow:0 8px 18px rgba(22,167,113,.22);
+}
+.kp-popup-error .kp-popup-emblem{background:linear-gradient(135deg,#fc7777,#d93c3c);box-shadow:0 8px 18px #d93c3c22}
+.kp-popup-details{display:flex;flex-direction:column;min-width:0;gap:3px}
+.kp-popup-details strong{font-size:17px;line-height:1.25;font-weight:800}
+.kp-popup-message{font-size:13px;line-height:1.5;overflow-wrap:anywhere;color:#42685e}
+.kp-popup-error .kp-popup-message{color:#854b4b}
+.kp-popup-close{align-self:start;width:28px;height:28px;border:0;background:#eff5f8;
+ border-radius:9px;color:#68828f;font-size:22px;line-height:1;cursor:pointer}
+.kp-popup-close:hover,.kp-popup-close:focus-visible{background:#e3edf6;color:#1e5482;outline:2px solid #bad7fb;outline-offset:1px}
+.kp-popup-progress{position:absolute;left:0;bottom:0;height:4px;width:100%;
+ background:linear-gradient(90deg,#18b981,#0b876b);
+ transform-origin:left;animation:kp-popup-timer 4.5s linear both}
+.kp-popup-error .kp-popup-progress{background:linear-gradient(90deg,#ff9090,#d74949);animation-duration:6.5s}
+@keyframes kp-popup-enter{from{opacity:0;transform:translateY(-16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes kp-popup-timer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media(max-width:640px){.kp-popup{top:12px;left:16px;right:16px;width:auto;padding:13px;grid-template-columns:42px minmax(0,1fr) 28px;gap:10px}.kp-popup-emblem{width:40px;height:40px}.kp-popup-details strong{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.kp-popup,.kp-popup-progress{animation:none}}
+@media print{.kp-popup{display:none!important}}

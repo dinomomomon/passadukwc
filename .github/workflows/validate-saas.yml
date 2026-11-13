@@ -1,0 +1,48 @@
+name: Validate Kru Pasadu SaaS
+on:
+  push:
+    branches:
+      - feature/kru-pasadu-v01
+  pull_request:
+    branches:
+      - main
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: saas
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: saas/package-lock.json
+      - run: npm ci
+      - name: Run form regression tests and build
+        run: npm run build
+      - name: Verify generated build metadata
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const j=JSON.parse(fs.readFileSync('dist/build-info.json','utf8')); if(j.build_commit!==process.env.GITHUB_SHA) process.exit(1); console.log('Verified build SHA',j.build_commit);"
+      - name: Check Cloudflare production for deployed Git SHA
+        continue-on-error: true
+        env:
+          WORKERS_URL: https://passadukwc.primstore589.workers.dev
+        run: |
+          set -uo pipefail
+          echo "Expecting Git commit: ${GITHUB_SHA}"
+          for attempt in 1 2 3 4 5 6 7 8; do
+            if curl --fail --silent --show-error --location --connect-timeout 8 --max-time 12 "${WORKERS_URL}/build-info.json?sha=${GITHUB_SHA}" -o /tmp/cloudflare-build.json; then
+              echo "Found build metadata on Cloudflare:"
+              cat /tmp/cloudflare-build.json
+              if node --input-type=module -e "import fs from 'node:fs'; const j=JSON.parse(fs.readFileSync('/tmp/cloudflare-build.json','utf8')); process.exit(j.build_commit===process.env.GITHUB_SHA?0:1)"; then
+                echo "Cloudflare verified on current commit ${GITHUB_SHA}"
+                exit 0
+              fi
+            fi
+            echo "Cloudflare not yet at expected SHA (attempt ${attempt}/8)"
+            sleep 12
+          done
+          echo "::warning::Cloudflare live deployment could not be verified from this GitHub run."
+          exit 1

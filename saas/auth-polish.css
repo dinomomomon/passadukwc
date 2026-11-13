@@ -1,0 +1,215 @@
+/* ครูพัสดุ – แบบ A: โลโก้กึ่งกลางเหนือฟอร์ม, อักษรไทยไม่ชนกัน
+   Overrides auth-unified.css only. Does not affect A4 documents or dashboard. */
+
+.kp-auth-screen{
+  font-family:"Sarabun",Tahoma,system-ui,sans-serif;
+}
+.kp-auth-screen *, .kp-auth-screen *::before, .kp-auth-screen *::after{
+  box-sizing:border-box;
+}
+.kp-auth-screen button,
+.kp-auth-screen input {
+  font-family:"Sarabun",Tahoma,system-ui,sans-serif;
+}
+
+/* Sales hero – leave enough vertical room for Thai ascenders/descenders. */
+.kp-auth-intro{
+  padding-block:clamp(34px,5vh,64px);
+  overflow:hidden;
+}
+.kp-auth-content{max-width:730px}
+.kp-auth-brand{margin-bottom:27px}
+.kp-auth-brand strong{font-size:27px;line-height:1.48;letter-spacing:0}
+.kp-auth-brand small{font-size:13px;line-height:1.5}
+.kp-auth-eyebrow{font-size:12px;line-height:1.5;padding-block:9px}
+.kp-auth-intro h1{
+  font-family:"Sarabun",Tahoma,sans-serif;
+  font-size:clamp(32px,3vw,46px);
+  line-height:1.48;
+  font-weight:800;
+  letter-spacing:0;
+  word-break:keep-all;
+  margin:16px 0 14px;
+  text-wrap:pretty;
+}
+.kp-auth-intro h1 em{
+  display:inline-block;
+  line-height:inherit;
+}
+.kp-auth-lead{
+  font-size:15px;
+  line-height:1.85;
+  letter-spacing:0;
+  margin-bottom:22px;
+}
+.kp-pipeline{padding:19px 21px 18px;margin-bottom:17px}
+.kp-pipeline-title{font-size:13px;line-height:1.6;margin-bottom:15px}
+.kp-pipeline-node b{font-size:12px;line-height:1.55}
+.kp-pipeline-node small{font-size:11px;line-height:1.5}
+.kp-benefits{gap:12px}
+.kp-benefit{padding:16px}
+.kp-benefit h3{font-size:14px;line-height:1.55;margin:8px 0 4px}
+.kp-benefit p{font-size:12px;line-height:1.7}
+.kp-intro-note{font-size:11px;line-height:1.7;margin-top:17px}
+
+/* Brand lives OUTSIDE the form card; both form tabs share the same logo. */
+.kp-auth-right{
+  align-items:center;
+  padding:25px clamp(18px,3vw,44px);
+  overflow:visible;
+}
+.kp-auth-right-inner{
+  width:min(100%,500px);
+  margin:auto;
+  padding:4px 0;
+}
+.kp-auth-identity{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  gap:0;
+  margin:0 auto 23px;
+  padding:4px 12px 0;
+}
+.kp-auth-identity-image{
+  display:block;
+  width:116px;
+  height:116px;
+  max-width:100%;
+  object-fit:contain;
+  padding:7px;
+  background:#fff;
+  border:1px solid #e0eafa;
+  border-radius:29px;
+  box-shadow:0 12px 33px rgba(9,72,169,.14);
+}
+.kp-auth-identity-name{
+  margin-top:10px;
+  font-family:"Sarabun",Tahoma,sans-serif;
+  font-size:30px;
+  line-height:1.55;
+  font-weight:800;
+  letter-spacing:0;
+  color:#0d479e;
+}
+.kp-auth-identity-tagline{
+  font-family:"Sarabun",Tahoma,sans-serif;
+  font-size:14px;
+  line-height:1.6;
+  color:#ef7d0b;
+  font-weight:700;
+  letter-spacing:0;
+}
+.kp-login-card{
+  width:100%;
+  max-width:none;
+  padding:25px 30px 25px;
+  border-radius:23px;
+  box-shadow:0 16px 47px rgba(17,74,154,.105);
+}
+.kp-login-mark{display:none}
+.kp-form-heading{
+  text-align:center;
+  padding-bottom:16px;
+  margin-bottom:17px;
+  border-bottom:1px solid #e5edf9;
+}
+.kp-login-card h2{
+  font-family:"Sarabun",Tahoma,sans-serif;
+  margin:0 0 3px;
+  color:#0d3f85;
+  font-size:25px;
+  line-height:1.52;
+  font-weight:800;
+  letter-spacing:0;
+}
+.kp-login-subtitle{
+  font-family:"Sarabun",Tahoma,sans-serif;
+  font-size:13px;
+  line-height:1.8;
+  color:#667e9f;
+  margin:0;
+  letter-spacing:0;
+}
+.kp-auth-tabs{
+  margin:0 0 20px;
+  padding:5px;
+  border-radius:12px;
+}
+.kp-auth-tab{
+  font-size:14px;
+  line-height:1.58;
+  padding:9px 7px;
+}
+.kp-login-form{gap:13px}
+.kp-field{gap:6px}
+.kp-field>label{font-size:13px;line-height:1.55}
+.kp-field input{
+  min-height:47px;
+  font-size:14px;
+  line-height:1.5;
+  padding-block:10px;
+}
+.kp-password-wrap input{padding-right:79px}
+.kp-eye{font-size:12px;line-height:1.4}
+.kp-auth-row{margin:2px 0 0}
+.kp-remember,.kp-inline-link{font-size:12px;line-height:1.6}
+.kp-main-button{min-height:49px;line-height:1.5}
+.kp-divider{margin:16px 0 12px;line-height:1.6}
+.kp-demo-button{font-size:13px;line-height:1.6}
+.kp-auth-footnote{font-size:11px;line-height:1.75;margin-top:12px}
+.kp-password-note{line-height:1.65}
+
+/* Laptops with a shorter viewport: preserve logo but save vertical space. */
+@media(min-width:941px) and (max-height:820px){
+  .kp-auth-identity{margin-bottom:12px}
+  .kp-auth-identity-image{width:96px;height:96px;border-radius:23px}
+  .kp-auth-identity-name{font-size:26px;margin-top:5px}
+  .kp-auth-identity-tagline{font-size:13px}
+  .kp-login-card{padding:19px 27px}
+  .kp-form-heading{padding-bottom:10px;margin-bottom:12px}
+  .kp-auth-tabs{margin-bottom:15px}
+  .kp-login-form{gap:11px}
+  .kp-auth-intro{padding-block:28px}
+  .kp-auth-intro h1{font-size:clamp(30px,3vw,43px)}
+}
+
+@media(max-width:1170px){
+  .kp-benefit{padding:12px 14px}
+  .kp-benefit h3{margin:0 0 4px}
+}
+
+@media(max-width:940px){
+  .kp-auth-right{padding:30px 16px 48px}
+  .kp-auth-right-inner{width:min(100%,520px)}
+  .kp-auth-identity-image{width:100px;height:100px;border-radius:25px}
+  .kp-auth-identity-name{font-size:27px}
+  .kp-auth-intro{padding:33px 28px}
+  .kp-auth-intro h1{font-size:clamp(30px,4.5vw,39px);line-height:1.5}
+  .kp-auth-lead{font-size:14px}
+}
+
+@media(max-width:610px){
+  .kp-auth-intro{padding:23px 19px}
+  .kp-auth-brand{margin-bottom:17px}
+  .kp-auth-brand strong{font-size:23px}
+  .kp-auth-intro h1{font-size:30px;line-height:1.52;margin:13px 0}
+  .kp-auth-lead{line-height:1.8;margin-bottom:18px}
+  .kp-pipeline{padding:14px}
+  .kp-pipeline-node b{font-size:10px}
+  .kp-pipeline-node small{font-size:9px}
+  .kp-auth-right{padding:20px 12px 35px}
+  .kp-auth-identity{margin-bottom:15px}
+  .kp-auth-identity-image{width:86px;height:86px;border-radius:22px}
+  .kp-auth-identity-name{font-size:25px;line-height:1.5;margin-top:6px}
+  .kp-auth-identity-tagline{font-size:13px}
+  .kp-login-card{padding:21px 17px;border-radius:18px}
+  .kp-form-heading{padding-bottom:14px;margin-bottom:15px}
+  .kp-login-card h2{font-size:23px;line-height:1.5}
+  .kp-login-subtitle{font-size:12px;line-height:1.7}
+  .kp-auth-tab{font-size:13px;line-height:1.55}
+  .kp-field input{font-size:14px}
+}

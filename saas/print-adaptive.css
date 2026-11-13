@@ -1,0 +1,164 @@
+/* ครูพัสดุ — adaptive, readable official A4 documents
+   This final print stylesheet supersedes older emergency compact modes.
+   Body + all signatures are fitted together before printing. */
+:root{--kru-doc-font:"TH Sarabun New","TH Sarabun PSK","Sarabun","Noto Sans Thai",Tahoma,sans-serif}
+.paper-page.official{
+ --doc-size:15pt;--doc-leading:1.38;--doc-gap:1.9mm;--doc-list-gap:1.2mm;
+ --doc-sign-size:13.7pt;--doc-sign-gap:6mm;
+ width:210mm;height:296mm;min-height:0;max-height:296mm;
+ padding:25mm 20mm 20mm 30mm;box-sizing:border-box;
+ background:#fff;color:#111;overflow:hidden;
+ font-family:var(--kru-doc-font);font-size:var(--doc-size);line-height:var(--doc-leading);
+}
+.paper-page.official[data-density="balanced"]{
+ --doc-size:14.5pt;--doc-leading:1.34;--doc-gap:1.5mm;--doc-list-gap:.9mm;
+ --doc-sign-size:13.5pt;--doc-sign-gap:4.7mm
+}
+.paper-page.official[data-density="fitted"]{
+ --doc-size:14pt;--doc-leading:1.30;--doc-gap:1.2mm;--doc-list-gap:.75mm;
+ --doc-sign-size:13.2pt;--doc-sign-gap:3.8mm
+}
+.paper-page.official[data-density="compact"]{
+ --doc-size:13.5pt;--doc-leading:1.29;--doc-gap:1mm;--doc-list-gap:.65mm;
+ --doc-sign-size:13pt;--doc-sign-gap:3mm
+}
+.paper-page.official[data-density="minimum"]{
+ --doc-size:13pt;--doc-leading:1.26;--doc-gap:.7mm;--doc-list-gap:.4mm;
+ --doc-sign-size:12.7pt;--doc-sign-gap:2.5mm
+}
+/* Force readable typography even when older style sheets define 14pt */
+.paper-page.official p,
+.paper-page.official .memo-content p,
+.paper-page.official .doc-sheet-body>p,
+.paper-page.official ol,
+.paper-page.official li,
+.paper-page.official .memo-content ol,
+.paper-page.official .memo-content li{
+ font-family:var(--kru-doc-font);
+ font-size:var(--doc-size);
+ line-height:var(--doc-leading);
+ letter-spacing:normal;
+}
+.paper-page.official p,.paper-page.official .memo-content p,
+.paper-page.official .doc-sheet-body>p{margin:var(--doc-gap) 0}
+.paper-page.official ol,.paper-page.official .memo-content ol{
+ margin:var(--doc-gap) 0;padding-left:9mm
+}
+.paper-page.official li,.paper-page.official .memo-content li{
+ margin:var(--doc-list-gap) 0;
+ padding-left:1mm
+}
+.paper-page.official .memo-top{height:18mm;margin:0 0 2mm;padding:0;position:relative}
+.paper-page.official .memo-top h1{
+ margin:0;padding:0;text-align:center;font:700 25pt/1.12 var(--kru-doc-font)
+}
+.paper-page.official .garuda-emblem{
+ display:block;position:absolute;left:0;top:0;width:15mm;height:15mm;object-fit:contain
+}
+.paper-page.official .memo-field{
+ display:grid;grid-template-columns:29mm minmax(0,1fr);
+ margin:1.1mm 0;gap:2mm;
+ font:400 var(--doc-size)/1.28 var(--kru-doc-font)
+}
+.paper-page.official .memo-field strong{font:700 var(--doc-size)/1.28 var(--kru-doc-font);white-space:nowrap}
+.paper-page.official .memo-field-number{
+ grid-template-columns:10mm 38mm 17mm minmax(0,1fr);
+ column-gap:1.5mm
+}
+.paper-page.official .memo-line{border:0;border-bottom:1px solid #111;margin:3mm 0}
+.paper-page.official .memo-field-to{margin-bottom:3.5mm}
+.paper-page.official .memo-content{min-width:0;overflow-wrap:break-word}
+.paper-page.official p.indent{text-indent:20mm}
+.paper-page.official .memo-signatures{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+ column-gap:9mm;row-gap:var(--doc-sign-gap);
+ margin-top:var(--doc-sign-gap);
+ clear:both;
+ break-inside:avoid;page-break-inside:avoid;
+}
+.paper-page.official .memo-signatures>.sign-grid{
+ display:contents;
+ margin:0;
+}
+.paper-page.official .memo-signatures>.sign-grid>.signature-card{min-width:0}
+.paper-page.official .memo-signatures>.sign-grid>.signature-card:first-child{
+ grid-column:1;grid-row:1
+}
+.paper-page.official .memo-signatures>.sign-grid>.signature-card:nth-child(2){
+ grid-column:2;grid-row:1
+}
+.paper-page.official .memo-signatures>.director-sign{
+ grid-column:2;grid-row:2;
+ width:100%;min-width:0;margin:0;
+ text-align:center;
+ break-inside:avoid;page-break-inside:avoid;
+}
+.paper-page.official .signature-card{
+ display:flex;flex-direction:column;
+ align-items:stretch;gap:.5mm;padding:0 0 1mm;
+ font:400 var(--doc-sign-size)/1.28 var(--kru-doc-font);
+ break-inside:avoid;page-break-inside:avoid;
+}
+.paper-page.official .signature-writing,
+.paper-page.official .signature-date{
+ display:flex;justify-content:center;align-items:baseline;
+ gap:1.7mm;white-space:nowrap;
+ font:400 var(--doc-sign-size)/1.26 var(--kru-doc-font)
+}
+.paper-page.official .signature-rule{width:34mm;max-width:68%;height:.9em;border-bottom:1px dotted #333}
+.paper-page.official .date-rule{width:23mm;max-width:62%;height:.9em;border-bottom:1px dotted #333}
+.paper-page.official .signature-name,
+.paper-page.official .signature-role{text-align:center;line-height:1.27;overflow-wrap:break-word}
+.paper-page.official .approval-options{
+ display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
+ gap:1.5mm 2.2mm;margin:0 0 2mm;
+ font:400 11.5pt/1.2 var(--kru-doc-font);white-space:normal
+}
+.paper-page.official .inspector-sign{
+ width:66%;margin:8mm 0 0 auto;
+ font:400 var(--doc-sign-size)/1.32 var(--kru-doc-font);
+ break-inside:avoid
+}
+.paper-page.official .official-table{
+ width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;
+ margin:3mm 0;
+ font:400 var(--doc-size)/1.25 var(--kru-doc-font);
+}
+.paper-page.official .official-table th,
+.paper-page.official .official-table td{
+ border:1px solid #222!important;color:#111;background:#fff;
+ font:inherit;padding:1.3mm 1mm;overflow-wrap:break-word
+}
+.paper-page.official .official-table th{font-weight:700;text-align:center}
+.paper-page.official .print-title{
+ font:700 19pt/1.23 var(--kru-doc-font);text-align:center;margin:0 0 5mm
+}
+.paper-page.official .sign-grid-four{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:7mm;margin:8mm 0 0
+}
+.paper-page.official .doc-sheet-body{width:100%;max-width:100%;zoom:1!important}
+body.print-measuring #print-area .paper-page.official{
+ width:210mm!important;height:296mm!important;
+ padding:25mm 20mm 20mm 30mm!important;
+ overflow:hidden!important
+}
+@page{size:A4;margin:0}
+@media print{
+ #app{display:none!important}
+ #print-area{display:block!important;position:static!important;width:210mm!important}
+ #print-area .paper-page.official{
+  box-sizing:border-box!important;width:210mm!important;
+  height:296mm!important;min-height:0!important;max-height:296mm!important;
+  padding:25mm 20mm 20mm 30mm!important;margin:0!important;
+  overflow:hidden!important;
+  font-family:var(--kru-doc-font)!important;
+  font-size:var(--doc-size)!important;
+  line-height:var(--doc-leading)!important;
+  break-inside:avoid!important;page-break-inside:avoid!important;
+  break-after:page!important;page-break-after:always!important
+ }
+ #print-area .paper-page.official:last-child{break-after:auto!important;page-break-after:auto!important}
+ #print-area .paper-page.official .memo-signatures{break-inside:avoid!important}
+ #print-area .paper-page.official .doc-sheet-body{zoom:1!important}
+}

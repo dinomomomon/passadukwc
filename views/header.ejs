@@ -1,1 +1,27 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>พัสดุ • กาวิละวิทยาลัย</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head><body><header><a class="brand" href="/">กาวิละวิทยาลัย <small>ระบบงานพัสดุ</small></a><% if(user){ %><nav><a href="/">รายการทั้งหมด</a><a href="/records/new">สร้างรายการ</a><% if(user.role==='admin'){ %><a href="/admin">ผู้ดูแลระบบ</a><% } %><a href="/account"><%= user.name %></a><form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="quiet">ออกจากระบบ</button></form></nav><% } %></header><main>
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <title>ครูพัสดุ | ระบบจัดซื้อจัดจ้างออนไลน์สำหรับโรงเรียน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/kru-pasadu.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="/"><span class="brand-icon">คพ</span><span>ครูพัสดุ <small>KRU PASADU · ระบบจัดซื้อจัดจ้าง</small></span></a>
+  <% if(user){ %>
+  <nav aria-label="เมนูหลัก">
+    <a href="/">ภาพรวม</a>
+    <a href="/records/new">+ สร้างรายการ</a>
+    <% if(user.role==='admin'){ %><a href="/admin">ตั้งค่าโรงเรียน</a><% } %>
+    <a href="/account">👤 <%= user.name %></a>
+    <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="quiet">ออกจากระบบ</button></form>
+  </nav>
+  <% } %>
+</header>
+<main>

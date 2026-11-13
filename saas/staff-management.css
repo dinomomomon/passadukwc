@@ -1,0 +1,36 @@
+/* School staff management — blue/orange Kru Pasadu theme */
+.staff-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:12px 0 22px}
+.staff-stats>div{padding:17px 21px;background:#fff;border:1px solid #d9e7fd;box-shadow:0 7px 22px rgba(25,82,155,.04);border-radius:16px;display:flex;flex-direction:column;gap:5px}
+.staff-stats small{font-size:13px;color:#7185a5}.staff-stats strong{font-size:27px;line-height:1.2;color:#1453b0}
+.staff-stats>div:nth-child(2) strong{color:#07886b}.staff-stats>div:nth-child(3) strong{color:#f18a12}
+.staff-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(350px,.9fr);gap:18px;align-items:start}
+.staff-directory,.staff-card{border-radius:18px;padding:25px!important;min-width:0}
+.staff-directory-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:18px}
+.staff-directory h2,.staff-card h2{margin:0 0 7px;font-size:21px;color:#113d83}
+.staff-directory p,.staff-card p{margin:0 0 15px;line-height:1.7}
+.staff-directory .table-scroller{overflow-x:auto}
+.staff-table{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
+.staff-table th{white-space:nowrap;font-size:13px;color:#385d94;background:#eff5ff}
+.staff-table th,.staff-table td{padding:14px 12px;vertical-align:middle;border-bottom:1px solid #e8f0fb}
+.staff-table td strong{color:#173a76;font-size:14px}
+.staff-table td small{display:block;color:#7b8ca4;margin-top:4px}
+.staff-table .tag{display:inline-flex;white-space:nowrap}
+.staff-self{font-size:11px;padding:2px 7px;border-radius:50px;margin-left:7px;color:#d97500;background:#fff0dc}
+.staff-row-actions{display:flex;flex-wrap:wrap;gap:6px}
+.staff-row-actions button{font:600 12px "Sarabun",Tahoma,sans-serif;border-radius:8px;padding:6px 9px;background:#f5f9ff;color:#2259ac;border:1px solid #cfe0fc;white-space:nowrap;cursor:pointer}
+.staff-row-actions button:hover{background:#e7f0ff}
+.staff-row-actions button.staff-danger{color:#c73737;background:#fff7f7;border-color:#ffcaca}
+.staff-status{display:inline-flex;align-items:center;padding:5px 9px;font-size:12px;border-radius:20px;font-weight:700;white-space:nowrap}
+.staff-status.is-active{color:#0e8769;background:#e4f9f2}
+.staff-status.is-inactive{color:#99630d;background:#fff3df}
+.staff-directory-note{margin-top:16px;padding:13px 15px;border-radius:12px;font-size:12px;line-height:1.7;background:#f4f8fe;color:#5b779e}
+.staff-empty{text-align:center;padding:30px;color:#7b8ca4}
+.staff-card .field{margin-bottom:15px}
+.staff-card .field label{display:block;font-size:13px;font-weight:700;color:#234777;margin:0 0 7px}
+.staff-card .field input,.staff-card .field select{width:100%;max-width:100%;min-height:46px}
+.staff-panel-eyebrow{display:inline-block;background:#fff1dd;color:#de7506;font-size:12px;font-weight:800;border-radius:40px;padding:5px 10px;margin-bottom:9px}
+.staff-full-btn{display:block;width:100%;margin-top:17px;min-height:46px}
+.staff-form-actions{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0}
+.staff-card .hint{font-size:12px;color:#7b8ca4;line-height:1.8}
+@media(max-width:1100px){.staff-layout{grid-template-columns:1fr}}
+@media(max-width:620px){.staff-stats{grid-template-columns:1fr 1fr;gap:9px}.staff-stats>div{padding:12px}.staff-stats strong{font-size:22px}.staff-directory,.staff-card{padding:16px!important}.staff-directory-head{flex-wrap:wrap}.staff-layout{gap:12px}}
