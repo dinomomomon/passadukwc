@@ -955,3 +955,34 @@ table td {
 #doc-meta-form .kp-document-main-section>.hint{margin:0 0 15px}
 #doc-meta-form .kp-document-main-section .doc-meta-advanced{margin-top:15px}
 @media(max-width:650px){#procurement-form .kp-evidence-visible{padding:14px 12px}#procurement-form .kp-evidence-head h4{font-size:14px}#procurement-form .kp-evidence-check{padding:11px 10px;gap:7px}#procurement-form .kp-check-state{font-size:10px}}
+
+/* Eight-stage procurement wizard: clearly visible steps; optional evidence is never required. */
+#procurement-form .kp-wizard-intro{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px;margin-bottom:10px;border:1px solid #cfe2fb;border-radius:14px;background:linear-gradient(120deg,#eff6ff,#fff)}
+#procurement-form .kp-wizard-intro strong{font-weight:800;font-size:14px;color:#12478e}
+#procurement-form .kp-wizard-intro span{font-size:12px;color:#5679a6;line-height:1.65}
+#procurement-form .kp-wizard-nav-eight{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 18px;align-items:stretch}
+#procurement-form .kp-wizard-nav-eight .kp-wizard-step{box-sizing:border-box;min-width:0;min-height:77px;display:flex;align-items:center;gap:11px;padding:12px 13px;border:1px solid #dae5f4;border-radius:13px;background:#f6f9fe;color:#476d9c;text-align:left;line-height:1.3;font:inherit;opacity:1;box-shadow:none;cursor:default;position:relative}
+#procurement-form .kp-wizard-nav-eight button.kp-wizard-step{cursor:pointer}
+#procurement-form .kp-wizard-nav-eight button.kp-wizard-step:hover{background:#eaf3ff;border-color:#a8cdf5}
+#procurement-form .kp-wizard-nav-eight button.kp-wizard-step:focus-visible{outline:3px solid #ed9c3b;outline-offset:2px}
+#procurement-form .kp-wizard-nav-eight .kp-wizard-step.is-active{background:linear-gradient(130deg,#1159b9,#0f6fe0);border-color:#1768d1;color:white;box-shadow:0 8px 20px #1769ca27}
+#procurement-form .kp-wizard-nav-eight .kp-wizard-step.is-done{background:#eef9f3;border-color:#bde6ce;color:#267155}
+#procurement-form .kp-wizard-nav-eight .kp-wizard-step-number{height:32px;width:32px;display:grid;place-items:center;border-radius:10px;background:#e6eef9;color:#235dad;flex-shrink:0;font-size:13px;font-weight:850}
+#procurement-form .kp-wizard-nav-eight .is-active .kp-wizard-step-number{background:#ffffff30;color:white}
+#procurement-form .kp-wizard-nav-eight .is-done .kp-wizard-step-number{background:#daf3e4;color:#187e53}
+#procurement-form .kp-wizard-nav-eight .kp-wizard-step-copy{min-width:0;display:flex;flex-direction:column;gap:5px}
+#procurement-form .kp-wizard-nav-eight .kp-wizard-step-copy strong{font-weight:800;font-size:12px;color:inherit;line-height:1.5;overflow-wrap:anywhere}
+#procurement-form .kp-wizard-nav-eight .kp-wizard-step-copy small{font-size:10px;font-weight:650;color:#758bab;white-space:normal;line-height:1.35}
+#procurement-form .kp-wizard-nav-eight .is-active .kp-wizard-step-copy small{color:#daecff}
+#procurement-form .kp-wizard-nav-eight .is-done .kp-wizard-step-copy small{color:#3c8b67}
+#procurement-form .kp-wizard-nav-eight [data-wizard-status="partial"] .kp-wizard-step-copy small{color:#d37c13}
+#procurement-form .kp-wizard-nav-eight .is-active[data-wizard-status="partial"] .kp-wizard-step-copy small{color:#ffe2ab}
+#procurement-form .kp-wizard-optional-notice{border-left:4px solid #e39a3b;border-radius:9px;padding:12px 15px;background:#fff8ea;color:#755128;font-size:12px;line-height:1.85;margin:9px 0 19px}
+#procurement-form .kp-wizard-optional-notice strong{color:#925914}
+#procurement-form .kp-wizard-progress small{display:block;font-size:11px;font-weight:500;color:#7289a8;line-height:1.7;margin-top:3px}
+#procurement-form .kp-wizard-footer{position:sticky;bottom:10px;z-index:4;box-shadow:0 8px 24px #184d9924;background:#fff}
+#procurement-form [data-wizard-panel]{scroll-margin-top:25px}
+#procurement-form .kp-wizard-dates .kp-document-date-editor{margin-top:12px}
+@media(max-width:1120px){#procurement-form .kp-wizard-nav-eight{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}#procurement-form .kp-wizard-nav-eight .kp-wizard-step{padding:10px;gap:8px}}
+@media(max-width:760px){#procurement-form .kp-wizard-nav-eight{grid-template-columns:repeat(2,minmax(0,1fr))}#procurement-form .kp-wizard-nav-eight .kp-wizard-step{min-height:67px;padding:9px;gap:7px}#procurement-form .kp-wizard-nav-eight .kp-wizard-step-number{width:29px;height:29px}#procurement-form .kp-wizard-nav-eight .kp-wizard-step-copy strong{font-size:11px}#procurement-form .kp-wizard-intro{padding:12px}#procurement-form .kp-wizard-footer{bottom:0}#procurement-form .kp-wizard-footer .row{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){#procurement-form .kp-wizard-step{transition:none!important}}
