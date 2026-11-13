@@ -510,9 +510,38 @@ function updatePayablePreview(){
  ' บาท'+(entered?' · ยอดที่ระบุเอง '+Number(entered).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท':' · หากไม่กรอกยอดสุทธิ ระบบใช้ยอดคำนวณนี้ในเอกสาร');
 }
 function editDocumentMeta(){const r=state.currentRecord;if(!r)return detail();shell('ข้อมูลเอกสารราชการ','เลขที่หนังสือและข้อมูลตรวจรับ',heading('ข้อมูลประกอบเอกสาร','แก้ไขวันที่หัวเอกสารและวันที่ลงนามของแต่ละฉบับได้จากปฏิทิน ข้อมูลเลขที่หนังสือและหลักฐานอื่นแยกด้านล่าง')+'<form id="doc-meta-form" class="card"><h2>'+e(r.title)+'</h2>'+docMetaInputs({...r.document_meta,memo_prefix:r.document_meta?.memo_prefix||state.school?.memo_prefix||''},{kind:r.kind,categories:schoolProcurementCategories(state.school,r.kind)})+'<p id="kp-payable-preview" class="hint" aria-live="polite"></p><div class="row">'+btn('กลับไปเอกสาร','detail','secondary')+'<button type="submit" class="primary">บันทึกข้อมูลเอกสาร</button></div></form>');updatePayablePreview();}
+function wizardPhaseStatus(phase,d,items,kind){
+ const v=key=>String(d?.[key]??'').trim();
+ if(phase===8)return {text:'ตรวจทาน',status:'review'};
+ if(phase===1)return v('title')&&v('document_date')&&v('budget_source')?{text:'ข้อมูลหลักครบ',status:'ready'}:{text:'ต้องกรอก',status:'required'};
+ if(phase===2){
+  const valid=!!v('doc_vat_mode')&&Array.isArray(items)&&items.length>0&&items.every(x=>String(x.name||'').trim()&&String(x.unit||'').trim()&&Number(x.qty)>0&&Number(x.price)>0);
+  return valid?{text:'รายการครบ',status:'ready'}:{text:'ต้องกรอก',status:'required'};
+ }
+ const keys=phase===3?['vendor_name','vendor_address','due_date','inspector_name']:
+  phase===4?['doc_order_number','doc_order_vendor_tax_id','doc_order_bank_account_number','doc_order_bank_account_name','doc_order_bank_name','doc_order_delivery_days','doc_order_delivery_location','doc_order_warranty','doc_order_penalty_percent','doc_order_penalty_min_baht','doc_order_vendor_signer_name','doc_order_vendor_signer_position',...(kind==='hire'?[]:['doc_requester_name','doc_requester_position'])]:
+  phase===5?['doc_request_document_date','doc_sign_request_date','doc_annex_document_date','doc_sign_annex_date','doc_approval_document_date','doc_sign_approval_date','doc_order_date','doc_order_school_sign_date','doc_order_vendor_sign_date','doc_acceptance_date','doc_sign_acceptance_date','doc_payment_document_date','doc_sign_payment_date',...(kind==='hire'?[]:['doc_requisition_date','doc_sign_requisition_date'])]:
+  phase===6?['doc_delivery_date','doc_invoice_number','doc_invoice_date','doc_inspection_date','doc_inspection_location','doc_inspection_expert']:
+  phase===7?['doc_withholding_baht','doc_fine_baht','doc_discount_baht','doc_budget_total_baht','doc_budget_paid_baht']:[];
+ const filled=keys.filter(v).length;
+ if(!filled)return {text:'ยังไม่กรอก',status:'empty'};
+ const focus=phase===3?!!v('vendor_name'):phase===4?!!v('doc_order_number'):phase===5?filled>=2:phase===6?!!v('doc_delivery_date'):true;
+ return {text:focus?'มีข้อมูล '+filled+' ช่อง':'กรอกบางส่วน '+filled+' ช่อง',status:focus?'ready':'partial'};
+}
+function updateWizardNavProgress(){
+ const wizard=document.getElementById('procurement-form');if(!wizard)return;
+ const data=Object.fromEntries(new FormData(wizard));
+ const kind=data.kind||state.draft.kind||'purchase';
+ for(const item of wizard.querySelectorAll('[data-wizard-indicator]')){
+  const phase=Number(item.dataset.wizardIndicator),status=wizardPhaseStatus(phase,data,state.items,kind);
+  const pill=item.querySelector('[data-wizard-state]');
+  if(pill)pill.textContent=status.text;
+  item.dataset.wizardStatus=status.status;
+ }
+}
 function form(){
  const d=state.draft,editing=!!state.editingRecordId;
- const step=Math.min(4,Math.max(1,Number(state.wizardStep)||1));
+ const step=Math.min(8,Math.max(1,Number(state.wizardStep)||1));
  const input=(label,name,value='',type='text',attrs='')=>'<div class="field"><label>'+e(label)+'</label><input class="input" name="'+name+'" type="'+type+'" '+attrs+' value="'+e(value)+'"></div>';
  const area=(label,name,value)=>'<div class="field"><label>'+e(label)+'</label><textarea class="textarea" name="'+name+'">'+e(value)+'</textarea></div>';
  const priorVat=editing?state.records.find(x=>x.id===state.editingRecordId)?.document_meta?.vat_mode||'legacy':'';
@@ -537,8 +566,15 @@ function form(){
  if(['included','added','none','mixed'].includes(chosenVat)){
   try{const pricing=calculatePricing(state.items,chosenVat);meta.doc_vat_baht=formatSatang(pricing.vat_satang);}catch(_){}
  }
- const labels=['ข้อมูลหลัก','รายการพัสดุ','ผู้ขายและผู้ตรวจรับ','เลขหนังสือ / ตรวจสอบ'];
- const steps='<nav class="kp-wizard-nav" aria-label="ขั้นตอนกรอกข้อมูล">'+labels.map((label,i)=>'<span class="kp-wizard-step '+(step===i+1?'is-active':step>i+1?'is-done':'')+'" data-wizard-indicator="'+(i+1)+'">'+(i+1)+'. '+e(label)+'</span>').join('')+'</nav>';
+ const labels=['ข้อมูลหลัก','รายการพัสดุ','ผู้ขาย / ผู้ตรวจรับ','ใบสั่งซื้อ / จ้าง','วันที่และเลขเอกสาร','ส่งมอบ / ตรวจรับ','การเงิน','ตรวจทาน / บันทึก'];
+ const steps='<div class="kp-wizard-intro"><strong>ขั้นตอนการบันทึกข้อมูล 8 ขั้น</strong><span>ขั้นที่ 3–7 ยังไม่มีข้อมูลสามารถกดถัดไปได้ แล้วกลับมาแก้ไขภายหลัง</span></div>'+
+  '<nav class="kp-wizard-nav kp-wizard-nav-eight" aria-label="ขั้นตอนกรอกข้อมูล">'+labels.map((label,i)=>{
+   const no=i+1,status=wizardPhaseStatus(no,d,state.items,d.kind||'purchase');
+   const className='kp-wizard-step '+(step===no?'is-active':step>no?'is-done':'')+'';
+   const inner='<span class="kp-wizard-step-number">'+no+'</span><span class="kp-wizard-step-copy"><strong>'+e(label)+'</strong><small data-wizard-state>'+e(status.text)+'</small></span>';
+   return no<=step?'<button type="button" class="'+className+'" data-action="wizard-jump" data-step="'+no+'" data-wizard-indicator="'+no+'" data-wizard-status="'+status.status+'" '+(no===step?'aria-current="step"':'')+'>'+inner+'</button>':
+    '<span class="'+className+'" data-wizard-indicator="'+no+'" data-wizard-status="'+status.status+'">'+inner+'</span>';
+  }).join('')+'</nav>';
  const panel=(number,title,inner)=>'<section class="card kp-wizard-panel" data-wizard-panel="'+number+'" style="'+(step===number?'':'display:none')+'"><h2>'+title+'</h2>'+inner+'</section>';
  const categories=schoolProcurementCategories(state.school,d.kind);
  const chosenRequestPrefix=normalizeMemoPrefix(d.doc_memo_prefix||categories[0]?.prefix||state.school?.memo_prefix||'พว.')||categories[0]?.prefix||'พว.';
@@ -563,13 +599,19 @@ function form(){
    activeOfficers.length===1?
     '<input type="hidden" name="officer_signer" value="'+e(activeOfficers[0].name)+'"><div class="alert success-alert">เจ้าหน้าที่พัสดุ: '+e(activeOfficers[0].name)+' (เลือกให้อัตโนมัติ ไม่ต้องกดเลือก)</div>':
     '<div class="alert">ยังไม่มีเจ้าหน้าที่พัสดุที่เปิดใช้งาน กรุณาให้แอดมินโรงเรียนตั้งค่ารายชื่อก่อนบันทึก</div>';
- const vendor=panel(3,'ขั้นที่ 3 — ผู้ขายและผู้ตรวจรับ','<div class="form-grid">'+input('ชื่อร้านค้า/ผู้รับจ้าง','vendor_name',d.vendor_name||'')+input('ที่อยู่ผู้ขาย/ผู้รับจ้าง','vendor_address',d.vendor_address||'')+input('กำหนดส่งมอบ (ถ้าทราบ)','due_date',d.due_date||'','date')+'</div>'+input('ชื่อผู้ตรวจรับ (เว้นว่างไว้ได้)','inspector_name',d.inspector_name||'')+officerPicker+'<div class="alert success-alert">หัวหน้าเจ้าหน้าที่: '+e(state.school.head_name||'ยังไม่ตั้งค่า')+' · ผู้อำนวยการ: '+e(state.school.director_name||'ยังไม่ตั้งค่า')+'</div><p class="hint">ข้อมูลผู้ลงนามดึงจากโรงเรียน ชื่อในเอกสารไม่ถือเป็นการอนุมัติหรือการลงนามจริง</p>'+docMetaWizardInputs(meta,3,d.kind||'purchase'));
- const docs=panel(4,'ขั้นที่ 4 — เลขที่หนังสือและตรวจสอบ','<p class="hint">รหัสที่หัวรายงานขอซื้อใช้ตามหมวดที่โรงเรียนกำหนดในขั้นที่ 1; รายงานผลการพิจารณาและหน้าทราบผลและขออนุมัติเบิกจ่ายออกเลขที่อัตโนมัติจากทะเบียนร่วม โดยวันที่หัวหนังสือและวันที่ลงนามทุกฉบับเลือกได้แยกกันจากปฏิทินในขั้นตอนนี้ หากเว้นวันที่หัวบางฉบับ ระบบจะแสดงวันที่ลงนามที่มีอยู่ตามที่ระบุในแบบฟอร์ม</p>'+docMetaInputs(meta,{mode:'create',kind:d.kind||'purchase',categories})+docMetaWizardInputs(meta,4,d.kind||'purchase')+'<div id="wizard-review" class="kp-wizard-review"></div>');
- const footer='<div class="card kp-wizard-footer"><span class="kp-wizard-progress">ขั้น '+step+' จาก 4</span><div class="row">'+(step>1?btn('← ย้อนกลับ','wizard-prev','secondary'):btn('ยกเลิก',editing?'cancel-edit':'dashboard','secondary'))+(step<4?btn('ถัดไป →','wizard-next','primary'):'<button class="primary" type="submit">'+(editing?'บันทึกการแก้ไข':'บันทึกและออกเลขทะเบียน →')+'</button>')+'</div></div>';
+ const vendor=panel(3,'ขั้นที่ 3 — ผู้ขายและผู้ตรวจรับ','<div class="form-grid">'+input('ชื่อร้านค้า/ผู้รับจ้าง','vendor_name',d.vendor_name||'')+input('ที่อยู่ผู้ขาย/ผู้รับจ้าง','vendor_address',d.vendor_address||'')+input('กำหนดส่งมอบ (ถ้าทราบ)','due_date',d.due_date||'','date')+'</div>'+input('ชื่อผู้ตรวจรับ (เว้นว่างไว้ได้)','inspector_name',d.inspector_name||'')+officerPicker+'<div class="alert success-alert">หัวหน้าเจ้าหน้าที่: '+e(state.school.head_name||'ยังไม่ตั้งค่า')+' · ผู้อำนวยการ: '+e(state.school.director_name||'ยังไม่ตั้งค่า')+'</div><p class="hint">ข้อมูลผู้ลงนามดึงจากโรงเรียน ชื่อในเอกสารไม่ถือเป็นการอนุมัติหรือการลงนามจริง</p>');
+ const order=panel(4,'ขั้นที่ 4 — ใบสั่งซื้อ / ใบสั่งจ้าง','<p class="kp-wizard-optional-notice"><strong>ขั้นตอนนี้ไม่บังคับ</strong> หากยังไม่ได้ออกใบสั่งหรือยังไม่มีข้อมูลผู้ขายเพิ่มเติม ให้กด <b>ถัดไป</b> ได้ทันที แล้วกลับมากรอกภายหลัง</p>'+docMetaWizardInputs(meta,3,d.kind||'purchase'));
+ const dates=panel(5,'ขั้นที่ 5 — วันที่และเลขที่เอกสาร','<p class="kp-wizard-optional-notice"><strong>เลือกวันที่ตามเอกสารจริง</strong> วันที่หัวเอกสารและวันที่ลงนามแต่ละฉบับเป็นคนละช่อง ยังไม่ทราบวันที่สามารถข้ามได้</p>'+docMetaInputs(meta,{mode:'create',kind:d.kind||'purchase',categories})+docMetaWizardInputs(meta,5,d.kind||'purchase'));
+ const delivery=panel(6,'ขั้นที่ 6 — การส่งมอบและตรวจรับ','<p class="kp-wizard-optional-notice"><strong>ข้ามได้หากยังไม่เกิดการส่งมอบ</strong> ใช้วันที่ตามหลักฐานจริงเท่านั้น ระบบจะไม่สร้างวันส่งมอบสมมติ</p>'+docMetaWizardInputs(meta,6,d.kind||'purchase'));
+ const finance=panel(7,'ขั้นที่ 7 — การเงินและข้อมูลเบิกจ่าย','<p class="kp-wizard-optional-notice"><strong>ข้ามได้หากยังไม่มีหลักฐานการเงิน</strong> เมื่อมีข้อมูลภาษีหัก ณ ที่จ่ายหรือรายการหักอื่นแล้ว จึงกลับมาเติมในระบบ</p>'+docMetaWizardInputs(meta,7,d.kind||'purchase'));
+ const review=panel(8,'ขั้นที่ 8 — ตรวจสอบและบันทึก','<p class="kp-wizard-optional-notice"><strong>ตรวจสอบความพร้อมก่อนบันทึก</strong> ข้อมูลที่ยังไม่เกิดขึ้นจริงสามารถเว้นว่างได้ และเพิ่มผ่านเมนูข้อมูลเอกสารเมื่อมีหลักฐาน</p><div id="wizard-review" class="kp-wizard-review"></div>');
+ const optional=step>=3&&step<=7&&wizardPhaseStatus(step,d,state.items,d.kind||'purchase').status==='empty';
+ const nextLabel=optional?'ยังไม่มีข้อมูล — ข้ามขั้นนี้ →':'ถัดไป →';
+ const footer='<div class="card kp-wizard-footer"><span class="kp-wizard-progress">ขั้น '+step+' จาก 8 <small>'+(step>=3&&step<=7?'กรอกเมื่อมีข้อมูลจริง • ข้ามได้':'')+'</small></span><div class="row">'+(step>1?btn('← ย้อนกลับ','wizard-prev','secondary'):btn('ยกเลิก',editing?'cancel-edit':'dashboard','secondary'))+(step<8?btn(nextLabel,'wizard-next','primary'):'<button class="primary" type="submit">'+(editing?'บันทึกการแก้ไข':'บันทึกและออกเลขทะเบียน →')+'</button>')+'</div></div>';
  shell(editing?'แก้ไขรายการ':'สร้างรายการใหม่','งานพัสดุ / บันทึกรายการ',
   heading(editing?'แก้ไขรายการที่บันทึกแล้ว':'สร้างรายการจัดซื้อจัดจ้าง','กรอกทีละขั้นได้ ย้อนกลับได้ และไม่ต้องกรอกข้อมูลซ้ำ')+
-  '<form id="procurement-form">'+steps+basic+entries+vendor+docs+footer+'</form>');
- updateTotal();updateWizardReview();updateEvidenceProgress();
+  '<form id="procurement-form">'+steps+basic+entries+vendor+order+dates+delivery+finance+review+footer+'</form>');
+ updateTotal();updateWizardReview();updateEvidenceProgress();updateWizardNavProgress();
 }
 function updateEvidenceProgress(){
  const root=document.getElementById('procurement-form');
@@ -614,7 +656,7 @@ function moveWizard(delta){
     return notify('กรอกรายการ จำนวน หน่วย และราคาให้ครบ พร้อมตรวจสอบว่ายอดเงินถูกต้อง',true);
   }
  }
- collectDraft();state.wizardStep=Math.max(1,Math.min(4,step+delta));form();
+ collectDraft();state.wizardStep=Math.max(1,Math.min(8,step+delta));form();
  document.getElementById('procurement-form')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function updateTotal(){
@@ -1230,7 +1272,14 @@ if(['registry-use','registry-edit','registry-void','registry-resolve'].includes(
  if(state.currentRecord)state.currentRecord=state.records.find(r=>r.id===state.currentRecord.id)||state.currentRecord;
  state.flash='บันทึกสถานะเลขทะเบียนและประวัติแล้ว';state.page='registry';return render();
 }
-if(action==='wizard-next')return moveWizard(1);if(action==='wizard-prev')return moveWizard(-1);if(action==='home'){state.page='landing';state.demo=false;render();return;}if(action==='login'||action==='signup'){
+if(action==='wizard-next')return moveWizard(1);
+if(action==='wizard-prev')return moveWizard(-1);
+if(action==='wizard-jump'){
+ const target=Number(el.dataset.step);
+ if(!Number.isInteger(target)||target<1||target>Number(state.wizardStep||1))return;
+ collectDraft();state.wizardStep=target;form();
+ document.getElementById('procurement-form')?.scrollIntoView({behavior:'smooth',block:'start'});return;
+}if(action==='home'){state.page='landing';state.demo=false;render();return;}if(action==='login'||action==='signup'){
   state.authEmail=String(document.querySelector('#kp-email')?.value||document.querySelector('#kp-forgot-email')?.value||state.authEmail||'').trim();
   state.authMode=action;state.authForgot=false;state.recoveryMode=false;state.page='auth';render();return;
 }
@@ -1523,11 +1572,11 @@ document.addEventListener('click',async ev=>{
 });
 document.addEventListener('submit',async ev=>{if(!ev.target.id)return;ev.preventDefault();const b=ev.target.querySelector('[type=submit]');if(b)b.disabled=true;try{await handleForm(ev.target);}catch(ex){notify(ex.message,true);}finally{if(b)b.disabled=false;}});
 document.addEventListener('focusin',ev=>{if(state.page==='templates'&&ev.target?.dataset?.templateText)templateEditor.selectInline(ev.target);});
-document.addEventListener('input',ev=>{const el=ev.target;if(state.page==='assets'&&el?.name==='useful_life_months')el.dataset.userEdited='1';equipmentModule.onInput(el);if(el?.id==='kp-public-search'){filterPublicContent(el.value);return;}if(state.page==='templates'&&el.dataset.templateText){templateEditor.inlineInput(el);return;}if(state.page==='templates'&&el.dataset.templateHeader){templateEditor.headerInput(el);return;}if(el.dataset.tplField)templateEditor.editField(el);if(['doc_withholding_baht','doc_fine_baht','doc_discount_baht','doc_payable_baht'].includes(el.name))updatePayablePreview();if(el?.closest?.('[data-evidence-group]'))updateEvidenceProgress();if(state.page==='create'&&state.wizardStep===4&&String(el?.name||'').startsWith('doc_'))updateWizardReview();if(el.name==='doc_delivery_date'&&el.value){const doc=el.closest('form');for(const targetName of ['doc_acceptance_date','doc_inspection_date']){const target=doc?.querySelector('[name="'+targetName+'"]');if(target&&!target.value)target.value=el.value;}}if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();}}});
+document.addEventListener('input',ev=>{const el=ev.target;if(state.page==='assets'&&el?.name==='useful_life_months')el.dataset.userEdited='1';equipmentModule.onInput(el);if(el?.id==='kp-public-search'){filterPublicContent(el.value);return;}if(state.page==='templates'&&el.dataset.templateText){templateEditor.inlineInput(el);return;}if(state.page==='templates'&&el.dataset.templateHeader){templateEditor.headerInput(el);return;}if(el.dataset.tplField)templateEditor.editField(el);if(['doc_withholding_baht','doc_fine_baht','doc_discount_baht','doc_payable_baht'].includes(el.name))updatePayablePreview();if(el?.closest?.('[data-evidence-group]'))updateEvidenceProgress();if(state.page==='create'&&String(el?.name||'').startsWith('doc_')){updateWizardNavProgress();if(state.wizardStep===8)updateWizardReview();}if(el.name==='doc_delivery_date'&&el.value){const doc=el.closest('form');for(const targetName of ['doc_acceptance_date','doc_inspection_date']){const target=doc?.querySelector('[name="'+targetName+'"]');if(target&&!target.value)target.value=el.value;}}if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();updateWizardNavProgress();}}});
 document.addEventListener('change',ev=>{
  if(ev.target?.name==='category_id'&&state.page==='assets')equipmentModule.categoryChanged(ev.target);
  equipmentModule.onChange(ev.target);
- if(ev.target?.closest?.('[data-evidence-group]'))updateEvidenceProgress();
+ if(ev.target?.closest?.('[data-evidence-group]')){updateEvidenceProgress();updateWizardNavProgress();}
  if(ev.target?.dataset?.tplField)templateEditor.editField(ev.target);
  if(ev.target?.name==='doc_vat_mode'&&state.page==='create'){collectDraft();form();return;}
  if(ev.target?.name==='kind'&&state.page==='create'){
