@@ -31,3 +31,11 @@ test('tenant authorization, audit, and last-active-admin protection remain enfor
  assert.match(edge,/if \(globalAdmin\) throw new HttpError\(403/);
  assert.match(edge,/await audit\("school_staff_updated"/);
 });
+
+test('successful staff edits serialize the defined nameChanged audit value, never an undefined name_changed',()=>{
+ const edit=edge.slice(edge.indexOf('// action === edit'));
+ assert.match(edit,/const nameChanged = fullName\(currentProfile\?\.full_name\) !== name;/);
+ assert.match(edit,/await audit\("school_staff_updated",targetId,\{role,email,name_changed:nameChanged\}\);/);
+ assert.doesNotMatch(edit,/await audit\("school_staff_updated",targetId,\{role,email,name_changed\}\)/);
+ assert.match(edit,/return json\(200,\{success:true,message:/);
+});
