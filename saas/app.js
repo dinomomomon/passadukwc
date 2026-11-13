@@ -49,7 +49,7 @@ const demoRecords=[
  mkDemo('demo-2','hire',1,'จ้างทำป้ายประชาสัมพันธ์','ร้านป้ายตัวอย่าง',980,'2026-10-17',[{name:'งานออกแบบและจัดทำป้าย',qty:1,unit:'งาน',price_satang:98000}]),
  mkDemo('demo-3','purchase',2,'ซื้ออุปกรณ์การเรียน','ร้านศึกษาภัณฑ์',1250,'2026-10-18',[{name:'อุปกรณ์การเรียน',qty:5,unit:'ชุด',price_satang:25000}])
 ];
-const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:'',memberEditingId:null,memberResetId:null,officialNumbers:[],numberFilter:'',numberSeries:'all',numberStatus:'all',numberYear:'all',schoolTemplates:{},templateVersions:{},adminGuideSection:'school',staffGuideSection:'create',assetSection:'overview',navExpanded:['procurement'],mobileNavOpen:false};
+const state={demoLogoUrl:'',session:null,user:null,profile:null,owner:false,memberships:[],school:null,schools:[],schoolRequests:[],subscriptions:[],subscription:null,members:[],records:[],demo:false,page:'landing',currentRecord:null,flash:'',error:'',items:[{name:'',qty:'1',unit:'',price:''}],draft:{},authMode:'login',authForgot:false,authEmail:'',recoveryMode:(new URLSearchParams(window.location.search).get('auth')==='recovery'||/(?:^|&)type=recovery(?:&|$)/.test(window.location.hash.slice(1))),pendingSignupEmail:'',filter:'',memberEditingId:null,memberResetId:null,memberCreateRole:'procurement_officer',officialNumbers:[],numberFilter:'',numberSeries:'all',numberStatus:'all',numberYear:'all',schoolTemplates:{},templateVersions:{},adminGuideSection:'school',staffGuideSection:'create',assetSection:'overview',navExpanded:['procurement'],mobileNavOpen:false};
 installStateNotices(state);
 const money=n=>(Number(n||0)/100).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const dateThai=d=>d?new Date(d+'T12:00:00+07:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
@@ -811,14 +811,14 @@ function staffPanel(){
       staffRoleOptions(editing.member_role)+'</select></div>'+
       '<div class="staff-form-actions"><button class="primary" type="submit">บันทึกการแก้ไข</button>'+
       btn('ยกเลิก','cancel-staff','secondary')+'</div>'+
-      '<p class="hint">เลือก “แอดมินโรงเรียน” เพื่อเพิ่มผู้ดูแลคนที่ 2 ได้ โดยแอดมินแต่ละคนต้องมีบัญชีของตนเอง การเปลี่ยนบทบาทไม่แก้เอกสารเก่า</p></form>';
+      '<p class="hint">สามารถแต่งตั้งแอดมินโรงเรียนได้ไม่จำกัดจำนวน โดยเลือก “แอดมินโรงเรียน” แล้วบันทึก แต่ละคนใช้บัญชีของตนเอง การเปลี่ยนบทบาทไม่แก้เอกสารเก่า</p></form>';
   }
   return '<form id="member-form" class="card staff-card"><div class="staff-panel-eyebrow">สร้างบัญชีใหม่</div>'+
-    '<h2>เพิ่มเจ้าหน้าที่โรงเรียน</h2>'+
-    '<p class="muted">แอดมินกำหนดบัญชีและรหัสผ่านให้เจ้าหน้าที่ได้เลย ไม่ต้องให้สมัครสมาชิกเอง</p>'+
+    '<h2>'+(state.memberCreateRole==='school_admin'?'เพิ่มแอดมินโรงเรียน':'เพิ่มเจ้าหน้าที่โรงเรียน')+'</h2>'+
+    '<p class="muted">แอดมินแต่งตั้งแอดมินโรงเรียนเพิ่มได้ไม่จำกัดจำนวน โดยแต่ละคนต้องใช้บัญชีของตนเอง หรือเพิ่มเจ้าหน้าที่บทบาทอื่นได้</p>'+
     staffInput('ชื่อ–นามสกุล','full_name','','required minlength="3" maxlength="200" placeholder="ชื่อและนามสกุลเจ้าหน้าที่" autocomplete="off"')+
     staffInput('อีเมลสำหรับเข้าสู่ระบบ','email','','type="email" required maxlength="254" placeholder="teacher@school.ac.th" autocomplete="off"')+
-    '<div class="field"><label>หน้าที่ในระบบ</label><select name="role" class="select" required>'+staffRoleOptions()+'</select></div>'+
+    '<div class="field"><label>หน้าที่ในระบบ</label><select name="role" class="select" required>'+staffRoleOptions(state.memberCreateRole)+'</select></div>'+
     staffInput('กำหนดรหัสผ่าน','password','','type="password" required minlength="6" maxlength="128" autocomplete="new-password" placeholder="อย่างน้อย 6 ตัวอักษร"')+
     staffInput('ยืนยันรหัสผ่าน','confirm_password','','type="password" required minlength="6" maxlength="128" autocomplete="new-password"')+
     '<button class="primary staff-full-btn" type="submit">+ สร้างบัญชีและให้สิทธิ์ใช้งาน</button>'+
@@ -854,10 +854,10 @@ function members(){
   shell('จัดการผู้ใช้งาน','เฉพาะแอดมินโรงเรียน',heading('บริหารเจ้าหน้าที่','สร้างบัญชี กำหนดบทบาท และควบคุมสิทธิ์จากที่เดียว')+
     '<div class="staff-stats"><div><small>ผู้ใช้ทั้งหมด</small><strong>'+rows.length+'</strong></div>'+
     '<div><small>กำลังใช้งาน</small><strong>'+active+'</strong></div>'+
-    '<div><small>แอดมินโรงเรียน</small><strong>'+administrators+'</strong></div></div>'+
+    '<div><small>แอดมินโรงเรียน (ไม่จำกัดจำนวน)</small><strong>'+administrators+'</strong></div></div>'+
     '<div class="staff-layout"><section class="card staff-directory"><div class="staff-directory-head"><div>'+
     '<h2>สมาชิกในโรงเรียน</h2><p class="muted">แสดงเฉพาะบุคลากรของ '+e(state.school.name)+'</p></div>'+
-    btn('↻ รีเฟรช','refresh-staff','secondary')+'</div>'+
+    '<div class="staff-directory-actions">'+btn('+ เพิ่มแอดมินโรงเรียน','add-school-admin','secondary')+btn('↻ รีเฟรช','refresh-staff','secondary')+'</div></div>'+
     table+
     '<div class="staff-directory-note">การลบจะถอนสิทธิ์ผู้ใช้ออกจากโรงเรียน แต่เก็บประวัติเอกสารและบันทึกการทำงานไว้ตรวจสอบย้อนหลัง</div></section>'+
     staffPanel()+'</div>');
@@ -1070,6 +1070,10 @@ if(action==='admin-guide-open'){
 }
 if(action==='templates'){if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);return templateEditor.open();}
 if(action.startsWith('tpl-'))return templateEditor.action(action,el);
+if(action==='add-school-admin'){
+  if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
+  state.memberEditingId=null;state.memberResetId=null;state.memberCreateRole='school_admin';return render();
+}
 if(['edit-staff','password-staff','cancel-staff','refresh-staff','toggle-staff','remove-staff'].includes(action)){
   if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);
   const id=el.dataset.id;
@@ -1337,7 +1341,7 @@ if(form.id==='member-form'){
   if(f.password!==f.confirm_password)return notify('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน',true);
   if(String(f.password||'').length<6)return notify('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',true);
   const message=await staffRequest('create',{full_name:f.full_name,email:f.email,role:f.role,password:f.password});
-  await loadMembers();state.memberEditingId=null;state.memberResetId=null;return notify(message);
+  await loadMembers();state.memberEditingId=null;state.memberResetId=null;state.memberCreateRole='procurement_officer';return notify(message);
 }
 if(form.id==='staff-edit-form'){
   if(!isSchoolAdmin())return notify('เฉพาะแอดมินโรงเรียนเท่านั้น',true);

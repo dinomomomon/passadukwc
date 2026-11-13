@@ -113,7 +113,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         throw new HttpError(500, String((err as Error).message || "สร้างบัญชีไม่สำเร็จ"));
       }
       await audit("school_staff_created", uid, { role, email });
-      return json(200, { success: true, message: "สร้างบัญชีเจ้าหน้าที่เรียบร้อยแล้ว" });
+      return json(200, { success: true, message: role === "school_admin" ? "สร้างบัญชีและแต่งตั้งแอดมินโรงเรียนเรียบร้อยแล้ว" : "สร้างบัญชีเจ้าหน้าที่เรียบร้อยแล้ว" });
     }
 
     const targetId = payload.user_id;
@@ -204,7 +204,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       .eq("school_id",schoolId).eq("user_id",targetId);
     if (changeRole.error) throw new HttpError(500,"บันทึกบทบาทไม่สำเร็จ");
     await audit("school_staff_updated",targetId,{role,email,name_changed});
-    return json(200,{success:true,message:"แก้ไขข้อมูลเจ้าหน้าที่เรียบร้อยแล้ว"});
+    return json(200,{success:true,message:role === "school_admin" && target.role !== "school_admin" ? "แต่งตั้งแอดมินโรงเรียนเพิ่มเติมเรียบร้อยแล้ว" : "แก้ไขข้อมูลเจ้าหน้าที่เรียบร้อยแล้ว"});
   } catch (err) {
     const status = err instanceof HttpError ? err.status : 500;
     if (status === 500) console.error("School staff request failed", err);
