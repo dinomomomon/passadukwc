@@ -811,7 +811,7 @@ function staffPanel(){
       staffRoleOptions(editing.member_role)+'</select></div>'+
       '<div class="staff-form-actions"><button class="primary" type="submit">บันทึกการแก้ไข</button>'+
       btn('ยกเลิก','cancel-staff','secondary')+'</div>'+
-      '<p class="hint">เปลี่ยนชื่อ อีเมล หรือบทบาทได้ โดยไม่กระทบเอกสารที่เคยจัดทำ</p></form>';
+      '<p class="hint">เลือก “แอดมินโรงเรียน” เพื่อเพิ่มผู้ดูแลคนที่ 2 ได้ โดยแอดมินแต่ละคนต้องมีบัญชีของตนเอง การเปลี่ยนบทบาทไม่แก้เอกสารเก่า</p></form>';
   }
   return '<form id="member-form" class="card staff-card"><div class="staff-panel-eyebrow">สร้างบัญชีใหม่</div>'+
     '<h2>เพิ่มเจ้าหน้าที่โรงเรียน</h2>'+

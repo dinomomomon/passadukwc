@@ -11,9 +11,13 @@ const roles = new Set([
   "director", "finance", "inspector"
 ]);
 
+// Exact production origins. Browser Origin headers serialize international
+// domain names to their ASCII/punycode form. Do not use wildcard CORS.
 const allowedOrigins = new Set([
   "https://kru-pasadu.vercel.app",
-  "https://passadukwc.primstore589.workers.dev"
+  "https://passadukwc.primstore589.workers.dev",
+  "https://xn--42c6a3at0b3bzcd.com",     // ครูพัสดุ.com
+  "https://www.xn--42c6a3at0b3bzcd.com"
 ]);
 
 class HttpError extends Error {
