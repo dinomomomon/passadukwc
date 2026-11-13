@@ -923,3 +923,35 @@ table td {
 .kp-fiscal-warning{margin:12px 0 0!important;font-size:12px;line-height:1.75;background:#fff9ed;border:1px solid #ffdf9a;color:#986211;padding:10px 13px;border-radius:10px}
 @media(max-width:680px){.kp-fiscal-row{display:grid;grid-template-columns:1fr}.kp-fiscal-row .field{max-width:100%}}
 @media print{.kp-fiscal-setting{display:none!important}}
+
+/* 2026-11-13: important evidence inputs always visible, no hidden accordions. */
+#procurement-form .kp-evidence-visible{display:block;padding:18px 20px;margin:15px 0;border:1px solid #cbdcf5;border-left:4px solid #2877de;background:#fff;border-radius:15px;box-shadow:0 5px 16px #114b9210}
+#procurement-form .kp-evidence-visible[data-evidence-group="delivery"]{border-left-color:#15a28d}
+#procurement-form .kp-evidence-visible[data-evidence-group="finance"]{border-left-color:#e5962e}
+#procurement-form .kp-evidence-visible .form-grid{margin-top:14px;padding:0 0 4px}
+#procurement-form .kp-evidence-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #e7eef9;padding-bottom:12px;margin-bottom:12px}
+#procurement-form .kp-evidence-head h4{font-size:16px;line-height:1.6;color:#144788;font-weight:800;margin:0}
+#procurement-form .kp-evidence-head .kp-evidence-status{font-size:11px;font-weight:750;color:#995b10;background:#fff5e4;border:1px solid #f9d8a7;border-radius:999px;padding:5px 10px;white-space:normal}
+#procurement-form .kp-evidence-head .kp-evidence-status.has-data{color:#11715f;background:#e9faf3;border-color:#bce9d6}
+#procurement-form .kp-evidence-intro{padding:15px 19px;margin-bottom:17px;border:1px solid #b7d8ff;border-radius:13px;background:#edf6ff}
+#procurement-form .kp-evidence-intro strong{display:block;color:#174a90;font-size:14px}
+#procurement-form .kp-evidence-intro p{color:#52729d;font-size:12px;line-height:1.8;margin:5px 0 0}
+#procurement-form .kp-evidence-visible .hint{font-size:12px;color:#5f7392}
+#procurement-form .kp-evidence-checklist{border:1px solid #dbe7f8;border-radius:14px;background:#fff;margin-top:18px;overflow:hidden}
+#procurement-form .kp-evidence-checklist>h4{font-size:15px;color:#1b518b;margin:17px 17px 2px}
+#procurement-form .kp-evidence-checklist>p{font-size:12px;color:#61799b;margin:0 17px 10px}
+#procurement-form .kp-evidence-check{display:flex;align-items:center;gap:11px;padding:12px 17px;border-top:1px solid #ebf0f8}
+#procurement-form .kp-evidence-check>span:first-child{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;font-size:13px;font-weight:850;flex:none}
+#procurement-form .kp-evidence-check.is-pending>span:first-child{color:#a26b17;background:#fff3d9}
+#procurement-form .kp-evidence-check.is-recorded>span:first-child{color:#13856f;background:#e2f8ef}
+#procurement-form .kp-evidence-check>div{display:flex;flex-direction:column;gap:2px;flex:1}
+#procurement-form .kp-evidence-check strong{font-size:12px;color:#204b7d}
+#procurement-form .kp-evidence-check small{font-size:11px;color:#7086a2}
+#procurement-form .kp-check-state{font-weight:800;font-size:11px;white-space:nowrap;color:#9d6816}
+#procurement-form .is-recorded .kp-check-state{color:#167f71}
+#procurement-form .kp-evidence-save-note{border-left:3px solid #f3a43b;padding:10px 12px;background:#fff9f0;border-radius:5px;margin:14px 0}
+#doc-meta-form .kp-document-main-section{border:1px solid #dbe7f7;background:#fff;border-radius:14px;padding:18px;margin:16px 0}
+#doc-meta-form .kp-document-main-section>h3{font-size:16px;color:#145191;margin:0 0 8px}
+#doc-meta-form .kp-document-main-section>.hint{margin:0 0 15px}
+#doc-meta-form .kp-document-main-section .doc-meta-advanced{margin-top:15px}
+@media(max-width:650px){#procurement-form .kp-evidence-visible{padding:14px 12px}#procurement-form .kp-evidence-head h4{font-size:14px}#procurement-form .kp-evidence-check{padding:11px 10px;gap:7px}#procurement-form .kp-check-state{font-size:10px}}
