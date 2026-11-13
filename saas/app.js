@@ -38,6 +38,7 @@ import {staffGuideHtml,staffGuideTopics,staffGuideIds} from './staff-guide.js';
 import {assetTopics,navGroupIds,visibleSidebarGroups,visibleAdminLinks,groupForPage,validAssetTopic} from './sidebar-navigation.js';
 import {createEquipmentModule} from './equipment-module.js';
 import {procurementDisplayStatus} from './record-display-status.js';
+import {latestDashboardRecords,dashboardRecordTotals} from './dashboard-recent.js';
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 const app=document.getElementById('app');
 const bootStage=phase=>{try{window.__kruBootStage=phase;document.documentElement.dataset.kruBoot=phase;sessionStorage.setItem('kru_boot_stage',phase);}catch{}};
@@ -279,7 +280,7 @@ function shell(title,sub,body){const top='<header class="topbar"><div class="top
   '<button data-action="nav-mobile" data-group="assets">'+i('building')+'<span>ครุภัณฑ์</span></button>'+
   '<button data-action="nav-mobile" data-group="guides">'+i('book')+'<span>คู่มือ</span></button>'+
   '<button data-action="nav-mobile" data-group="all">'+i('dashboard')+'<span>เมนูทั้งหมด</span></button></nav>';
- app.innerHTML='<div class="shell">'+(state.mobileNavOpen?'<button type="button" class="kp-nav-overlay" aria-label="ปิดเมนู" data-action="nav-mobile-close"></button>':'')+
+ app.innerHTML='<div class="shell '+(state.page==='dashboard'?'kp-dashboard-shell':'')+'">'+(state.mobileNavOpen?'<button type="button" class="kp-nav-overlay" aria-label="ปิดเมนู" data-action="nav-mobile-close"></button>':'')+
  sidebar()+'<div class="workspace">'+top+'<div class="content">'+(state.demo?'<div class="alert">โหมดตัวอย่าง — ข้อมูลและเอกสารไม่ถูกบันทึกบนเซิร์ฟเวอร์ กรุณาเข้าสู่ระบบเพื่อใช้งานจริง</div>':subscriptionBanner())+msg()+body+
  '<div class="footer">ครูพัสดุ • KRU PASADU — ระบบทดลองสำหรับพัฒนาและตรวจรับ</div></div></div></div>'+mobile;
 }
@@ -441,7 +442,61 @@ async function ensurePinnedTemplateVersions(record){
  if(needed.some(([key,v])=>!state.templateVersions[key+':'+v]))
   throw Error('ไม่พบแม่แบบที่ใช้กับเอกสารฉบับเดิม กรุณาติดต่อแอดมินโรงเรียน');
 }
-function dashboard(){const rows=state.records.filter(r=>!r.deleted_at);const purch=rows.filter(r=>r.kind==='purchase'),hire=rows.filter(r=>r.kind==='hire');const total=rows.reduce((s,r)=>s+Number(r.total_satang||0),0);const block=(t,n,ico,note)=>'<div class="stat"><div class="stat-top"><span>'+t+'</span><span class="stat-ico">'+ico+'</span></div><strong>'+n+'</strong><small>'+note+'</small></div>';shell('ภาพรวม','งานพัสดุ / ภาพรวม',heading('สวัสดี ยินดีต้อนรับ 👋','ติดตามงานพัสดุทั้งหมดในโรงเรียนได้จากที่เดียว',createAction())+'<div class="stats-grid">'+block('รายการทั้งหมด',rows.length,'▤','รายการที่บันทึกแล้ว')+block('งานจัดซื้อ',purch.length,'◈','ทะเบียนจัดซื้อ')+block('งานจัดจ้าง',hire.length,'⚒','ทะเบียนจัดจ้าง')+block('วงเงินรวม',money(total),'฿','บาท รวมทุกประเภท')+'</div><div class="grid-two"><section class="card"><div class="section-head"><h2>รายการล่าสุด</h2>'+btn('ดูทั้งหมด →','records','mini-btn')+'</div>'+recordTable(rows.slice(0,6))+'</section><section class="card"><h2>ทางลัดงานพัสดุ</h2><div class="action-grid"><button class="action-card" data-action="create"><span class="action-icon">'+i('plus')+'</span>สร้างรายการ</button><button class="action-card" data-action="records"><span class="action-icon">'+i('file')+'</span>ค้นหาเอกสาร</button><button class="action-card" data-action="settings"><span class="action-icon">'+i('settings')+'</span>ผู้ลงนาม</button><button class="action-card" data-action="registry"><span class="action-icon">'+i('book')+'</span>ทะเบียนคุมเลข</button></div><div class="alert" style="margin:18px 0 0">เอกสารที่ระบบสร้างเป็นแบบร่าง ต้องตรวจสอบกับระเบียบที่มีผลบังคับก่อนใช้งานราชการ</div></section></div>');}
+function dashboard(){
+ const summary=dashboardRecordTotals(state.records);
+ const recent=latestDashboardRecords(state.records,10);
+ const prettyCount=n=>Number(n).toLocaleString('th-TH');
+ const mainAction=canCreate()
+  ?'<button type="button" class="kp-ov-button kp-ov-button--light" data-action="create">'+i('plus')+' สร้างรายการใหม่</button>'
+  :'<button type="button" class="kp-ov-button kp-ov-button--light" data-action="subscription-help">ดูสิทธิ์การสร้างเอกสาร</button>';
+ const card=(theme,label,value,icon,details)=>
+  '<article class="kp-ov-metric kp-ov-metric--'+theme+'"><div class="kp-ov-metric-head"><span>'+label+'</span>'+
+  '<span class="kp-ov-metric-icon">'+i(icon)+'</span></div>'+
+  '<strong>'+value+'</strong><small>'+details+'</small><span class="kp-ov-metric-bottom" aria-hidden="true"></span></article>';
+ const action=(label,sub,icon,verb,theme='blue')=>
+  '<button type="button" class="kp-ov-quick kp-ov-quick--'+theme+'" data-action="'+verb+'"><span class="kp-ov-quick-icon">'+i(icon)+'</span>'+
+  '<span class="kp-ov-quick-copy"><strong>'+label+'</strong><small>'+sub+'</small></span><span class="kp-ov-quick-chevron" aria-hidden="true">›</span></button>';
+ const dateLabel=new Intl.DateTimeFormat('th-TH',{dateStyle:'full',timeZone:'Asia/Bangkok'}).format(new Date());
+ const hero='<section class="kp-ov-hero" aria-labelledby="kp-ov-title"><div class="kp-ov-hero-content">'+
+   '<span class="kp-ov-eyebrow"><span class="kp-ov-eyebrow-dot" aria-hidden="true"></span> ศูนย์บริหารงานพัสดุ</span>'+
+   '<h1 id="kp-ov-title">สวัสดี ยินดีต้อนรับ<span class="kp-ov-wave" aria-hidden="true"> 👋</span></h1>'+
+   '<p>ดูภาพรวมงานจัดซื้อจัดจ้าง ติดตามรายการ และเข้าถึงเอกสารสำคัญของโรงเรียนได้จากที่เดียว</p>'+
+   '<div class="kp-ov-hero-actions">'+mainAction+
+    '<button type="button" class="kp-ov-button kp-ov-button--outline" data-action="records">'+i('search')+' ค้นหารายการ</button></div>'+
+   '<div class="kp-ov-hero-meta"><span>'+i('building')+' '+e(state.school?.name||'โรงเรียน')+'</span>'+
+     '<span>'+i('clock')+' '+e(dateLabel)+'</span></div></div>'+
+   '<div class="kp-ov-hero-visual" aria-hidden="true"><div class="kp-ov-glass">'+
+    '<span class="kp-ov-glass-label">KRU PASADU · OVERVIEW</span><div class="kp-ov-glass-icon">'+i('dashboard')+'</div>'+
+    '<strong>'+prettyCount(summary.total)+'</strong><small>รายการจัดซื้อจัดจ้างในระบบ</small>'+
+    '<div class="kp-ov-glass-rule"></div><div class="kp-ov-glass-mini"><span>จัดซื้อ <b>'+prettyCount(summary.purchase)+'</b></span>'+
+      '<span>จัดจ้าง <b>'+prettyCount(summary.hire)+'</b></span></div></div></div></section>';
+ const metrics='<section class="kp-ov-metrics" aria-label="สถิติงานพัสดุ">'+
+  card('all','รายการทั้งหมด',prettyCount(summary.total),'file','รายการที่บันทึกไว้')+
+  card('purchase','งานจัดซื้อ',prettyCount(summary.purchase),'book','ทะเบียนจัดซื้อ')+
+  card('hire','งานจัดจ้าง',prettyCount(summary.hire),'settings','ทะเบียนจัดจ้าง')+
+  card('money','วงเงินรวม',money(summary.satang),'dashboard','บาท · รวมจัดซื้อและจัดจ้าง')+'</section>';
+ const recentPanel='<section class="kp-ov-panel kp-ov-recent" aria-labelledby="kp-ov-recent-title">'+
+  '<div class="kp-ov-panel-head"><div><span class="kp-ov-panel-label">RECENT ACTIVITY</span>'+
+   '<h2 id="kp-ov-recent-title">รายการที่บันทึกล่าสุด <span class="kp-ov-count">'+recent.length+' รายการ</span></h2>'+
+   '<p>เรียงจากวันที่บันทึกใหม่ที่สุด แสดงสูงสุด 10 รายการ</p></div>'+
+   '<button type="button" class="kp-ov-view-all" data-action="records">ดูทะเบียนทั้งหมด <span aria-hidden="true">→</span></button></div>'+
+  '<div class="kp-ov-recent-table">'+recordTable(recent)+'</div>'+
+  '<div class="kp-ov-panel-foot"><span>'+i('check')+' แสดง '+prettyCount(recent.length)+' จาก '+prettyCount(summary.total)+' รายการ</span>'+
+  '<span>ข้อมูลของโรงเรียนนี้เท่านั้น</span></div></section>';
+ const createActionName=canCreate()?'create':'subscription-help';
+ const shortcuts='<aside class="kp-ov-aside" aria-label="ทางลัดงานพัสดุ"><section class="kp-ov-panel kp-ov-shortcuts">'+
+  '<div class="kp-ov-panel-head"><div><span class="kp-ov-panel-label">QUICK ACCESS</span><h2>ทางลัดงานพัสดุ</h2>'+
+  '<p>เข้าถึงเครื่องมือที่ใช้บ่อยได้ทันที</p></div></div>'+
+  '<div class="kp-ov-quick-grid">'+
+  action(canCreate()?'สร้างรายการใหม่':'สิทธิ์สร้างเอกสาร','จัดซื้อ / จัดจ้าง','plus',createActionName,'blue')+
+  action('ค้นหาเอกสาร','ทะเบียนและรายการย้อนหลัง','search','records','amber')+
+  action('ข้อมูลผู้ลงนาม','ตั้งค่าผู้ลงนามของโรงเรียน','users','settings','sky')+
+  action('ทะเบียนคุมเลข','ค้นหาและตรวจเลขหนังสือ','book','registry','violet')+
+  '</div></section><div class="kp-ov-note"><span class="kp-ov-note-icon">'+i('file')+'</span>'+
+   '<div><strong>ข้อควรตรวจสอบ</strong><p>เอกสารที่สร้างจากระบบเป็นแบบร่าง โปรดตรวจความถูกต้องกับระเบียบราชการก่อนใช้งาน</p></div></div></aside>';
+ shell('ภาพรวม','งานพัสดุ / ภาพรวม','<main class="kp-dashboard">'+hero+metrics+
+  '<div class="kp-ov-layout">'+recentPanel+shortcuts+'</div></main>');
+}
 function records(){const q=(state.filter||'').toLowerCase();const rows=state.records.filter(r=>!r.deleted_at&&(r.title+' '+r.vendor_name+' '+r.document_number).toLowerCase().includes(q));shell('ทะเบียนพัสดุ','รายการจัดซื้อจัดจ้าง',heading('ทะเบียนจัดซื้อจัดจ้าง','เปิดดูรายการแล้วเลือก พิมพ์ / บันทึก PDF เพื่อเก็บไฟล์ไว้ที่ใดก็ได้ตามต้องการ',createAction())+'<section class="card"><div class="filters"><input class="input" id="record-search" placeholder="ค้นหาเรื่อง ผู้ขาย หรือเลขที่..." value="'+e(state.filter)+'">'+btn(i('search')+' ค้นหา','search','secondary')+'</div>'+recordTable(rows)+'</section>');}
 function updatePayablePreview(){
  const form=document.getElementById('doc-meta-form'),output=document.getElementById('kp-payable-preview');if(!form||!output)return;
