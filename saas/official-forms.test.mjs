@@ -968,7 +968,8 @@ test('wizard evidence inputs are optional and reuse saved metadata keys across p
  assert.equal(metadata.invoice_number,'INV-18');
  assert.equal(metadata.order_number,'จ. 9/2569');
  const filled=docMetaWizardInputs(Object.fromEntries(Object.entries(metadata).map(([k,v])=>['doc_'+k,v])),4,'hire');
- assert.match(filled,/data-evidence-group="delivery" open/);
+ assert.match(filled,/data-evidence-group="delivery"/);
+ assert.match(filled,/บันทึกข้อมูลแล้ว 5 ช่อง/);
  const html=buildDocuments({...sample,kind:'hire',vendor_name:'ร้านรับจ้างทดสอบ',
    total_satang:499900,document_meta:metadata,due_date:'2026-11-08'},school);
  assert.match(html,/จ\. 9\/2569/);
