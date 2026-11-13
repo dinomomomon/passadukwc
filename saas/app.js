@@ -569,13 +569,36 @@ function form(){
  shell(editing?'แก้ไขรายการ':'สร้างรายการใหม่','งานพัสดุ / บันทึกรายการ',
   heading(editing?'แก้ไขรายการที่บันทึกแล้ว':'สร้างรายการจัดซื้อจัดจ้าง','กรอกทีละขั้นได้ ย้อนกลับได้ และไม่ต้องกรอกข้อมูลซ้ำ')+
   '<form id="procurement-form">'+steps+basic+entries+vendor+docs+footer+'</form>');
- updateTotal();updateWizardReview();
+ updateTotal();updateWizardReview();updateEvidenceProgress();
+}
+function updateEvidenceProgress(){
+ const root=document.getElementById('procurement-form');
+ if(!root)return;
+ for(const group of root.querySelectorAll('[data-evidence-group]')){
+  const fields=[...group.querySelectorAll('input[name^="doc_"],textarea[name^="doc_"],select[name^="doc_"]')].filter(el=>!el.disabled&&!el.readOnly);
+  const count=fields.filter(el=>String(el.value??'').trim()!=='').length;
+  const badge=group.querySelector('[data-evidence-count]');
+  if(!badge)continue;
+  badge.textContent=count?'บันทึกข้อมูลแล้ว '+count+' ช่อง':'ยังไม่มีข้อมูล • กรอกภายหลังได้';
+  badge.classList.toggle('has-data',count>0);
+ }
 }
 function updateWizardReview(){
  const review=document.getElementById('wizard-review');if(!review)return;
  const form=document.getElementById('procurement-form'),data=Object.fromEntries(new FormData(form));
  let sum=0;try{sum=calculatePricing(state.items,document.getElementById('kp-vat-mode')?.value||state.draft.doc_vat_mode||'legacy').total_satang/100;}catch(_){}
- review.innerHTML='<h3>ตรวจสอบก่อนบันทึก</h3><p><b>เรื่อง:</b> '+e(data.title||'ยังไม่ระบุ')+'</p><p><b>ผู้ขาย:</b> '+e(data.vendor_name||'ยังไม่ระบุ')+'</p><p><b>จำนวน:</b> '+state.items.length+' รายการ — <b>วงเงิน:</b> '+sum.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท</p><p class="hint">เมื่อบันทึกแล้ว ยังเพิ่มเลขที่ใบสั่งซื้อ ข้อมูลตรวจรับและการเบิกจ่ายได้ภายหลัง</p>';
+ const has=(key)=>String(data['doc_'+key]??'').trim()!=='';
+ const financial=['vat_baht','withholding_baht','fine_baht','discount_baht','budget_total_baht','budget_paid_baht'].some(has);
+ const checks=[
+  ['ใบสั่งซื้อ / ใบสั่งจ้าง',has('order_number')?'มีเลขที่ใบสั่งแล้ว':'ยังไม่มีเลขที่ใบสั่ง',has('order_number')],
+  ['การส่งมอบและตรวจรับ',has('delivery_date')?'มีวันที่ส่งมอบแล้ว':'ยังไม่มีวันส่งมอบจริง',has('delivery_date')],
+  ['การเงินประกอบการเบิกจ่าย',financial?'มีข้อมูลประกอบการเบิกจ่ายแล้ว':'ยังไม่มีข้อมูลการเงิน',financial],
+  ...(data.kind==='hire'?[]:[['ข้อมูลผู้เบิกพัสดุ',has('requester_name')?'ระบุผู้เบิกแล้ว':'ยังไม่ระบุชื่อผู้เบิก',has('requester_name')]])
+ ];
+ review.innerHTML='<h3>ตรวจสอบก่อนบันทึก</h3><p><b>เรื่อง:</b> '+e(data.title||'ยังไม่ระบุ')+'</p><p><b>ผู้ขาย:</b> '+e(data.vendor_name||'ยังไม่ระบุ')+'</p><p><b>จำนวน:</b> '+state.items.length+' รายการ — <b>วงเงิน:</b> '+sum.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท</p>'+
+  '<div class="kp-evidence-checklist"><h4>ความพร้อมข้อมูลประกอบเอกสาร</h4><p>ส่วนที่ยังไม่มีหลักฐานจริงสามารถเว้นว่างได้ ระบบไม่สมมติข้อมูลแทนผู้กรอก</p>'+
+  checks.map(([label,note,done])=>'<div class="kp-evidence-check '+(done?'is-recorded':'is-pending')+'"><span aria-hidden="true">'+(done?'✓':'!')+'</span><div><strong>'+e(label)+'</strong><small>'+e(note)+'</small></div><span class="kp-check-state">'+(done?'มีข้อมูล':'เติมภายหลัง')+'</span></div>').join('')+
+  '</div><p class="hint kp-evidence-save-note">เมื่อยังไม่ถึงขั้นออกใบสั่ง ส่งมอบ หรือตรวจรับ สามารถบันทึกเป็นฉบับร่างและกลับมาเติมที่เมนู “ข้อมูลเอกสาร / ตรวจรับ / เบิกจ่าย” ก่อนพิมพ์ใช้งานจริง</p>';
 }
 function moveWizard(delta){
  const wizardForm=document.getElementById('procurement-form');if(!wizardForm)return;
@@ -1500,10 +1523,11 @@ document.addEventListener('click',async ev=>{
 });
 document.addEventListener('submit',async ev=>{if(!ev.target.id)return;ev.preventDefault();const b=ev.target.querySelector('[type=submit]');if(b)b.disabled=true;try{await handleForm(ev.target);}catch(ex){notify(ex.message,true);}finally{if(b)b.disabled=false;}});
 document.addEventListener('focusin',ev=>{if(state.page==='templates'&&ev.target?.dataset?.templateText)templateEditor.selectInline(ev.target);});
-document.addEventListener('input',ev=>{const el=ev.target;if(state.page==='assets'&&el?.name==='useful_life_months')el.dataset.userEdited='1';equipmentModule.onInput(el);if(el?.id==='kp-public-search'){filterPublicContent(el.value);return;}if(state.page==='templates'&&el.dataset.templateText){templateEditor.inlineInput(el);return;}if(state.page==='templates'&&el.dataset.templateHeader){templateEditor.headerInput(el);return;}if(el.dataset.tplField)templateEditor.editField(el);if(['doc_withholding_baht','doc_fine_baht','doc_discount_baht','doc_payable_baht'].includes(el.name))updatePayablePreview();if(el.name==='doc_delivery_date'&&el.value){const doc=el.closest('form');for(const targetName of ['doc_acceptance_date','doc_inspection_date']){const target=doc?.querySelector('[name="'+targetName+'"]');if(target&&!target.value)target.value=el.value;}}if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();}}});
+document.addEventListener('input',ev=>{const el=ev.target;if(state.page==='assets'&&el?.name==='useful_life_months')el.dataset.userEdited='1';equipmentModule.onInput(el);if(el?.id==='kp-public-search'){filterPublicContent(el.value);return;}if(state.page==='templates'&&el.dataset.templateText){templateEditor.inlineInput(el);return;}if(state.page==='templates'&&el.dataset.templateHeader){templateEditor.headerInput(el);return;}if(el.dataset.tplField)templateEditor.editField(el);if(['doc_withholding_baht','doc_fine_baht','doc_discount_baht','doc_payable_baht'].includes(el.name))updatePayablePreview();if(el?.closest?.('[data-evidence-group]'))updateEvidenceProgress();if(state.page==='create'&&state.wizardStep===4&&String(el?.name||'').startsWith('doc_'))updateWizardReview();if(el.name==='doc_delivery_date'&&el.value){const doc=el.closest('form');for(const targetName of ['doc_acceptance_date','doc_inspection_date']){const target=doc?.querySelector('[name="'+targetName+'"]');if(target&&!target.value)target.value=el.value;}}if(el.matches('[data-item]')){const x=state.items[Number(el.dataset.item)];if(x){x[el.dataset.key]=el.value;updateTotal();}}});
 document.addEventListener('change',ev=>{
  if(ev.target?.name==='category_id'&&state.page==='assets')equipmentModule.categoryChanged(ev.target);
  equipmentModule.onChange(ev.target);
+ if(ev.target?.closest?.('[data-evidence-group]'))updateEvidenceProgress();
  if(ev.target?.dataset?.tplField)templateEditor.editField(ev.target);
  if(ev.target?.name==='doc_vat_mode'&&state.page==='create'){collectDraft();form();return;}
  if(ev.target?.name==='kind'&&state.page==='create'){
