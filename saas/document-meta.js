@@ -100,6 +100,23 @@ export function docMetaWizardInputs(meta={},step=3,kind='purchase'){
    '<p class="hint">'+e(hint)+'</p>'+
    '<div class="form-grid">'+fields.map(f=>fieldHtml(f,meta)).join('')+'</div></section>';
  };
+ // The eight-step wizard uses isolated, visible phases. The historical
+ // step 3/4 calls remain supported for legacy editors and regression tests.
+ if(Number(step)===5){
+  return '<div class="kp-evidence-panel kp-wizard-dates">'+docMetaDateInputs(meta,kind)+'</div>';
+ }
+ if(Number(step)===6){
+  return '<div class="kp-evidence-panel kp-wizard-delivery">'+
+   '<div class="kp-evidence-intro"><strong>ข้อมูลส่งมอบและตรวจรับ</strong><p>หากผู้ขายยังไม่ได้ส่งมอบจริง ให้กดข้ามขั้นตอนนี้ได้ และกลับมาระบุวันส่งมอบตามหลักฐานภายหลัง</p></div>'+
+   section('ข้อมูลส่งมอบและตรวจรับ (เมื่อส่งมอบจริง)',
+    'กรอกวันส่งมอบตามเหตุการณ์จริง ไม่ใช่กำหนดส่งมอบ วันตรวจรับใช้วันส่งมอบเป็นค่าเริ่มต้นหากไม่ระบุวันอื่น โปรดตรวจสอบว่าตรวจรับจริงวันใด เลขใบตรวจรับออกจากทะเบียนกลางหลังบันทึกการส่งมอบ',deliveryFields,'delivery')+'</div>';
+ }
+ if(Number(step)===7){
+  return '<div class="kp-evidence-panel kp-wizard-finance">'+
+   '<div class="kp-evidence-intro"><strong>ข้อมูลประกอบการเบิกจ่าย</strong><p>หากยังไม่ได้รับเอกสารการเงินหรือยังไม่ถึงขั้นเบิกจ่าย สามารถข้ามและกลับมาเติมตามหลักฐานจริงได้</p></div>'+
+   section('ข้อมูลการเงินประกอบการเบิกจ่าย (ถ้ามี)',
+    'กรอกจำนวนเงินตามหลักฐานที่ตรวจสอบแล้ว ยอดเบิกจ่ายสุทธิจะคำนวณจากวงเงินรวม หักภาษีและค่าปรับ หากไม่มีข้อมูลจริงอย่าเพิ่งกรอกตัวเลขสมมติ',paymentFields,'finance')+'</div>';
+ }
  if(Number(step)===3){
   // The requisition requester is the actual person withdrawing supplies.
   // Show these fields directly, not inside the optional order-data accordion.
